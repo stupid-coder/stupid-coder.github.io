@@ -1,0 +1,12 @@
+#+TITLE: stupid-coder's blogs
+
+   + machin-learning
+     + computer-vision
+       + image-retrival
+         + [[file:machin-learning/computer-vision/image-retrival/deep-learning-of-binary-hash-codes-for-fast-image-retrieval.org][deep learning of binary hash codes for fast image retrieval 2018-08-07]]
+   + books
+     + scheme
+       + struct-and-interpretation-of-computer-programs
+         + [[file:books/scheme/struct-and-interpretation-of-computer-programs/Modularity-Objects-and-State.org][Structure and Interpretation of Computer Programs - Modularity, Objects, and State 2018-08-07]]
+         + [[file:books/scheme/struct-and-interpretation-of-computer-programs/Building-Abstractions-with-Procedures.org][Structure and Interpretation of Computer Programs - Building Abstractions with Procedures 2018-08-07]]
+         + [[file:books/scheme/struct-and-interpretation-of-computer-programs/Building-Abstractions-with-Data.org][Structure and Interpretation of Computer Programs - Building Abstractions with Data 2018-08-07]]

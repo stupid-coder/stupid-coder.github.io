@@ -1,0 +1,1715 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Structure and Interpretation of Computer Programs - Building Abstractions with Data</title>
+<!-- 2018-08-07 Tue 13:17 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Structure and Interpretation of Computer Programs - Building Abstractions with Data</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Building Abstractions with Data</a>
+<ul>
+<li><a href="#sec-1-1">简介数据抽象 - Introduction to Data Abstraction</a>
+<ul>
+<li><a href="#sec-1-1-1">有理数的算数运算</a></li>
+<li><a href="#sec-1-1-2">抽象屏障 - Abstract Barrier</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-2">层次性数据和闭包性质 - Hierarchical Data and the Closure Property</a>
+<ul>
+<li><a href="#sec-1-2-1">序列的表示 - Representing Sequences</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-3">符号数据 - Symbolic Data</a>
+<ul>
+<li><a href="#sec-1-3-1">引用 - Quotation</a></li>
+<li><a href="#sec-1-3-2">求导 - Symbolic Differentiation</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-4">抽象数据对象的多重表示 - Multiple Representations for Abstract Data</a>
+<ul>
+<li><a href="#sec-1-4-1">复数的表示</a></li>
+<li><a href="#sec-1-4-2">带标志的数据</a></li>
+<li><a href="#sec-1-4-3">数据导向的程序设计和可加性</a></li>
+<li><a href="#sec-1-4-4">消息传递</a></li>
+<li><a href="#sec-1-4-5">总结</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-5">通用操作系统 - Systems with Generic Operations</a>
+<ul>
+<li><a href="#sec-1-5-1">通用算数运算</a></li>
+<li><a href="#sec-1-5-2">不同类型的数据的组合</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Building Abstractions with Data</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+第一章中介绍了如何对表达式进行组合，抽象来解决实际问题。并且通过将函数对象作为参数和返回结果，能够实现更为一般的编程方式。本章将更为深入的研究数据 <code>data</code> 对程序设计的影响。<br  />
+</p>
+
+<p>
+考虑在做数值计算的时候，会处理分数，会有一个操作函数 <code>add-rat</code> 接受两个分数，然后计算出和。分数右两个整数组成：分子和分母。这样 <code>add-rat</code> 在接受输入参数时候，就需要接受4个参数，分别为2个分子和2个分母，在计算过程中，我们需要知道哪两个参数是表示一个分母的；这样在进行大量计算的时候，会增加编程难度；而且没有办法将分母的计算逻辑和整型的计算逻辑进行统一处理。<br  />
+</p>
+
+<p>
+解决方法就是可以将分子和分母组成一个复合数据对象，这个对象能够在编程中视为一个单元进行处理。这样可以增加编程语言的表达能力。<br  />
+</p>
+
+<p>
+计算线性 <code>ax+by</code> ，不引入复合数据对象，可以写出如下代码：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">linear-combination</span> a b x y)
+<span class="linenr">2: </span>  (+ (* a x) (* b y)))
+</pre>
+</div>
+
+<p>
+上述函数可以很好的处理内置数值数据，但是在考虑我们处理的是分数，复数，多项式时，并不能很好的处理，因为内置的 <code>*</code> 和 <code>+</code> 操作函数并不能处理对应数据类型。我们可以重新定义该函数：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">linear-combination</span> a b x y)
+<span class="linenr">2: </span>  (add (mul a x) (mul b y)))
+</pre>
+</div>
+
+<p>
+<code>linear-combination</code> 函数并不需要知道对应的参数实现；只需要保证处理函数 <code>add</code> 和 <code>mul</code> 可以根据参数类型调用对应的操作即可处理任何复杂的情况。如果没有复合数据对象，那么 <code>linear-combination</code> 就不能将任意的数据用一个参数表示，无法实现一个一般计算过程。<br  />
+</p>
+
+<p>
+函数抽象提供将复杂计算过程封装成简单对象的能力，数据抽象可以提供一个抽象栅篱，将程序分割成不同的部分，从而封装复杂度，降低编程代价，提高编程能力。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">简介数据抽象 - Introduction to Data Abstraction</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+数据抽象将基础数据聚合当成一个复合对象使用，从而使得底层复合对象的实现与操作隔离；实现数据实现与操作隔离。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-1-1" class="outline-4">
+<h4 id="sec-1-1-1">有理数的算数运算</h4>
+<div class="outline-text-4" id="text-1-1-1">
+<p>
+在实现有理数运算的时候，假设我们已知构造函数，分子获取函数和分母获取函数：<br  />
+</p>
+<dl class="org-dl">
+<dt> <code>(make-rat &lt;n&gt; &lt;d&gt;)</code> </dt><dd>构造函数，返回一个有理数，其分子是整数&lt;n&gt;，分母是整数&lt;d&gt;<br  />
+</dd>
+<dt> <code>(numer &lt;x&gt;)</code> </dt><dd>返回有理数&lt;x&gt;的分子<br  />
+</dd>
+<dt> <code>(denom &lt;x&gt;)</code> </dt><dd>返回有理数&lt;x&gt;的分母<br  />
+</dd>
+</dl>
+
+<p>
+那么就可以通过分数对应的运算法则得到对应的函数：<br  />
+</p>
+
+<p>
+$$\frac{n_{1}}{d_{1}}+\frac{n_{2}}{d_{2}}=\frac{n_{1}d_{1}+n_{2}d_{2}}{d_{1}d_{2}}$$<br  />
+$$\frac{n_{1}}{d_{1}}-\frac{n_{2}}{d_{2}}=\frac{n_{1}d_{1}-n_{2}d_{2}}{d_{1}d_{2}}$$<br  />
+$$\frac{n_{1}}{d_{1}}*\frac{n_{2}}{d_{2}}=\frac{n_{1}n_{1}}{d_{1}d_{2}}$$<br  />
+$$\frac{\frac{n_{1}}{d_{1}}}{\frac{n_{2}}{d_{2}}}=\frac{n_{1}d_{2}}{d_{1}n_{2}}$$<br  />
+$$\frac{n_{1}}{d_{1}}=\frac{n_{2}}{d_{2}}\ 当且仅当\ n_{1}d_{2}=n_{2}d_{1}$$<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-rat</span> x y)
+<span class="linenr"> 2: </span>  (make-rat (+ (* (numer x) (denom y))
+<span class="linenr"> 3: </span>               (* (numer y) (denom x)))
+<span class="linenr"> 4: </span>            (* (denom x) (denom y))))
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sub-rat</span> x y)
+<span class="linenr"> 7: </span>  (make-rat (- (* (numer x) (denom y))
+<span class="linenr"> 8: </span>               (* (numer y) (denom x)))
+<span class="linenr"> 9: </span>            (* (denom x) (denom y))))
+<span class="linenr">10: </span>
+<span class="linenr">11: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">mul-rat</span> x y)
+<span class="linenr">12: </span>  (make-rat (* (numer x) (numer y))
+<span class="linenr">13: </span>            (* (denom x) (denom y))))
+<span class="linenr">14: </span>
+<span class="linenr">15: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">div-rat</span> x y)
+<span class="linenr">16: </span>  (make-rat (* (numer x) (denom y))
+<span class="linenr">17: </span>            (* (numer y) (denom x))))
+<span class="linenr">18: </span>
+<span class="linenr">19: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">equal-rat?</span> x y)
+<span class="linenr">20: </span>  (= (* (numer x) (denom y))
+<span class="linenr">21: </span>     (* (numer y) (denom x))))
+</pre>
+</div>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-1-1-1" name="sec-1-1-1-1"></a>分数的内部表示 - cons<br  /><div class="outline-text-5" id="text-1-1-1-1">
+<p>
+<code>scheme</code> 内部有一个数据结构 <code>list</code> 可以用来表示分数，使用 <code>cons</code> 操作符可以链接两个数据对象在一起。并且可以通过 <code>car</code> 和 <code>cdr</code> 来获取对应的数据对象：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-rat</span> n d) (cons n d))
+<span class="linenr">2: </span>
+<span class="linenr">3: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">numer</span> x) (car x))
+<span class="linenr">4: </span>
+<span class="linenr">5: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">denom</span> x) (cdr x))
+</pre>
+</div>
+
+<p>
+通过以上定义我们就构造了分数相关的操作函数和对应的底层实现。<br  />
+</p>
+</div>
+</li></ul>
+</div>
+
+<div id="outline-container-sec-1-1-2" class="outline-4">
+<h4 id="sec-1-1-2">抽象屏障 - Abstract Barrier</h4>
+<div class="outline-text-4" id="text-1-1-2">
+<p>
+在上述有理数的构造和计算过程中，我们其实是把先假设我们已经拥有了 <code>make-rat numer denom</code> 函数后，直接编写出了对应的计算函数。这个过程中，我们已经使用了一种抽象，即复合数据对象只对外暴露构造和选取函数接口，并不需要暴露底层实现细节。<br  />
+</p>
+
+
+<div id="" class="figure">
+<p><img src="assets/ch2-Z-G-6.gif" alt="ch2-Z-G-6.gif" /><br  />
+</p>
+</div>
+
+<p>
+上图中的横线表示了抽象屏障 <code>Absract Barrier</code> ，每层屏障将下一层的实现细节对该层的操作进行了屏蔽。使用有理数的程序只需要调用下一层中的 <code>add-rat sub-rat ...</code> 函数即可； <code>add-rat sub-rat ...</code> 只需要调用 <code>make-rat numer denom</code> 函数即可。依次类推，每层只关心下一层的接口使用，不需要知道实现细节。<br  />
+</p>
+
+<p>
+这种分层的设计有很多优点：<br  />
+</p>
+<dl class="org-dl">
+<dt> <code>代码容易维护和修改</code> </dt><dd>每一层都可以被替换或者修改，只需要接口函数不变，即可实现对整体没有影响<br  />
+</dd>
+<dt> <code>代码容易开发</code> </dt><dd>开发过程中，每层的开发逻辑，只以来于下一层的接口函数，并不需要关心具体实现细节<br  />
+</dd>
+<dt> <code>代码容易调试</code> </dt><dd>每次只需要保证下一层的逻辑正常即可，这样可以一层一层向上进行调试<br  />
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">层次性数据和闭包性质 - Hierarchical Data and the Closure Property</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+在有理数构造中，我们可以看到 <code>scheme</code> 提供了 <code>cons</code> 函数用于构造简单的复合对象 <code>序对</code> 。 <code>cons</code> 构造的复合对象具有两个元素，可以分别用 <code>car</code> 和 <code>cdr</code> 来访问。可以认为 <code>car</code> 用来存储元素， <code>cdr</code> 用来存储下一个 <code>cons</code> 对象的指针，这样可以构造无限长度的数据对象。<br  />
+</p>
+
+
+<div id="cons-1-2" class="figure">
+<p><img src="assets/ch2-Z-G-11.gif" alt="ch2-Z-G-11.gif" /><br  />
+</p>
+</div>
+
+<p>
+如图所示了 <code>(cons 1 2)</code> 对象，其中 <code>(car (cons 1 2)) -&gt; 1</code> , <code>(cdr (cons 1 2)) -&gt; 2</code> 。通过这个简单的基础数据对象，我们就可以组合成更为复杂和具有一定存储原理的数据对象：<br  />
+</p>
+
+
+<div class="figure">
+<p><img src="assets/ch2-Z-G-12.gif" alt="ch2-Z-G-12.gif" /><br  />
+</p>
+</div>
+
+
+<p>
+我们使用 <code>cons</code> 建立的序对对象同时也可以作为序对中的一元，这样就赋予了序对无限扩展的能力。我们称这种能力为闭包性质(<code>closure property</code>)。所有具有闭包性质的对象，都具有一种无限扩展的能力；例如表达式(<code>expression</code>)，表达式可以作为参数，传入另一个表达式中，这样就使得表达可以具有更为强大的表达能力。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-2-1" class="outline-4">
+<h4 id="sec-1-2-1">序列的表示 - Representing Sequences</h4>
+<div class="outline-text-4" id="text-1-2-1">
+<p>
+利用序对表示的第一个有用的数据结构就是序列(<code>Sequences</code>)，表示一批数据的汇集对象！其中有 链表(<code>list</code>)、数(<code>tree</code>)、队列(<code>queue</code>)等<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-2-1-1" name="sec-1-2-1-1"></a>链表 list<br  /><div class="outline-text-5" id="text-1-2-1-1">
+
+<div id="cons" class="figure">
+<p><img src="assets/ch2-Z-G-13.gif" alt="ch2-Z-G-13.gif" /><br  />
+</p>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(cons 1
+<span class="linenr">2: </span>      (cons 2
+<span class="linenr">3: </span>            (cons 3
+<span class="linenr">4: </span>                  (cons 4 nil))))
+</pre>
+</div>
+
+<p>
+通过 <code>cons</code> 的嵌套，就可以实现一个简单的链表结构， <code>car</code> 可以看作对链表的第一个元素的读取， <code>cdr</code> 表示取链表除了第一个元素的剩下元素组成的链表。<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-2-1-1-1" name="sec-1-2-1-1-1"></a>表操作 - List Operations<br  /><div class="outline-text-6" id="text-1-2-1-1-1">
+<p>
+通过 <code>car</code> 和 <code>cdr</code> 两个操作我们就可以实现对当前元素和余下元素的处理流程。<br  />
+</p>
+
+<p>
+计算表的长度的递归(<code>recursive</code>)过程如下：<br  />
+</p>
+<ul class="org-ul">
+<li>任意的表的长度等于这个表的 <code>cdr</code> 后的长度加一<br  />
+</li>
+<li>空表的长度为0<br  />
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">length</span> items)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (null? items)
+<span class="linenr">3: </span>      0
+<span class="linenr">4: </span>      (+ 1 (length (cdr items)))))
+<span class="linenr">5: </span>
+<span class="linenr">6: </span>(length (list 1 2 3 4))
+</pre>
+</div>
+
+<pre class="example">
+4
+</pre>
+
+<p>
+也可以通过迭代(<code>iterative</code>)计算表的长度:<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">length</span> items)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">length-iter</span> a count)
+<span class="linenr">3: </span>    (<span style="color: #00bfff; font-weight: bold;">if</span> (null? a)
+<span class="linenr">4: </span>        count
+<span class="linenr">5: </span>        (length-iter (cdr a) (+ count 1))))
+<span class="linenr">6: </span>  (length-iter items 0))
+<span class="linenr">7: </span>
+<span class="linenr">8: </span>(length (list 1 2 3 4))
+</pre>
+</div>
+
+<pre class="example">
+4
+</pre>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-2-1-1-1-1" name="sec-1-2-1-1-1-1"></a>对表的映射 - Mapping over lists<br  /><div class="outline-text-7" id="text-1-2-1-1-1-1">
+<p>
+一个特别操作是将一个特定的变换或者函数作用到一个表的所有元素，得到所有的结果构成表。<br  />
+</p>
+
+<p>
+例如对一个表的所有元素做一次缩放：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">map</span> proc items)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (null? items)
+<span class="linenr">3: </span>      '()
+<span class="linenr">4: </span>      (cons (proc (car items)) (<span style="color: #00bfff; font-weight: bold;">map</span> proc (cdr items)))))
+<span class="linenr">5: </span>
+<span class="linenr">6: </span>(<span style="color: #00bfff; font-weight: bold;">map</span> abs (list -10 2.5 -11.6 17))
+</pre>
+</div>
+
+<pre class="example">
+(10 2.5 11.6 17)
+</pre>
+
+<p>
+<code>map</code> 是一个很重要的数据结构，不仅因为他代表了一种公共的模式，而且建立了处理层的高层抽象。将底层的链表的实现与处理过程进行的抽象。<br  />
+</p>
+</div>
+</li></ul>
+</li></ul>
+</li>
+
+<li><a id="sec-1-2-1-2" name="sec-1-2-1-2"></a>层次性结构<br  /><div class="outline-text-5" id="text-1-2-1-2">
+<p>
+将表作为序列的表示方式，也可以推广到元素本身也是序列的序列。<br  />
+</p>
+
+<p>
+例如：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(cons (list 1 2) (list 3 4))
+</pre>
+</div>
+
+<p>
+这是一个包含三项的表，其中第一个是一个表 <code>(1 2)</code> ，第二个是元素 <code>3</code> ，最后一个是元素 <code>4</code> 。用 <code>cons</code> 打印出来如下图所示：<br  />
+</p>
+
+
+<div id="cons-list-1-2-list-3-4" class="figure">
+<p><img src="assets/ch2-Z-G-15.gif" alt="ch2-Z-G-15.gif" /><br  />
+</p>
+</div>
+
+<p>
+这种结构，我们可以看作一种树结构。序列元素可以看作为树的分支：<br  />
+</p>
+
+
+<div id="" class="figure">
+<p><img src="assets/ch2-Z-G-16.gif" alt="ch2-Z-G-16.gif" /><br  />
+</p>
+</div>
+
+<p>
+一般处理树状结构的最有力方法是递归，遇到树的分支，可以看作一个全新的树来处理，直到达到树的叶节点。例如计算一个树中的叶子节点的数量:<br  />
+</p>
+<ul class="org-ul">
+<li>树的叶子节点数量等于子数的叶子节点的和<br  />
+</li>
+<li>空树的叶子节点等于0<br  />
+</li>
+<li>叶子节点为1<br  />
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">count-leaves</span> x)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((null? x) 0) <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">&#31354;&#26641;&#20026;0</span>
+<span class="linenr">3: </span>        ((not (pair? x)) 1) <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">&#21494;&#23376;&#33410;&#28857;&#20026;1</span>
+<span class="linenr">4: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (+ (count-leaves (car x)) <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">&#24038;&#23376;&#25968;&#21494;&#23376;&#33410;&#28857;&#25968;&#37327;</span>
+<span class="linenr">5: </span>                 (count-leaves (cdr x)))))) <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">&#21491;&#23376;&#26641;&#21494;&#23376;&#33410;&#28857;&#25968;&#37327;</span>
+</pre>
+</div>
+</div>
+
+
+<ul class="org-ul"><li><a id="sec-1-2-1-2-1" name="sec-1-2-1-2-1"></a>对树的映射 - Mapping over trees<br  /><div class="outline-text-6" id="text-1-2-1-2-1">
+<p>
+类似与map操作链表的定义：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">map</span> proc trees)
+<span class="linenr">2: </span>  (conf ((null? trees) nil)
+<span class="linenr">3: </span>        ((not (pair? trees)) (proc trees))
+<span class="linenr">4: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (cons (<span style="color: #00bfff; font-weight: bold;">map</span> proc (car trees))
+<span class="linenr">5: </span>                    (<span style="color: #00bfff; font-weight: bold;">map</span> proc (cdr trees))))))
+</pre>
+</div>
+</div>
+</li></ul>
+</li>
+
+<li><a id="sec-1-2-1-3" name="sec-1-2-1-3"></a>序列作为约定的接口 - Sequences as Conventional Interfaces<br  /><div class="outline-text-5" id="text-1-2-1-3">
+<p>
+我们在数据抽象中，主要强大的是通过对复合对象接口的约束，能写实现不被复合数据对象实现细节限制的代码。另外通过约定一种数据提取接口与高阶函数进行结合，就能实现对一般序列数据对象通用化处理过程。<br  />
+</p>
+
+<p>
+考虑计算叶子节点为奇数的平方和：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme" id=""><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-odd-squares</span> tree)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((null? tree) 0)
+<span class="linenr">3: </span>        ((not (pair? tree))
+<span class="linenr">4: </span>         (<span style="color: #00bfff; font-weight: bold;">if</span> (odd? tree) (square tree) 0))
+<span class="linenr">5: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (+ (sum-odd-squares (car tree))
+<span class="linenr">6: </span>                 (sum-odd-squares (cdr tree))))))
+</pre>
+</div>
+
+<p>
+考虑计算斐波那契小于n且为偶数的表：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme" id=""><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">event-fibs</span> n)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">next</span> k)
+<span class="linenr">3: </span>    (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; k n)
+<span class="linenr">4: </span>        nil
+<span class="linenr">5: </span>        (<span style="color: #00bfff; font-weight: bold;">let</span> ((f (fib k)))
+<span class="linenr">6: </span>          (<span style="color: #00bfff; font-weight: bold;">if</span> (event? f)
+<span class="linenr">7: </span>              (cons f (next (+ k 1)))
+<span class="linenr">8: </span>              (next (+ k 1))))))
+<span class="linenr">9: </span>  (next 0))
+</pre>
+</div>
+
+<p>
+虽然这两个计算过程差异非常大，但是通过两个计算流程抽象还是能够找到一些相似之处。<br  />
+</p>
+
+<p>
+第一个程序：<br  />
+</p>
+<ul class="org-ul">
+<li>枚举一个树的所有叶子节点<br  />
+</li>
+<li>过滤，取出奇数的叶子节点<br  />
+</li>
+<li>求解平方<br  />
+</li>
+<li>累加所有平方和<br  />
+</li>
+</ul>
+
+<p>
+第二个程序：<br  />
+</p>
+<ul class="org-ul">
+<li>枚举从0到n的整数<br  />
+</li>
+<li>计算斐波那契<br  />
+</li>
+<li>过滤出偶数序列<br  />
+</li>
+<li>cons累积结果<br  />
+</li>
+</ul>
+
+<p>
+从上述两个过程，可以看成电子信号处理中的一个个过滤器。首先为 <code>枚举器</code> 生成对应的待处理数据序列，然后送入到 <code>过滤器</code> 过滤出满足需求的序列，然后是 <code>映射器</code> 将对应的序列映射结果值，最后送到 <code>累积器</code> 中，将所有结果进行累积。<br  />
+</p>
+
+
+<div id="" class="figure">
+<p><img src="assets/ch2-Z-G-17.gif" alt="ch2-Z-G-17.gif" /><br  />
+</p>
+</div>
+
+<p>
+如果我们能够将上述两个计算函数拆解成对应的各种过滤器，则可以实现一个信号流结构的代码，提高代码的结构清晰性。<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-2-1-3-1" name="sec-1-2-1-3-1"></a>序列操作 - Sequence Operations<br  /><div class="outline-text-6" id="text-1-2-1-3-1">
+<p>
+为了实现上述的信号流处理代码，我们需要首先确定内部流转的信号流的具体表现形式。这里可以很自然想到复合数据对象 <code>序列</code> 来实现信号。这样我们就可以使用对应的操作函数实现对应的过滤器：<br  />
+</p>
+
+<p>
+其中参考map的过程，可以自然实现一个映射器:<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme" id=""><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">map</span> proc sequence)
+</pre>
+</div>
+
+<p>
+过滤器实现：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme" id=""><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">fileter</span> predicate sequence)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((null sequence) '())
+<span class="linenr">3: </span>        ((predicate (car sequence))
+<span class="linenr">4: </span>         (cons (car sequence)
+<span class="linenr">5: </span>               (filter predicate (cdr sequence))))
+<span class="linenr">6: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (filter predicate (cdr sequence)))))
+</pre>
+</div>
+
+<p>
+累积器实现：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme" id=""><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">accumulate</span> op initial sequence)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (null? sequence)
+<span class="linenr">3: </span>      initial
+<span class="linenr">4: </span>      (op (car (car sequence))
+<span class="linenr">5: </span>          (accumulate op initial (cdr sequence)))))
+</pre>
+</div>
+
+<p>
+枚举器：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">enumerate-interval</span> low high)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; low high)
+<span class="linenr"> 3: </span>      '()
+<span class="linenr"> 4: </span>      (cons low (enumerate-interval (+ low 1) high))))
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">enumerate-tree</span> tree)
+<span class="linenr"> 7: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((null? tree) '())
+<span class="linenr"> 8: </span>        ((not (pair? tree)) (list tree))
+<span class="linenr"> 9: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (append (enumerate-tree (car tree))
+<span class="linenr">10: </span>                      (enumerate-tree (cdr tree)))))
+</pre>
+</div>
+
+<p>
+<code>enumerate-interval</code> 用于枚举从 <code>low</code> 到 <code>high</code> 的数据序列； <code>enumerate-tree</code> 用于将一个树 <code>tree</code> 转为对应的链表。<br  />
+</p>
+
+<p>
+如此我们就可以通过这些过滤器的组合实现上述两个函数：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-odd-square</span> tree)
+<span class="linenr"> 2: </span>  (accumulate +
+<span class="linenr"> 3: </span>              0
+<span class="linenr"> 4: </span>              (<span style="color: #00bfff; font-weight: bold;">map</span> square
+<span class="linenr"> 5: </span>                   (filter odd?
+<span class="linenr"> 6: </span>                           (enumerate-tree tree)))))
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">even-fibs</span> n)
+<span class="linenr"> 9: </span>  (accumulate cons
+<span class="linenr">10: </span>              '()
+<span class="linenr">11: </span>              (filter event?
+<span class="linenr">12: </span>                      (<span style="color: #00bfff; font-weight: bold;">map</span> fib
+<span class="linenr">13: </span>                           (enumerate-interval 0 n)))))
+</pre>
+</div>
+
+<p>
+通过这些模块化后的过滤器组合就能很快的实现各种功能函数，这种设计更为灵活和模块化。<br  />
+</p>
+</div>
+</li></ul>
+</li></ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">符号数据 - Symbolic Data</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+<code>scheme</code> 提供了符号数据(<code>symbolic data</code>)，用于处理符号对象。使得表达式 <code>expression</code> 也能表示为内部的一种数据对象，提供了元编程 <code>meta programming</code> 的可能。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-3-1" class="outline-4">
+<h4 id="sec-1-3-1">引用 - Quotation</h4>
+<div class="outline-text-4" id="text-1-3-1">
+<p>
+例如列表：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(a b c d)
+<span class="linenr">2: </span>(23 45 17)
+<span class="linenr">3: </span>((Norah 12) (Molly 9) (Anna 7) (Lauren 6) (Charlotte 4))
+</pre>
+</div>
+
+<p>
+直接输入到 <code>scheme REPL</code> 中，会被当成表达式进行计算，但是如何让解释器知道我们输入并不是一个表达式，而是一个列表，并且不会对其中任何元素进行求值 <code>eval</code> ？ 这里需要引入引用操作符(<code>Quota</code>)，利用 <code>引用</code> 我们就同样可以将表达式的字面 <code>literature</code> 输入到解释器中，作为参数进行各种运算，这种特殊的功能可以使得 <code>scheme</code> 具有元编程的能力。<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> <span style="font-weight: bold;">a</span> 1)
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> <span style="font-weight: bold;">b</span> 2)
+<span class="linenr">3: </span>
+<span class="linenr">4: </span>(list a b) =&gt; (1 2)
+<span class="linenr">5: </span>
+<span class="linenr">6: </span>(list 'a 'b) =&gt; (a b)
+<span class="linenr">7: </span>
+<span class="linenr">8: </span>(list 'a b) =&gt; (a 2)
+</pre>
+</div>
+
+<p>
+其中： ='= 可以用来引用其后符号数据，而不会进行求值。<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3-2" class="outline-4">
+<h4 id="sec-1-3-2">求导 - Symbolic Differentiation</h4>
+<div class="outline-text-4" id="text-1-3-2">
+<p>
+这里通过对代数表达式进行求导，从而说明符号计算。例如：输入代数表达式 \(ax^{2}+bx+c\) 和参数 <code>x</code> , 求导结果为 \(2ax+b\) 。对代数表达式求导是符号计算及符号编程语言的主要解决的问题方向。<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-3-2-1" name="sec-1-3-2-1"></a>基于抽象数据的求导函数<br  /><div class="outline-text-5" id="text-1-3-2-1">
+<p>
+我们首先考虑最简单的求导表达式，只处理乘法和加法，并且每个操作符只接受2个参数，如下是简单的求导规则：<br  />
+</p>
+
+<p>
+\(\frac{dc}{dx}=0\ 当c为常量或者非x的变量\)<br  />
+</p>
+
+<p>
+\(\frac{dx}{dx}=1\)<br  />
+</p>
+
+<p>
+\(\frac{d(u+v)}{dx}=\frac{du}{dx}+\frac{dv}{dx}\)<br  />
+</p>
+
+<p>
+\(\frac{d(uv)}{dx}=u\frac{dv}{dx}+v\frac{du}{dx}\)<br  />
+</p>
+
+<p>
+这里可以看出最后两个规则中，是通过递归调用求导函数，将求导表达式拆分成更小粒度的表达式进行求导。整个过程最后会归结到前两个表达式求出求导值0或者1。<br  />
+</p>
+
+<p>
+这里我们首先采取抽象，假设我们已知代数表达式的表示方式(<code>constructor</code>)，并且能够确定表达式是加法还是乘法(<code>predicator</code>)，从而能够取出不同的参数对象(<code>extractor</code>)：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(variable? e) &#21028;&#26029;e&#26159;&#21542;&#26159;&#21464;&#37327;
+<span class="linenr"> 2: </span>(same-variable? v1 v2) &#21028;&#26029;&#20004;&#20010;&#21464;&#37327;&#26159;&#21542;&#30456;&#21516;
+<span class="linenr"> 3: </span>(sum? e) &#21028;&#26029;&#34920;&#36798;&#24335;&#26159;&#21542;&#26159;&#21152;&#27861;
+<span class="linenr"> 4: </span>(addend e) &#21462;&#20986;&#21152;&#27861;&#34920;&#36798;&#24335;&#30340;&#31532;&#19968;&#20010;&#21442;&#25968;
+<span class="linenr"> 5: </span>(augend e) &#21462;&#20986;&#21152;&#27861;&#34920;&#36798;&#24335;&#30340;&#31532;&#20108;&#20010;&#21442;&#25968;
+<span class="linenr"> 6: </span>(make-sum a1 a2) &#26500;&#24314;&#21152;&#27861;&#34920;&#36798;&#24335;&#65292;&#21442;&#25968;&#20026;a1&#21644;a2
+<span class="linenr"> 7: </span>(product? e) &#21028;&#26029;&#34920;&#36798;&#24335;&#26159;&#21542;&#26159;&#20056;&#27861;&#34920;&#36798;&#24335;
+<span class="linenr"> 8: </span>(multiplier e) &#21462;&#20986;&#20056;&#27861;&#34920;&#36798;&#24335;&#30340;&#31532;&#19968;&#20010;&#21442;&#25968;
+<span class="linenr"> 9: </span>(multiplicand e) &#21462;&#20986;&#20056;&#27861;&#34920;&#36798;&#24335;&#30340;&#31532;&#20108;&#20010;&#21442;&#25968;
+<span class="linenr">10: </span>(make-product m1 m2) &#26500;&#24314;&#20056;&#27861;&#34920;&#36798;&#24335;&#65292;&#21442;&#25968;&#20026;m1&#21644;m2
+</pre>
+</div>
+
+<p>
+通过上述的抽象，我们就可以构建求导函数:<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">deriv</span> exp var)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((number? exp) 0)
+<span class="linenr"> 3: </span>        ((variable? exp)
+<span class="linenr"> 4: </span>         (<span style="color: #00bfff; font-weight: bold;">if</span> (same-variable? exp var) 1 0))
+<span class="linenr"> 5: </span>        ((sum? exp)
+<span class="linenr"> 6: </span>         (make-sum (deriv (addend exp) var)
+<span class="linenr"> 7: </span>                   (deriv (augend exp) var)))
+<span class="linenr"> 8: </span>        ((product? exp)
+<span class="linenr"> 9: </span>         (make-sum
+<span class="linenr">10: </span>          (make-product (multiplier exp) (deriv (multiplicand exp) var))
+<span class="linenr">11: </span>          (make-product (deriv (multiplier exp) var) (multiplicand exp))))
+<span class="linenr">12: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"unknow expression type -- DERIV"</span> exp))))
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="sec-1-3-2-2" name="sec-1-3-2-2"></a>代数表达式 - Algebraic Expressions<br  /><div class="outline-text-5" id="text-1-3-2-2">
+<p>
+代数表达式的实现可以采取多种方式，其中比较直观的是采取一个list结构体表示表达式，\(ax+b\) 可以表示为 <code>(a * x + b)</code> ；另外一种的选择是直接采取 <code>scheme</code> 中表达式的前缀形式， <code>(+ (* a x) b)</code> ；很明显采取前缀表达式具有更好的层次信息，更好的抽取逻辑(<code>extractor</code>)。<br  />
+</p>
+
+<p>
+采取前缀表达式，可以构建如下抽象函数：<br  />
+</p>
+<dl class="org-dl">
+<dt> <code>variables?</code> </dt><dd>判断是否是变量<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">variable?</span> x) (symbol? x))
+</pre>
+</div>
+</dd>
+<dt> <code>same-variable?</code> </dt><dd>判断变量是否是同一个<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">same-variable?</span> v1 v2)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">and</span> (variable? v1) (variable? v2) (eq? v1 v2)))
+</pre>
+</div>
+</dd>
+<dt> <code>make-sum make-product</code> </dt><dd>构建乘法和加法表达式<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-sum</span> a1 a2) (list '+ a1 a2))
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-product</span> m1 m2) (list '* m1 m2))
+</pre>
+</div>
+</dd>
+<dt> <code>sum?</code> </dt><dd>判断是否乘法表达式<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum?</span> exp) (<span style="color: #00bfff; font-weight: bold;">and</span> (pair? exp) (eq? '+ (car exp))))
+</pre>
+</div>
+</dd>
+<dt> <code>addend augend</code> </dt><dd>抽取加法表达式参数<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">addend</span> exp) (cadr exp))
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">augend</span> exp) (caddr exp))
+</pre>
+</div>
+</dd>
+<dt> <code>product?</code> </dt><dd>判断是否是乘法表达式<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">product?</span> exp) (<span style="color: #00bfff; font-weight: bold;">and</span> (pair? exp) (eq? '* (car exp)))
+</pre>
+</div>
+</dd>
+<dt> <code>multiplier multiplicand</code> </dt><dd>抽取乘法表达式参数<br  />
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">multiplier</span> exp) (cadr exp))
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">multiplicand</span> exp) (caddr exp))
+</pre>
+</div>
+</dd>
+</dl>
+
+<p>
+通过引入符号数据对象，我们就可以实现对表达式的求导，同样的可以实现对 <code>scheme</code> 语言的扩展。<br  />
+</p>
+</div>
+</li></ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">抽象数据对象的多重表示 - Multiple Representations for Abstract Data</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+在本章中，我们通过引入不同的抽象层&amp;抽象栅栏(<code>Abstract Barrier</code>)从而使得层级之间可以封装实现细节，只暴露对应接口，从而将复杂的程序设计分解成一个一个简单的子任务。<br  />
+</p>
+
+<p>
+上述的程序设计过程中，会碰到一个抽象数据对象可能有多重表示，这时希望能够设计一种编程模式可以在一个程序设计中综合利用多种数据表示。同时，在多人编程模式下，每个人都设计了自己的抽象数据对象，希望可以通过一种设计模式，达到多种抽象数据实现共存，并且无需修改任何代码就可以将所有代码集成，从而可以达到程序设计的可加性(<code>additively</code>)。<br  />
+</p>
+
+<p>
+一种设计模式是通过设计通用函数(<code>generic procedures</code>)，该函数可以处理潜在的任何抽象数据；这种设计模式需要引入面向数据的编程(<code>data-directed programming</code>)在待处理的数据对象中包含数据类型(<code>type tags</code>)，从而实现通用编程。<br  />
+</p>
+
+<p>
+我们通过引入复数的计算设计，从而实现面向数据的编程如何来达到多重表示共存，且实现代码的可加性。<br  />
+</p>
+
+
+<div class="figure">
+<p><img src="assets/ch2-Z-G-54.gif" alt="ch2-Z-G-54.gif" /><br  />
+</p>
+</div>
+
+
+<p>
+图中： <code>横线</code> 是抽象栅栏，用于隔离不同抽象层间的实现细节；不同复数实现间的 <code>竖线</code> 用来表示不同的复数实现。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-4-1" class="outline-4">
+<h4 id="sec-1-4-1">复数的表示</h4>
+<div class="outline-text-4" id="text-1-4-1">
+<p>
+复数在数学上有两种表示形式：代数形式和极坐标形式。<br  />
+</p>
+
+<p>
+复数在几何上表的是在 <code>x-y</code> 二维坐标系上表示一个点：<br  />
+</p>
+
+
+<div class="figure">
+<p><img src="assets/ch2-Z-G-59.gif" alt="ch2-Z-G-59.gif" /><br  />
+</p>
+</div>
+
+
+<dl class="org-dl">
+<dt> <code>代数形式</code> </dt><dd>由实部(<code>real part</code>)和虚部(<code>imageinary part</code>)组成，其中表示坐标的两个坐标轴坐标。这样可知道代数形式的加法规则就是两个坐标相加：<br  />
+<div class="center">
+<p>
+\(Real-Part(z_{1}+z_{2})=Real-Part(z_{1})+Real-Part(z_{2})\)<br  />
+\(Imaginary-Part(z_{1}+z_{2})=Imaginary-Part(z_{1})+Imaginary-Part(z_{2})\)<br  />
+</p>
+</div>
+</dd>
+<dt> <code>极坐标形式</code> </dt><dd>由极角(<code>angle</code>)和极摸(<code>magnitude</code>)组成，如图(<code>A r</code>)所示，可以知道极坐标形式的乘法：<br  />
+<div class="center">
+<p>
+\(Magnitude(z_{1}z_{2})=Magnitude(z_{1})Magnitude(z_{2})\)<br  />
+\(Angle(z_{1}z_{2})=Angle(z_{1})+Angle(z_{2})\)<br  />
+</p>
+</div>
+</dd>
+</dl>
+
+<p>
+这里就有两种复数的表示形式，不同的表示形式适合不同的操作。而使用复数库进行运算的高阶接口来看，并不需要知道具体的实现，只需要实现不同的数据抽取接口即可(<code>extractor</code>)，例如从极坐标中得到实部，从代数表示中得到极角。那么从而需要实现4种抽取函数： <code>real-part</code>, <code>imag-part</code>, <code>magnitude</code>, <code>angle</code> 。<br  />
+</p>
+
+<p>
+同时，需要两个构造函数 <code>make-from-real-imag</code> 和 <code>make-from-mag-ang</code> 返回分别对应的复数。<br  />
+</p>
+
+<p>
+具有如上复数的抽象数据我们就可以实现对应的一些操作了：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-complex</span> z1 z2)
+<span class="linenr"> 2: </span>  (make-from-real-imag (+ (real-part z1) (real-part z2))
+<span class="linenr"> 3: </span>                       (+ (imag-part z1) (imag-part z2))))
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sub-complex</span> z1 z2)
+<span class="linenr"> 6: </span>  (make-from-real-imag (- (real-part z1) (real-part z2))
+<span class="linenr"> 7: </span>                       (- (imag-part z1) (imag-part z2))))
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">mul-complex</span> z1 z2)
+<span class="linenr">10: </span>  (make-from-mag-ang (* (magnitude z1) (magnitude z2))
+<span class="linenr">11: </span>                     (+ (angle z1) (angle z2))))
+<span class="linenr">12: </span>
+<span class="linenr">13: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">div-complex</span> z1 z2)
+<span class="linenr">14: </span>  (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
+<span class="linenr">15: </span>                     (- (angle z1) (angle z2))))
+</pre>
+</div>
+
+<p>
+现在需要决定实际的复数的实现：采取代数形式或者极坐标形式。也可以同时实现两种具体的实现。<br  />
+</p>
+
+<p>
+两种实现形式可以采取如下数学函数进行转换：<br  />
+</p>
+<div class="center">
+<p>
+\(x = r\ cosA\)<br  />
+\(y = r\ sinA\)<br  />
+\(r = \sqrt{x^{2}+y^{2}}\)<br  />
+\(A = arctan(y,x)\)<br  />
+</p>
+</div>
+
+<p>
+代数形式实现：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z) (car z))
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z) (cdr z))
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z)
+<span class="linenr"> 6: </span>  (sqrt (+ (square (real-part z)) (square (imag-part z)))))
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z)
+<span class="linenr"> 9: </span>  (atan (imag-part z) (real-part z)))
+<span class="linenr">10: </span>
+<span class="linenr">11: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y)
+<span class="linenr">12: </span>  (cons x y))
+<span class="linenr">13: </span>
+<span class="linenr">14: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang</span> r a)
+<span class="linenr">15: </span>  (cons (* r (cons a)) (* r (sin a))))
+</pre>
+</div>
+
+<p>
+极坐标形式实现：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z)
+<span class="linenr"> 2: </span>  (* (magnitude z) (cos (angle z))))
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z)
+<span class="linenr"> 5: </span>  (* (magnitude z) (sin (angle z))))
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z) (car z))
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z) (cdr z))
+<span class="linenr">10: </span>
+<span class="linenr">11: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y)
+<span class="linenr">12: </span>  (cons (sqrt (+ (square x) (square y)))
+<span class="linenr">13: </span>        (atan y x)))
+<span class="linenr">14: </span>
+<span class="linenr">15: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang</span> r a) (cons r a))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4-2" class="outline-4">
+<h4 id="sec-1-4-2">带标志的数据</h4>
+<div class="outline-text-4" id="text-1-4-2">
+<p>
+如何使得两种复数实现形式共存？由于当前的抽象数据实现中没有字段来表示 <code>(3,4)</code> 到底是何种实现。可以通过在这个数据上添加标志(<code>tag - rectangular or plar</code>)表示数据类型。<br  />
+</p>
+
+<p>
+为了添加标志我们需要实现， <code>type-tag</code> 用来获取数据 <code>tag</code> ， <code>contents</code> 获取数据内容， <code>attach-tag</code> 用来给一个坐标数据添加 <code>tag</code> 。<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">attach-tag</span> type-tag contents)
+<span class="linenr"> 2: </span>  (cons type-tag contents))
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">type-tag</span> datum)
+<span class="linenr"> 5: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (pair? datum)
+<span class="linenr"> 6: </span>      (car datum)
+<span class="linenr"> 7: </span>      (error <span style="color: #daa520; font-style: italic;">"Bad tagged datum -- TYPE-TAG"</span> datum)))
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">contents</span> datum)
+<span class="linenr">10: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (pair? datum)
+<span class="linenr">11: </span>      (cdr datum)
+<span class="linenr">12: </span>      (error <span style="color: #daa520; font-style: italic;">"Bad tagged datum -- CONTENTS"</span> datum)))
+</pre>
+</div>
+
+<p>
+通过对不同的数据打上对应标记，就可以通过如下程序分辨数据的具体实现：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">rectangular?</span> z)
+<span class="linenr">2: </span>  (eq? (type-tag z) 'rectangular))
+<span class="linenr">3: </span>
+<span class="linenr">4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">polar?</span> z)
+<span class="linenr">5: </span>  (eq? (type-tag z) 'polar))
+</pre>
+</div>
+
+
+<p>
+代数坐标的实现改写如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part-rectangular</span> z) (car z))
+<span class="linenr"> 2: </span>
+<span class="linenr"> 3: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part-rectangular</span> z) (cdr z))
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude-rectangular</span> z)
+<span class="linenr"> 6: </span>  (sqrt (+ (square (real-part-rectangular z))
+<span class="linenr"> 7: </span>           (square (imag-part-rectangular z)))))
+<span class="linenr"> 8: </span>
+<span class="linenr"> 9: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle-rectangular</span> z)
+<span class="linenr">10: </span>  (atan (imag-part-rectangular z)
+<span class="linenr">11: </span>        (real-part-rectangular z)))
+<span class="linenr">12: </span>
+<span class="linenr">13: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag-rectangular</span> x y)
+<span class="linenr">14: </span>  (attach-tag 'rectangular (cons x y)))
+<span class="linenr">15: </span>
+<span class="linenr">16: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang-rectangular</span> r a)
+<span class="linenr">17: </span>  (attach-tag 'rectangular (cons (* r (cons a)) (* r (sin a)))))
+</pre>
+</div>
+
+<p>
+极坐标的实现改写如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part-polar</span> z)
+<span class="linenr"> 2: </span>  (* (magnitude-polar z) (cos (angle-polar z))))
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part-ploar</span> z)
+<span class="linenr"> 5: </span>  (* (magnitude-polar z) (sin (angle-polar z))))
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude-polar</span> z)
+<span class="linenr"> 8: </span>  (car z))
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle-polar</span> z)
+<span class="linenr">11: </span>  (cdr z))
+<span class="linenr">12: </span>
+<span class="linenr">13: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag-polar</span> x y)
+<span class="linenr">14: </span>  (attach-tag 'polar
+<span class="linenr">15: </span>              (cons (sqrt (+ (square x) (square y)))
+<span class="linenr">16: </span>                    (atan x y))))
+<span class="linenr">17: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang-polar</span> r a)
+<span class="linenr">18: </span>  (attach-tag 'polar
+<span class="linenr">19: </span>              (cons r a)))
+</pre>
+</div>
+
+<p>
+剩下的就是实现一个对外暴露的选择器接口，接口根据不同的标志调用对应的数据实现函数：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((rectangular? z)
+<span class="linenr"> 3: </span>         (real-part-rectangular (contents z)))
+<span class="linenr"> 4: </span>        ((polar? z)
+<span class="linenr"> 5: </span>         (real-part-polar (contents z)))
+<span class="linenr"> 6: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"Unknown type -- REAL-PART"</span> z))))
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z)
+<span class="linenr"> 9: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((rectangular? z)
+<span class="linenr">10: </span>         (imag-part-rectangular (contents z)))
+<span class="linenr">11: </span>        ((polar? z)
+<span class="linenr">12: </span>         (imag-part-polar (contents z)))
+<span class="linenr">13: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"Unknown type -- IMAG-PART"</span> z))))
+<span class="linenr">14: </span>
+<span class="linenr">15: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z)
+<span class="linenr">16: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((rectangular? z)
+<span class="linenr">17: </span>         (magnitude-rectangular (contents z)))
+<span class="linenr">18: </span>        ((polar? z)
+<span class="linenr">19: </span>         (magnitude-polar (contents z)))
+<span class="linenr">20: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"Unknown type -- MAGNITUDE"</span> z))))
+<span class="linenr">21: </span>
+<span class="linenr">22: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z)
+<span class="linenr">23: </span>  (<span style="color: #00bfff; font-weight: bold;">cond</span> ((rectangular? z)
+<span class="linenr">24: </span>         (angle-rectangular (contents z)))
+<span class="linenr">25: </span>        ((polar? z)
+<span class="linenr">26: </span>         (angle-polar (contents z)))
+<span class="linenr">27: </span>        (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"Unknown type -- ANGLE"</span> z))))
+</pre>
+</div>
+
+<p>
+通过上述实现我们就可以不改动原有复数高阶函数：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-complex</span> z1 z2)
+<span class="linenr">2: </span>  (make-from-real-imag (+ (real-part z1) (real-part z2))
+<span class="linenr">3: </span>                       (+ (imag-part z1) (imag-part z2))))
+</pre>
+</div>
+
+<div class="figure">
+<p><img src="assets/ch2-Z-G-62.gif" alt="ch2-Z-G-62.gif" /><br  />
+</p>
+</div>
+
+
+<p>
+两种数据实现共存在一个系统中，结构如上图所示。可以看出系统由三个独立的部分组成：<br  />
+</p>
+<dl class="org-dl">
+<dt> <code>复数代数操作</code> </dt><dd>基于 <code>抽取接口</code> 的复数代数函数，独立于数据实现<br  />
+</dd>
+<dt> <code>极坐标复数数据实现</code> </dt><dd>基于极坐标的实现<br  />
+</dd>
+<dt> <code>代数坐标实现</code> </dt><dd>基于代数坐标系的实现<br  />
+</dd>
+</dl>
+
+
+<p>
+带标志的数据实现主要是通过对不同的数据实现打上对应标志，然后通过实现一个抽象并且通用的抽取层接口 <code>extractor</code> 根据数据的标志调用不同的内部实现逻辑，从而将上层逻辑与具体的数据实现分隔开来。<br  />
+</p>
+
+<p>
+可以将通用的抽取层看作是一个代理层，用来给不同的数据实现打上对应的标志 <code>attach-tag</code> ，然后根据数据的标志 <code>polar? rectangular?</code> ，取出标志后，调用不同数据实现的内部逻辑。这种在某一层添加数据标志，祛除标志，从而传递到不同数据实现中，从而对上层提供统一的接口编程策略在多种数据实现时具有很好的编程风格。<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4-3" class="outline-4">
+<h4 id="sec-1-4-3">数据导向的程序设计和可加性</h4>
+<div class="outline-text-4" id="text-1-4-3">
+<p>
+基于检测数据的类型，然后调用不同数据实现函数成为基于类型的分派(<code>dispatching on type</code>)。这种编程方式可以说是一个很好的模块化编程策略。但是这种编程策略也有两个很明显的缺点：<br  />
+</p>
+<dl class="org-dl">
+<dt> 抽象&amp;通用抽取接口(<code>real-part imag-part magnitude angle</code>)必须知道具体有哪些具体的数据实现 </dt><dd>比如，我们如果需要添加一个新的复数的实现，那么这些接口必须添加对应的代码分支(<code>cond</code>)。<br  />
+</dd>
+<dt> 不同的数据实现逻辑会有函数命名冲突问题 </dt><dd>虽然不同的数据实现逻辑并不需要知道其他的实现逻辑，但是必须保证全局不能有两个函数具有相同的命名。<br  />
+</dd>
+</dl>
+
+
+<p>
+上述的两个缺陷，都是因为基于数据类型的编程策略并不具有编程可加性(<code>additively</code>)。每次增加新的数据实现，都需要对抽取层进行修改；抽象层必须知道每个具体数据实现的对应接口命名，且需要保证这些接口命名不能重复。这些问题在多种数据实现并存的情况下，会尤为突出。<br  />
+</p>
+
+<p>
+为了客服上述两种缺点，可以引入数据导向的程序设计策略(<code>data-directed programming</code>)。数据导向的编程可以看作，保存一个二维表结构(<code>two-dimensional table</code>)，一个轴为数据类型，一个轴为对应的操作，保存的值为作用在该数据类型的对应操作的具体实现函数。例如我们实现的复数代数操作中，抽象&amp;通用的抽取层中的一堆条件逻辑就简化为该二维表查询中，表如图所示：<br  />
+</p>
+
+
+<div class="figure">
+<p><img src="assets/ch2-Z-G-63.gif" alt="ch2-Z-G-63.gif" /><br  />
+</p>
+</div>
+
+
+<p>
+这种根据操作对象的类型和操作类型查询表，然后apply具体的函数的过程就是数据导向的编程设计。 <code>基于类型的分派</code> 编程策略中需要实现的抽取层逻辑，在数据导向的编程中只需要简化为简单的 <code>查表-调用</code> 过程；并不需要知道具体有哪些数据实现。这种实现逻辑，在添加新的数据实现时候，并不需要修改任何已有代码，只需要在表中添加新的表项(<code>type-operation-function</code>)即可。<br  />
+</p>
+
+<p>
+假设我们已经具有操作表的两个函数:<br  />
+</p>
+<dl class="org-dl">
+<dt> <code>(put &lt;op&gt; &lt;type&gt; &lt;item&gt;)</code> </dt><dd>将&lt;item&gt;存储到表中，&lt;op&gt;和&lt;type&gt;用来索引该数据<br  />
+</dd>
+<dt> <code>(get &lt;op&gt; &lt;type&gt;)</code> </dt><dd>获取表中&lt;op&gt;和&lt;type&gt;索引的数据；如果没有数据对象，返回false<br  />
+</dd>
+</dl>
+
+<p>
+代数坐标系下的复数实现逻辑如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">install-rectangular-package</span>)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z) (car z))
+<span class="linenr"> 3: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z) (cdr z))
+<span class="linenr"> 4: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y) (cons x y))
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z)
+<span class="linenr"> 7: </span>    (sqrt (+ (square (real-part z))
+<span class="linenr"> 8: </span>             (square (imag-part z)))))
+<span class="linenr"> 9: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z)
+<span class="linenr">10: </span>    (atan (imag-part z) (real-part z)))
+<span class="linenr">11: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang</span> r a)
+<span class="linenr">12: </span>    (cons (* r (cos a)) (* r (sin a))))
+<span class="linenr">13: </span>
+<span class="linenr">14: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">tag</span> x) (attach-tag 'rectangular x))
+<span class="linenr">15: </span>
+<span class="linenr">16: </span>  (put 'real-part '(rectangular) real-part)
+<span class="linenr">17: </span>  (put 'imag-part '(rectangular) imag-part)
+<span class="linenr">18: </span>  (put 'magnitude '(rectangular) magnitude)
+<span class="linenr">19: </span>  (put 'angle     '(rectangular) angle)
+<span class="linenr">20: </span>  (put 'make-from-real-imag 'rectangular
+<span class="linenr">21: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (make-from-real-imag x y))))
+<span class="linenr">22: </span>  (put 'make-from-mag-ang 'rectangular
+<span class="linenr">23: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (r a) (tag (make-from-mag-ang r a))))
+<span class="linenr">24: </span>  'done)
+</pre>
+</div>
+
+<p>
+可以看到上述的定义在一个函数过程中，这样就不存在函数命名冲突问题。这里将代数坐标系下的实部抽取函数存储在操作符为(<code>real-part</code>)和类型为(<code>(rectangular)</code>)的表项下，这里类型为一个链表主要是因为可能操作参数为多个对象的情况下。这里同时实现了对应的构造函数，用于构造代数坐标系下的复数对象，并且给数据打上tag。<br  />
+</p>
+
+<p>
+同理，极坐标系下的实现如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">install-polar-package</span>)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z) (car z))
+<span class="linenr"> 3: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z) (cdr z))
+<span class="linenr"> 4: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang</span> r a) (cons r a))
+<span class="linenr"> 5: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z)
+<span class="linenr"> 6: </span>    (* (magnitude z) (cos (angle z))))
+<span class="linenr"> 7: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z)
+<span class="linenr"> 8: </span>    (* (magnitude z) (sin (angle z))))
+<span class="linenr"> 9: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y)
+<span class="linenr">10: </span>    (cons (sqrt (+ (square x) (square y)))
+<span class="linenr">11: </span>          (atan y x)))
+<span class="linenr">12: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">interface to the rest of the system</span>
+<span class="linenr">13: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">tag</span> x) (attach-tag 'polar x))
+<span class="linenr">14: </span>  (put 'real-part '(polar) real-part)
+<span class="linenr">15: </span>  (put 'imag-part '(polar) imag-part)
+<span class="linenr">16: </span>  (put 'magnitude '(polar) magnitude)
+<span class="linenr">17: </span>  (put 'angle '(polar) angle)
+<span class="linenr">18: </span>  (put 'make-from-real-imag 'polar
+<span class="linenr">19: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (make-from-real-imag x y))))
+<span class="linenr">20: </span>  (put 'make-from-mag-ang 'polar
+<span class="linenr">21: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (r a) (tag (make-from-mag-ang r a))))
+<span class="linenr">22: </span>  'done)
+</pre>
+</div>
+
+<p>
+现在需要实现 <code>查表-调用</code> 函数，根据操作符和数据类型查询表，然后调用对应的函数：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">apply-generic</span> op . args)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">let</span> ((type-tags (<span style="color: #00bfff; font-weight: bold;">map</span> type-tag args)))
+<span class="linenr">3: </span>    (<span style="color: #00bfff; font-weight: bold;">let</span> ((proc (get op type-tags)))
+<span class="linenr">4: </span>      (<span style="color: #00bfff; font-weight: bold;">if</span> proc
+<span class="linenr">5: </span>          (apply proc (<span style="color: #00bfff; font-weight: bold;">map</span> contents args))
+<span class="linenr">6: </span>          (error <span style="color: #daa520; font-style: italic;">"No method for these types -- APPLY-GENERIC"</span> (list op type-tags))))))
+</pre>
+</div>
+
+<p>
+通过调用 <code>apply-generic</code> 过程，可以更为通用的抽取层：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">real-part</span> z) (apply-generic 'real-part z))
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">imag-part</span> z) (apply-generic 'imag-part z))
+<span class="linenr">3: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">magnitude</span> z) (apply-generic 'magnitude z))
+<span class="linenr">4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">angle</span> z) (apply-generic 'angle z))
+</pre>
+</div>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-4-3-1" name="sec-1-4-3-1"></a><span class="todo TODO">TODO</span> 基于数据导向的代数求导程序实现 <a href="#sec-1-3-2">(求导 - Symbolic Differentiation</a>)&#xa0;&#xa0;&#xa0;<span class="tag"><span class="exercise">exercise</span></span><br  /></li></ul>
+</div>
+<div id="outline-container-sec-1-4-4" class="outline-4">
+<h4 id="sec-1-4-4">消息传递</h4>
+<div class="outline-text-4" id="text-1-4-4">
+<p>
+数据导向的程序设计策略可以看作是对 <code>operation-type-function</code> 的 <code>查差-调用</code> 。而基于数据类型的分派程序设计策略中每一个抽象&amp;通用抽取层中的函数(<code>real-part imag-part magnitude angle</code>)可以看作是上述表中的每一行中进行查询和调用的操作。<br  />
+</p>
+
+<p>
+同样，我们可以将表拆成一个个列来进行模块化，这里不再基于数据类型进行分派(<code>dispatching</code>)，而是根据操作进行分派；可以将一列的各种操作包裹在一个数据对象中；并且实现一个分派函数，根据传入不同的操作，从而调用不同的操作过程。这种编程策略下，构造函数(<code>make-from-real-mag</code>)的实现如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">dispatch</span> op)
+<span class="linenr"> 3: </span>    (<span style="color: #00bfff; font-weight: bold;">cond</span> ((eq? op 'real-part) x)
+<span class="linenr"> 4: </span>          ((eq? op 'imag-part) y)
+<span class="linenr"> 5: </span>          ((eq? op 'magnitude)
+<span class="linenr"> 6: </span>           (sqrt (+ (square x) (square y))))
+<span class="linenr"> 7: </span>          ((eq? op 'angle)
+<span class="linenr"> 8: </span>           (atan y x))
+<span class="linenr"> 9: </span>          (<span style="color: #00bfff; font-weight: bold;">else</span> (error <span style="color: #daa520; font-style: italic;">"Unknow op -- MAKE-FROM-REAL-IMAG"</span> op))))
+<span class="linenr">10: </span>  dispatch)
+</pre>
+</div>
+
+<p>
+这样 <code>查询-调用</code> 过程就可以简单的实现如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">apply-generic</span> op arg) (arg op))
+</pre>
+</div>
+
+<p>
+这种编程策略为消息传递(<code>message-passing</code>)，该种编程策略在模拟程序中非常有用，后续会再设计。<br  />
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-4-5" class="outline-4">
+<h4 id="sec-1-4-5">总结</h4>
+<div class="outline-text-4" id="text-1-4-5">
+<p>
+上述共有3种编程策略，实现了多种数据实现并存在系统的目标，可以看出数据导向的程序设计联系3中编程策略的基石。<br  />
+</p>
+
+<dl class="org-dl">
+<dt> <code>数据导向</code> </dt><dd>面向 <code>operation-type-function</code> 表的编程<br  />
+</dd>
+<dt> <code>基于类型分派</code> </dt><dd>可以将通用抽取层逻辑看作为对 <code>operation-type-function</code> 一行中对类型的查表-调用逻辑的封装<br  />
+</dd>
+<dt> <code>消息传递</code> </dt><dd>可以看作对 <code>operation-type-function</code> 一列的操作的查表-调用逻辑的封装<br  />
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5">通用操作系统 - Systems with Generic Operations</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+在前面几小节中，我们可以看到如何在一个系统中使用多种数据实现；主要思想是通过构造抽象&amp;通用数据抽取层来将具体数据实现代码和上层逻辑代码聚合在一起；从而实现不改动上层代码的情况下，可以添加新的数据实现。<br  />
+</p>
+
+<p>
+本小节会利用数据导向编程策略来实现一个代数计算系统，不光可以处理不同的底层数据实现，同时可以处理不同类型的参数。<br  />
+</p>
+
+<p>
+我们已经定义了很多代数计算包：内置基础计算(<code>+,-,*,/</code>)，分数计算包(<code>add-rat,sub-rat,mul-rat,div-rat</code>)和复数计算包(<code>add-complex,sub-complex,mul-complex,div-complex</code>)。<br  />
+</p>
+
+<p>
+下图为我们最终构建系统的架构。最上面的抽象层提供数值计算的基本函数(<code>add sub mul div</code>)； <code>add</code> 提供统一的接口来处理数值的加法运算，不管输入的参数是整形，分数，还是复数。而实际的处理函数由对应的数值计算包提供(<code>例如 复数的加法运算由 add-complex 执行</code>)，并且可能一种数值类型具有多种实现(<code>rectangular polar</code>)。其中，最为重要的设计目标是整个系统是具有可加性的，即添加新的计算包，并不会对整个系统的代码有较大的改动。<br  />
+<img src="assets/ch2-Z-G-64.gif" alt="ch2-Z-G-64.gif" /><br  />
+</p>
+</div>
+
+
+<div id="outline-container-sec-1-5-1" class="outline-4">
+<h4 id="sec-1-5-1">通用算数运算</h4>
+<div class="outline-text-4" id="text-1-5-1">
+<p>
+设计的通用算数运算即提供一个统一的抽象接口 <code>add</code> ，可以根据输入的参数来调用对应的操作；整形就调用 <code>+</code> ，分数就调用 <code>add-rat</code> ，复数就调用 <code>add-complex</code> 。这里可以采取在复数计算中采取的数据导向的编程策略，面向 <code>operation-type-function</code> 的表，实现对应的操作。<br  />
+</p>
+
+<p>
+通用数值计算过程定义如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add</span> x y) (apply-generic 'add x y))
+<span class="linenr">2: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sub</span> x y) (apply-generic 'sub x y))
+<span class="linenr">3: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">mul</span> x y) (apply-generic 'mul x y))
+<span class="linenr">4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">div</span> x y) (apply-generic 'div x y))
+</pre>
+</div>
+
+<p>
+系统需要具有可加性，所以我们可以一个一个的数值计算包进行开发，首先我们开发整形计算包，将该中数据对象打上标志(<code>scheme-number</code>)。<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">install-scheme-number-package</span>)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">tag</span> x) (attach-tag 'scheme-number))
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>  (put 'add '(scheme-number scheme-number) (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (+ x y))))
+<span class="linenr"> 5: </span>
+<span class="linenr"> 6: </span>  (put 'sub '(scheme-number scheme-number) (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (- x y))))
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>  (put 'mul '(scheme-number scheme-number) (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (* x y))))
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>  (put 'div '(scheme-number scheme-number) (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (/ x y))))
+<span class="linenr">11: </span>
+<span class="linenr">12: </span>  (put 'make 'scheme-number (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x) (tag x)))
+<span class="linenr">13: </span>
+<span class="linenr">14: </span>  'done)
+<span class="linenr">15: </span>
+<span class="linenr">16: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-scheme-number</span> n)
+<span class="linenr">17: </span>  ((get 'make 'scheme-number) n))
+</pre>
+</div>
+
+<p>
+分数运算包如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">install-rational-package</span>)
+<span class="linenr"> 2: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">internal procedures</span>
+<span class="linenr"> 3: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">numer</span> x) (car x))
+<span class="linenr"> 4: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">denom</span> x) (cdr x))
+<span class="linenr"> 5: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-rat</span> n d)
+<span class="linenr"> 6: </span>    (<span style="color: #00bfff; font-weight: bold;">let</span> ((g (gcd n d)))
+<span class="linenr"> 7: </span>      (cons (/ n g) (/ d g))))
+<span class="linenr"> 8: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-rat</span> x y)
+<span class="linenr"> 9: </span>    (make-rat (+ (* (numer x) (denom y))
+<span class="linenr">10: </span>                 (* (numer y) (denom x)))
+<span class="linenr">11: </span>              (* (denom x) (denom y))))
+<span class="linenr">12: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sub-rat</span> x y)
+<span class="linenr">13: </span>    (make-rat (- (* (numer x) (denom y))
+<span class="linenr">14: </span>                 (* (numer y) (denom x)))
+<span class="linenr">15: </span>              (* (denom x) (denom y))))
+<span class="linenr">16: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">mul-rat</span> x y)
+<span class="linenr">17: </span>    (make-rat (* (numer x) (numer y))
+<span class="linenr">18: </span>              (* (denom x) (denom y))))
+<span class="linenr">19: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">div-rat</span> x y)
+<span class="linenr">20: </span>    (make-rat (* (numer x) (denom y))
+<span class="linenr">21: </span>              (* (denom x) (numer y))))
+<span class="linenr">22: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">interface to rest of the system</span>
+<span class="linenr">23: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">tag</span> x) (attach-tag 'rational x))
+<span class="linenr">24: </span>  (put 'add '(rational rational)
+<span class="linenr">25: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (add-rat x y))))
+<span class="linenr">26: </span>  (put 'sub '(rational rational)
+<span class="linenr">27: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (sub-rat x y))))
+<span class="linenr">28: </span>  (put 'mul '(rational rational)
+<span class="linenr">29: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (mul-rat x y))))
+<span class="linenr">30: </span>  (put 'div '(rational rational)
+<span class="linenr">31: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (div-rat x y))))
+<span class="linenr">32: </span>
+<span class="linenr">33: </span>  (put 'make 'rational
+<span class="linenr">34: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (n d) (tag (make-rat n d))))
+<span class="linenr">35: </span>  'done)
+<span class="linenr">36: </span>
+<span class="linenr">37: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-rational</span> n d)
+<span class="linenr">38: </span>  ((get 'make 'rational) n d))
+</pre>
+</div>
+
+<p>
+复数运算包如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">install-complex-package</span>)
+<span class="linenr"> 2: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">imported procedures from rectangular and polar packages</span>
+<span class="linenr"> 3: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-real-imag</span> x y)
+<span class="linenr"> 4: </span>    ((get 'make-from-real-imag 'rectangular) x y))
+<span class="linenr"> 5: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-from-mag-ang</span> r a)
+<span class="linenr"> 6: </span>    ((get 'make-from-mag-ang 'polar) r a))
+<span class="linenr"> 7: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">internal procedures</span>
+<span class="linenr"> 8: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-complex</span> z1 z2)
+<span class="linenr"> 9: </span>    (make-from-real-imag (+ (real-part z1) (real-part z2))
+<span class="linenr">10: </span>                         (+ (imag-part z1) (imag-part z2))))
+<span class="linenr">11: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sub-complex</span> z1 z2)
+<span class="linenr">12: </span>    (make-from-real-imag (- (real-part z1) (real-part z2))
+<span class="linenr">13: </span>                         (- (imag-part z1) (imag-part z2))))
+<span class="linenr">14: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">mul-complex</span> z1 z2)
+<span class="linenr">15: </span>    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
+<span class="linenr">16: </span>                       (+ (angle z1) (angle z2))))
+<span class="linenr">17: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">div-complex</span> z1 z2)
+<span class="linenr">18: </span>    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
+<span class="linenr">19: </span>                       (- (angle z1) (angle z2))))
+<span class="linenr">20: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">interface to rest of the system</span>
+<span class="linenr">21: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">tag</span> z) (attach-tag 'complex z))
+<span class="linenr">22: </span>  (put 'add '(complex complex)
+<span class="linenr">23: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (z1 z2) (tag (add-complex z1 z2))))
+<span class="linenr">24: </span>  (put 'sub '(complex complex)
+<span class="linenr">25: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (z1 z2) (tag (sub-complex z1 z2))))
+<span class="linenr">26: </span>  (put 'mul '(complex complex)
+<span class="linenr">27: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (z1 z2) (tag (mul-complex z1 z2))))
+<span class="linenr">28: </span>  (put 'div '(complex complex)
+<span class="linenr">29: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (z1 z2) (tag (div-complex z1 z2))))
+<span class="linenr">30: </span>  (put 'make-from-real-imag 'complex
+<span class="linenr">31: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (x y) (tag (make-from-real-imag x y))))
+<span class="linenr">32: </span>  (put 'make-from-mag-ang 'complex
+<span class="linenr">33: </span>       (<span style="color: #00bfff; font-weight: bold;">lambda</span> (r a) (tag (make-from-mag-ang r a))))
+<span class="linenr">34: </span>
+<span class="linenr">35: </span>  <span style="font-weight: bold; font-style: italic;">;; </span><span style="font-weight: bold; font-style: italic;">&#23454;&#29616;&#23545;&#22797;&#25968;&#25968;&#25454;&#37096;&#20998;&#30340;&#35835;&#21462;&#65292;&#19979;&#21015;&#35013;&#36733;&#20989;&#25968;&#29992;&#20110;&#35843;&#29992;&#22797;&#25968;&#21253;&#20013;&#30340;&#23545;&#24212;&#30340;&#20989;&#25968;&#65292;&#36825;&#20123;&#20989;&#25968;&#20250;&#35843;&#29992;apply-generic&#65292;&#26681;&#25454;&#23545;&#24212;&#30340;&#25805;&#20316;&#21644;&#31867;&#22411;&#21435;&#35835;&#21462;&#25968;&#25454;</span>
+<span class="linenr">36: </span>  (put 'real-part '(complex) real-part)
+<span class="linenr">37: </span>  (put 'imag-part '(complex) imag-part)
+<span class="linenr">38: </span>  (put 'magnitude '(complex) magnitude)
+<span class="linenr">39: </span>  (put 'angle '(complex) angle)
+<span class="linenr">40: </span>
+<span class="linenr">41: </span>  'done)
+<span class="linenr">42: </span>
+<span class="linenr">43: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-complex-from-real-imag</span> x y)
+<span class="linenr">44: </span>  ((get 'make-from-real-imag 'complex) x y))
+<span class="linenr">45: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">make-complex-from-mag-ang</span> r a)
+<span class="linenr">46: </span>  ((get 'make-from-mag-ang 'complex) r a))
+</pre>
+</div>
+
+<p>
+可以看到由于 <code>complex</code> 具有两种数据实现形式，所以这里具有两层的标志体系，第一层为外部使用的 <code>complex</code> ，内部进行复数运算的时候，根据第二层标志(<code>polar rectangular</code>)来进行对应的抽取工作，从而实现通用复数运算。<br  />
+</p>
+
+<p>
+而且这种定义包的方式，由于对函数具有闭包的属性，使得函数的命名之间并不会由冲突，所以上述的 <code>add-rat add-complex add</code>  其实内部可以统一使用 <code>add</code> 来进行命名。<br  />
+</p>
+</div>
+</div>
+<div id="outline-container-sec-1-5-2" class="outline-4">
+<h4 id="sec-1-5-2">不同类型的数据的组合</h4>
+<div class="outline-text-4" id="text-1-5-2">
+<p>
+上述定义的通用运算系统，可以很好的应对两个参数是相同类型的情况，并没有考虑参与运算的参数不是相同的类型。<br  />
+</p>
+
+<p>
+可以想到的一种解决方法是，为每一种不同参数类型的情况都添加对应的函数过程，进行特殊处理。例如，可以在复数运算包中定义函数来处理复数和整数的加法：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">add-complex-to-schemenum</span> z x)
+<span class="linenr">2: </span>  (make-from-real-imag (+ (real-part z) x)
+<span class="linenr">3: </span>                       (imag-part z)))
+<span class="linenr">4: </span>
+<span class="linenr">5: </span>(put 'add '(complex scheme-number)
+<span class="linenr">6: </span>     (<span style="color: #00bfff; font-weight: bold;">lambda</span> (z x) (tag (add-complex-to-schemenum z x))))
+</pre>
+</div>
+
+<p>
+上述的解决方案非常的简单和笨重，因为一旦我们添加新的类型，就需要在很多的运算包中添加该种类型的对应的运算函数，破坏了系统设计期望达到的可加性。<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-5-2-1" name="sec-1-5-2-1"></a>强制 - Coercion<br  /><div class="outline-text-5" id="text-1-5-2-1">
+<p>
+可以通过引入类型之间的关系，解决上述夸类型运算的问题。类型之间并不是完全无关的，我们可以通过将某种类型视为其他类型的特例来处理，该种方法叫做强制(<code>coercion</code>)。例如在处理复数和整形的时候，我们可以将整形视为虚部为0的复数；然后转化为两个复数的运算。<br  />
+</p>
+
+<p>
+通常需要编写对应的强制函数(<code>coercion procedures</code>)来对不同类型进行转化。<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">scheme-number-&gt;complex</span> n)
+<span class="linenr">2: </span>  (make-complex-from-real-imag (contents n) 0))
+</pre>
+</div>
+
+<p>
+将上述的强制函数放到强制表中：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(put-coercion 'scheme-number 'complex scheme-number-&gt;complex)
+</pre>
+</div>
+
+<p>
+一旦上述的强制表构建完成后，就可以在 <code>apply-generic</code> 调用过程中去调用对应的强制过程：查询是否原生类型有调用程序可用，如果有直接调用即可；没有的话，查看强制表，将第一个参数类型转为第二参数类型，查看是否有对应的函数可以调用；没有的话，将第二参数类型转为第一个参数的类型，查看是否可以调用；如果都没有，报错。<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">apply-generic</span> op . args)
+<span class="linenr"> 2: </span>  (<span style="color: #00bfff; font-weight: bold;">let</span> ((type-tags (<span style="color: #00bfff; font-weight: bold;">map</span> type-tag args)))
+<span class="linenr"> 3: </span>    (<span style="color: #00bfff; font-weight: bold;">let</span> ((proc (get op type-tags)))
+<span class="linenr"> 4: </span>      (<span style="color: #00bfff; font-weight: bold;">if</span> proc
+<span class="linenr"> 5: </span>          (apply proc (<span style="color: #00bfff; font-weight: bold;">map</span> contents args))
+<span class="linenr"> 6: </span>          (<span style="color: #00bfff; font-weight: bold;">if</span> (= (length args) 2)
+<span class="linenr"> 7: </span>              (<span style="color: #00bfff; font-weight: bold;">let</span> ((type1 (car type-tags))
+<span class="linenr"> 8: </span>                    (type2 (cadr type-tags))
+<span class="linenr"> 9: </span>                    (a1 (car args))
+<span class="linenr">10: </span>                    (a2 (cadr args)))
+<span class="linenr">11: </span>                (<span style="color: #00bfff; font-weight: bold;">let</span> ((t1-&gt;t2 (get-coercion type1 type2))
+<span class="linenr">12: </span>                      (t2-&gt;t1 (get-coercion type2 type1)))
+<span class="linenr">13: </span>                  (<span style="color: #00bfff; font-weight: bold;">cond</span> (t1-&gt;t2
+<span class="linenr">14: </span>                         (apply-generic op (t1-&gt;t2 a1) a2))
+<span class="linenr">15: </span>                        (t2-&gt;t1
+<span class="linenr">16: </span>                         (apply-generic op a1 (t2-&gt;t1 a2)))
+<span class="linenr">17: </span>                        (<span style="color: #00bfff; font-weight: bold;">else</span>
+<span class="linenr">18: </span>                         (error <span style="color: #daa520; font-style: italic;">"No method for these types"</span>
+<span class="linenr">19: </span>                                (list op type-tags))))))
+<span class="linenr">20: </span>              (error <span style="color: #daa520; font-style: italic;">"No method for these types"</span>
+<span class="linenr">21: </span>                     (list op type-tags)))))))
+</pre>
+</div>
+
+<p>
+这种基于类型关系的强制类型转换的方法，比硬编写夸类型的运算过程具有多种好处。但是还是需要写大概 n^2 个强制过程。如果我们知道如何从一个类型转到另一个类型，并且最后转到目标类型，那么我们就可以少些很多的强制过程。<br  />
+</p>
+
+<p>
+可以认为类型之间的转换并不以来与具体的操作，而是类型之间的关系决定的。上述两两类型之间的转换并不能解决两个参数都转为第三个类型的情况。<br  />
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-2-2" name="sec-1-5-2-2"></a>类型的层次结构<br  /><div class="outline-text-5" id="text-1-5-2-2">
+<p>
+强制转换依赖的是类型之间的关系，这样我们也可以通过引入一个全局的类型之间的关系结构体，用来知道类型之间的转换关系。例如，我们现在要设计一个的通用的数值系统，用来处理整形、分数、浮点和复数。在这个系统中，一个很自然的想法是整形是一个特殊的分数；分数是一个特殊形式的浮点数；浮点数是一种特殊的复数。上述描述的类型之间的关系，叫做类型的层次结构，整型为分数的子类型(<code>即是说任何可以操作分数的函数都可以操作整形</code>)。对应地可以说分数为整形的超类型(<code>supertype</code>)。<br  />
+<img src="assets/ch2-Z-G-66.gif" alt="ch2-Z-G-66.gif" /><br  />
+</p>
+
+
+<p>
+上图现实的类型的层次结构，为比较简单的结构，可以看出为每个类型都最多有一个子类型和超类型。这种层次结构中，添加一个新的类型很简单，只需要插入到这个层次串中，保证最多有一个子类型和一个超类型。这样我们只需要定义 <code>integer-&gt;ration</code> <code>ration-&gt;double</code> <code>double-&gt;complex</code> 即可完成整个类型之间的转换。<br  />
+</p>
+
+<p>
+重新设计 <code>apply-generic</code> 过程：在需要进行类型转换时候，我们只需要设计一个过程 <code>raise</code> ，将在层次结构体中低的类型向上转型，直到参数都在同一个类型级别即可。<br  />
+</p>
+
+<p>
+引入类型层次结构的好处在于，任何的子类型都可以应用到超类型的作用函数。即是说，整形由于是复数的子类型，那么整形也可以应用到 <code>real-part</code> 函数，提取实部。并且可以引入更为一般的层次结构，我们也可以将一个高的数据类型转为低的数据类型，例如在计算复数 <code>2+3i + 4-3i</code> 的时候，结果应该为 <code>6</code> ，而非 <code>6+0i</code> 。<br  />
+</p>
+</div>
+</li>
+
+<li><a id="sec-1-5-2-3" name="sec-1-5-2-3"></a>层次结构的不足<br  /><div class="outline-text-5" id="text-1-5-2-3">
+<p>
+如果层次结构如下图所示：其中一个类型具有多个超类型， <code>raise</code> 就没有一个唯一提升路径，那么在做类型提升的时候，需要进行搜索；同理对于降低类型时候。<br  />
+<img src="assets/ch2-Z-G-67.gif" alt="ch2-Z-G-67.gif" /><br  />
+</p>
+</div>
+</li></ul>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

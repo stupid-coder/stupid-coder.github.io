@@ -1,0 +1,6 @@
+#+TITLE: readme
+#+AUTHOR: stupid_coder@163.com
+#+STARTUP: indent
+
+* 说明
+个人技术博客。

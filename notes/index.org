@@ -1,0 +1,23 @@
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:auto html-preamble:t
+#+OPTIONS: html-scripts:t html-style:t html5-fancy:nil tex:t
+#+HTML_DOCTYPE: xhtml-strict
+#+HTML_CONTAINER: div
+#+DESCRIPTION:
+#+KEYWORDS:
+#+HTML_LINK_HOME:
+#+HTML_LINK_UP:
+#+HTML_MATHJAX:
+#+HTML_HEAD:
+#+HTML_HEAD_EXTRA:
+#+SUBTITLE:
+#+INFOJS_OPT:
+#+CREATOR: <a href="https://www.gnu.org/software/emacs/">Emacs</a> 24.5.1 (<a href="https://orgmode.org">Org</a> mode 9.1.11)
+#+LATEX_HEADER:
+
+[[file:sitemap.org][sitemap]] 和 [[file:theindex.org][index]]
+
+* 博客说明
+  梳理技术相关的博客，希望能坚持下去！
+
+* 博客内容
+  #+INCLUDE: "sitemap.org" :lines "3-" :only-contents t

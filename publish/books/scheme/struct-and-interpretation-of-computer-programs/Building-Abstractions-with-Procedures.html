@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Structure and Interpretation of Computer Programs - Building Abstractions with Procedures</title>
+<!-- 2018-08-07 Tue 13:17 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Structure and Interpretation of Computer Programs - Building Abstractions with Procedures</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Building Abstractions with Procedures</a>
+<ul>
+<li><a href="#sec-1-1">程序设计语言的元素</a>
+<ul>
+<li><a href="#sec-1-1-1">表达式</a></li>
+<li><a href="#sec-1-1-2">命名和环境</a></li>
+<li><a href="#sec-1-1-3">组合表达式的运算</a></li>
+<li><a href="#sec-1-1-4">函数调用的运算</a></li>
+<li><a href="#sec-1-1-5">函数调用的替换计算模型</a></li>
+<li><a href="#sec-1-1-6">例子：计算平方根 - 牛顿方法</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-2">函数和其计算过程</a>
+<ul>
+<li><a href="#sec-1-2-1">线性递归和迭代</a></li>
+<li><a href="#sec-1-2-2">计算复杂度 - Order of Growth</a></li>
+</ul>
+</li>
+<li><a href="#sec-1-3">高阶函数抽象 - Formulating Abstractions with Higher-Order Procedures</a>
+<ul>
+<li><a href="#sec-1-3-1">函数作为参数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Building Abstractions with Procedures</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+程序设计可以理解为编写一段代码 <code>program</code> ，用来指引计算机处理一些抽象事情 <code>data</code> ，代码的运行是一个动态的运行过程 <code>computational process</code> 。<br  />
+</p>
+
+<p>
+优秀的程序员必须了解 <code>computational process</code> 运行的每一个细节，这样能够编写一个无错的代码 <code>program</code> ，并且需要保证代码具有：模块化、可读性、代码的可加性等！<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">程序设计语言的元素</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+一个优秀的程序设计语言不仅仅是一些计算机执行计算的指令集合，并且需要提供一个框架 <code>framework</code> ，程序员可以更好的表达自己的编程思想，更好的组织代码。一般是通过将简单指令组合成复杂指令，并且能够像简单指令一样调用复杂指令，从而构建程序！<br  />
+</p>
+
+<p>
+这样一个组合，抽象，组合，抽象的递归过程需要如下三个机制实现：<br  />
+</p>
+<dl class="org-dl">
+<dt> 基础表达式 </dt><dd>语言提供的基础表达式，为程序设计中最小的指令集。<br  />
+</dd>
+<dt> 组合 </dt><dd>可以通过代码块组合基础表达式成一个组合代码块。<br  />
+</dd>
+<dt> 抽象 </dt><dd>通过对组合代码块命令，从而能够像基础表达式一样调用该组合代码块。<br  />
+</dd>
+</dl>
+
+
+<p>
+程序设计中简化来看，设计两类元素：函数和数据！数据为函数需要操作的对象，函数为操作数据的规则！<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-1-1" class="outline-4">
+<h4 id="sec-1-1-1">表达式</h4>
+<div class="outline-text-4" id="text-1-1-1">
+<p>
+<code>表达式</code> 是由数字、算符、数字分组符号（括号）、自由变量和约束变量等以能求得数值的有意义排列方法所得的组合。约束变量在表达式中已被指定数值，而自由变量则可以在表达式之外另行指定数found值。<br  />
+</p>
+
+<p>
+计算机通过程序编译器或者解释器能够将表达式转为对应的机器指令进行执行。<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-1-2" class="outline-4">
+<h4 id="sec-1-1-2">命名和环境</h4>
+<div class="outline-text-4" id="text-1-1-2">
+<p>
+程序设计中通过命名来指向计算对象 <code>computational objects</code> 。可以认为为key-value对，可以通过key访问对应的value值。可以认为命名提供的最为基础的抽象 <code>abstract</code> ，即可以通过变量名或者函数名访问对应的变量和函数，而忽略掉内部的变量结构和函数计算过程。<br  />
+</p>
+
+<p>
+这些key-value对需要一个数据结构进行存储，保证后续代码中能够进行访问！这个数据结构就为环境 <code>environemnt</code> ，在一些程序设计中也叫上下文 <code>context</code> 。<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-1-3" class="outline-4">
+<h4 id="sec-1-1-3">组合表达式的运算</h4>
+<div class="outline-text-4" id="text-1-1-3">
+<p>
+表达式中的操作符 <code>operator</code> 或操作数 <code>operands</code> 也可以为表达式，这样的表达式就具有更为复杂的计算逻辑！这种表达式叫做组合表达式，可以通过如下规则进行运算：<br  />
+</p>
+<ul class="org-ul">
+<li>运算组合表达式中的子表达式<br  />
+</li>
+<li>将子表达操作符运算结果应用到子表达运算的操作符<br  />
+
+<p>
+其中如果操作符或者操作数为变量，则直接在环境中进行查找即可！<br  />
+</p>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1-1-4" class="outline-4">
+<h4 id="sec-1-1-4">函数调用的运算</h4>
+<div class="outline-text-4" id="text-1-1-4">
+<p>
+程序设计中通过表达式的组合和命名就可以定义函数，对代码块进行抽象！例如：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">square</span> x) (* x x))
+<span class="linenr">2: </span>
+<span class="linenr">3: </span>(square 10)
+</pre>
+</div>
+
+<pre class="example">
+100
+</pre>
+
+<p>
+其中， <code>square</code> 为函数名，后续可以该对象进行调用；x 为参数； <code>(* x x)</code> 为代码块，为函数的计算逻辑。这可以理解为定义一个函数，叫做 <code>square</code> ，参数为 <code>x</code> ，执行 <code>(* x x)</code> 。<br  />
+</p>
+
+<p>
+在调用该函数时，参数 x 会被替换为10，然后执行 <code>(* 10 10)</code> 函数体，得到100。<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-1-5" class="outline-4">
+<h4 id="sec-1-1-5">函数调用的替换计算模型</h4>
+<div class="outline-text-4" id="text-1-1-5">
+<p>
+在替换计算模型中，函数体内的形式参数会被替换为对应的实际参数！例如：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-of-square</span> x y)
+<span class="linenr">2: </span>  (+ (square x) (square y)))
+<span class="linenr">3: </span>
+<span class="linenr">4: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">f</span> x)
+<span class="linenr">5: </span>  (sum-of-square (+ x 1) (* x 2)))
+<span class="linenr">6: </span>
+<span class="linenr">7: </span>(f 5)
+</pre>
+</div>
+
+<p>
+其中 <code>(f 5)</code> 会被替换成 <code>(sum-of-square (+ 5 1) (* 5 2))</code><br  />
+</p>
+
+<p>
+然后计算子表达式得到 <code>(sum-of-square 6 10)</code><br  />
+</p>
+
+<p>
+继续替换为 <code>(+ (square 6) (square 10))</code><br  />
+</p>
+
+<p>
+继续替换为 <code>(+ 36 100)</code> ，执行该组合表达式，即可得到对应结果！<br  />
+</p>
+
+<p>
+这种函数体中形式参数替换为实际参数后，进行计算的过程就为最为简单的替换计算模型！这种模型在后续引入赋值后会出现一些问题，但是在函数编程模型 <code>function programings</code> 中可以使用。<br  />
+</p>
+</div>
+
+<ul class="org-ul"><li><a id="sec-1-1-5-1" name="sec-1-1-5-1"></a>应用序和正则序<br  /><div class="outline-text-5" id="text-1-1-5-1">
+<p>
+在替换计算模型中，函数调用的运算，首先运算对应的计算数，然后进行替换叫做应用序。还有一种替换方式，即不进行操作数计算，直接进行参数替换，替换完成后，在进行运算：<br  />
+</p>
+<pre class="example">
+(f 5)
+=&gt;
+(sum-of-square (+ 5 1) (* 5 2))
+=&gt;
+(+ (square (+ 5 1)) (square (* 5 2)))
+=&gt;
+(+ (* (+ 5 1) (+ 5 1)) (* (* 5 2) (* 5 2)))
+</pre>
+
+<p>
+替换完成后续进行计算，得到对应结果！<br  />
+</p>
+
+<p>
+可以看出，正则序会在规约计算的时候，出现多余的计算量，所以大部分的编译器和解释器使用应用序！<br  />
+</p>
+</div>
+</li></ul>
+</div>
+
+<div id="outline-container-sec-1-1-6" class="outline-4">
+<h4 id="sec-1-1-6">例子：计算平方根 - 牛顿方法</h4>
+<div class="outline-text-4" id="text-1-1-6">
+<p>
+平方根定义为：<br  />
+\(\sqrt{x}\ =\ y\ the\ y\ such\ that\ y\ \ge 0\ and\ y^2 = x\)<br  />
+</p>
+
+<p>
+上述定义了一个数据公式，用于判断一个值 <code>y</code> 是否是 <code>x</code> 的平方根！但是并没有定义一个平方根的计算过程！<br  />
+</p>
+
+<p>
+牛顿法计算平方根的方法为：首先猜测一个y，然后通过对 <code>y</code> 和 <code>x/y</code> 求平均获取一个更为接近平方根的结果！例如：<br  />
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="right" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="right">Guess</th>
+<th scope="col" class="left">Quotient</th>
+<th scope="col" class="left">Average</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="right">1</td>
+<td class="left">(2/1)=2</td>
+<td class="left">((2+1)/2)=1.5</td>
+</tr>
+
+<tr>
+<td class="right">1.5</td>
+<td class="left">(2/1.5)=1.333</td>
+<td class="left">((1.3333+1.5)/2)=1.4167</td>
+</tr>
+
+<tr>
+<td class="right">1.4167</td>
+<td class="left">(2/1.4167)=1.4118</td>
+<td class="left">((1.4167+1.4118)/2)=1.4142</td>
+</tr>
+
+<tr>
+<td class="right">&#x2026;.</td>
+<td class="left">&#xa0;</td>
+<td class="left">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+迭代过程如下：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr"> 1: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sqrt-iter</span> guess x)
+<span class="linenr"> 2: </span>    (<span style="color: #00bfff; font-weight: bold;">if</span> (good-enough? guess x)
+<span class="linenr"> 3: </span>        guess
+<span class="linenr"> 4: </span>        (sqrt-iter (improve guess x)
+<span class="linenr"> 5: </span>                   x)))
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">improve</span> guess x)
+<span class="linenr"> 8: </span>    (average guess (/ x guess)))
+<span class="linenr"> 9: </span>
+<span class="linenr">10: </span>  (d
+<span class="linenr">11: </span>
+<span class="linenr">12: </span>static CONCATx(Router,USE_ROUTER) DEFAULT_ROUTER<span style="font-weight: bold; font-style: italic;">;</span>
+<span class="linenr">13: </span>static RouterIf * DEFAULT_ROUTER_PTR = &amp; DEFAULT_ROUTER<span style="font-weight: bold; font-style: italic;">;</span>
+<span class="linenr">14: </span>efine (average x y)
+<span class="linenr">15: </span>    (/ (+ x y) 2))
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">good-enough?</span> guess x)
+<span class="linenr">18: </span>    (&lt; (abs (- (square guess) x)) 0.001))
+<span class="linenr">19: </span>
+<span class="linenr">20: </span>  (<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sqrt</span> x)
+<span class="linenr">21: </span>    (sqrt-iter 1.0 x))
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">函数和其计算过程</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+通过对程序设计语言的学习，基本了解如何组合表达式，通过命名抽象变量和函数！但是并没有了解一个函数的执行的计算过程，只有充分了解了程序的计算过程，我们才能写出更多健壮和模块化的程序！<br  />
+</p>
+
+<p>
+主要讨论一个函数的运行过程 <code>computational process</code> ，计算过程涉及的计算资源 （计算时间和计算使用的空间）。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-2-1" class="outline-4">
+<h4 id="sec-1-2-1">线性递归和迭代</h4>
+<div class="outline-text-4" id="text-1-2-1">
+<p>
+考量计算阶乘<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">factorial</span> n)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (= n 1)
+<span class="linenr">3: </span>      1
+<span class="linenr">4: </span>      (* n (factorial (- n 1)))))
+</pre>
+</div>
+
+<p>
+这种计算过程，为递归计算过程 <code>linear recursive process</code> ，计算 <code>n!</code> 的结果，需要计算出 <code>(n-1)!</code> ，然后再乘以 <code>n</code> 获取结果！<br  />
+</p>
+
+<hr  />
+
+<p>
+还有另外一个计算过程，计算阶乘 <code>n!</code> ，采取 <code>1*2*3*...*n</code> 的计算顺序，只需要记录一个计数器 <code>counter</code> ，从1到n；记录一个阶乘结果保证为 <code>counter!</code> 。<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">fact-iter</span> product counter max-count)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; counter max-count)
+<span class="linenr">3: </span>      product
+<span class="linenr">4: </span>      (fact-iter (* product counter) (+ counter 1) max-counter)))
+<span class="linenr">5: </span>
+<span class="linenr">6: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">factorial</span> n) (fact-iter 1 1 n))
+</pre>
+</div>
+
+<p>
+这种计算过程叫做迭代计算过程 <code>iterative process</code> ！<br  />
+</p>
+
+<hr  />
+
+<p>
+上述两种计算过程的在于，递归计算过程，需要使用数据结构 <code>栈</code> 来保存函数递归调用的路径和对应的值返回后需要乘以的值。迭代计算过程内部使用了一个辅助函数来记录内部状态！这样并不需要像递归计算用栈来保存计算上下文，计算空间为常量！<br  />
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2-2" class="outline-4">
+<h4 id="sec-1-2-2">计算复杂度 - Order of Growth</h4>
+<div class="outline-text-4" id="text-1-2-2">
+<p>
+<code>n</code> 表示问题的输入的参数的一种度量方式， <code>R(n)</code> 表示计算过程中所需要的资源。<br  />
+</p>
+
+<p>
+那么，如果说某个程序具有 &theta;(f(n)) 的计算复杂度，那么即是说无论n多大或者多小，都能够与 <code>f(n)</code> 具有纤细ing<br  />
+</p>
+
+<p>
+\(k_{1}f(n) \le R(n) \le k_{2}f(n)\)<br  />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">高阶函数抽象 - Formulating Abstractions with Higher-Order Procedures</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+我们可以通过表达式的组合及代码块的命令来对一般的计算函数进行抽象，从而可以允许他人或者系统里其他部分的代码饮用该函数，而无需关心函数的具体实现情况！<br  />
+</p>
+
+<p>
+其中，函数的参数和返回可以是任何对象，并不仅仅局限于变量，常量值等！可以是函数对象。这样能够接受以函数为参数或者返回值的的函数叫做 <code>高阶函数</code> 。从而达到更为高级的抽象。<br  />
+</p>
+</div>
+
+<div id="outline-container-sec-1-3-1" class="outline-4">
+<h4 id="sec-1-3-1">函数作为参数</h4>
+<div class="outline-text-4" id="text-1-3-1">
+<p>
+我们考虑如下3个函数：<br  />
+</p>
+
+<p>
+第一个是计算从a到b的和：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-integers</span> a b)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; a b)
+<span class="linenr">3: </span>      0
+<span class="linenr">4: </span>      (+ a (sum-integers (+ a 1) b))))
+</pre>
+</div>
+
+<p>
+第二是用于计算从a到b的立方和：<br  />
+</p>
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-cubes</span> a b)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; a b)
+<span class="linenr">3: </span>      0
+<span class="linenr">4: </span>      (+ (cube a) (sum-cubes (+ a 1) b))))
+</pre>
+</div>
+
+<p>
+第三个是计算如下的等式，其值约等于 &pi;/8 ：<br  />
+$$ \frac{1}{1*3} + \frac{1}{5*7} + \frac{1}{9*11} + ... $$<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-pi</span> a b)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; a b)
+<span class="linenr">3: </span>      0
+<span class="linenr">4: </span>      (+ (/ 1.0 (* a (+ a 2))) (sum-pi (+ a 4) b))))
+</pre>
+</div>
+
+<p>
+可以看出上述3个计算函数基本具有相似的代码风格，这样我们就可以通过规则上述代码模版，然后传入差异化的函数参数，实现不通的函数！<br  />
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-scheme"><span class="linenr">1: </span>(<span style="color: #00bfff; font-weight: bold;">define</span> (<span style="font-weight: bold;">sum-template</span> a b value next)
+<span class="linenr">2: </span>  (<span style="color: #00bfff; font-weight: bold;">if</span> (&gt; a b)
+<span class="linenr">3: </span>      0
+<span class="linenr">4: </span>      (+ (value a) (sum-template (next a) b))))
+</pre>
+</div>
+
+<p>
+其中： <code>value</code> 为需要求和的值的函数，例如立方等； <code>next</code> 为求出下一个求和的值的函数；通过上述我们就可以传入不同的 <code>value</code> 和 <code>next</code> 就可以实现不同的函数过程！<br  />
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

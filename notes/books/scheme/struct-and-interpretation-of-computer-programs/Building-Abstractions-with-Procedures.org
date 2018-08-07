@@ -1,0 +1,225 @@
+#+TITLE: Structure and Interpretation of Computer Programs - Building Abstractions with Procedures
+#+ALT_TITLE: 计算机程序的构造和解释 - 第一章
+#+AUTHOR: stupid coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: \n:t H:3 num:nil
+
+* Building Abstractions with Procedures
+
+程序设计可以理解为编写一段代码 =program= ，用来指引计算机处理一些抽象事情 =data= ，代码的运行是一个动态的运行过程 =computational process= 。
+
+优秀的程序员必须了解 =computational process= 运行的每一个细节，这样能够编写一个无错的代码 =program= ，并且需要保证代码具有：模块化、可读性、代码的可加性等！
+
+** 程序设计语言的元素
+一个优秀的程序设计语言不仅仅是一些计算机执行计算的指令集合，并且需要提供一个框架 =framework= ，程序员可以更好的表达自己的编程思想，更好的组织代码。一般是通过将简单指令组合成复杂指令，并且能够像简单指令一样调用复杂指令，从而构建程序！
+
+这样一个组合，抽象，组合，抽象的递归过程需要如下三个机制实现：
++ 基础表达式 :: 语言提供的基础表达式，为程序设计中最小的指令集。
++ 组合 :: 可以通过代码块组合基础表达式成一个组合代码块。
++ 抽象 :: 通过对组合代码块命令，从而能够像基础表达式一样调用该组合代码块。
+
+
+程序设计中简化来看，设计两类元素：函数和数据！数据为函数需要操作的对象，函数为操作数据的规则！
+
+*** 表达式
+=表达式= 是由数字、算符、数字分组符号（括号）、自由变量和约束变量等以能求得数值的有意义排列方法所得的组合。约束变量在表达式中已被指定数值，而自由变量则可以在表达式之外另行指定数found值。
+
+计算机通过程序编译器或者解释器能够将表达式转为对应的机器指令进行执行。
+
+*** 命名和环境
+程序设计中通过命名来指向计算对象 =computational objects= 。可以认为为key-value对，可以通过key访问对应的value值。可以认为命名提供的最为基础的抽象 =abstract= ，即可以通过变量名或者函数名访问对应的变量和函数，而忽略掉内部的变量结构和函数计算过程。
+
+这些key-value对需要一个数据结构进行存储，保证后续代码中能够进行访问！这个数据结构就为环境 =environemnt= ，在一些程序设计中也叫上下文 =context= 。
+
+*** 组合表达式的运算
+表达式中的操作符 =operator= 或操作数 =operands= 也可以为表达式，这样的表达式就具有更为复杂的计算逻辑！这种表达式叫做组合表达式，可以通过如下规则进行运算：
+  + 运算组合表达式中的子表达式
+  + 将子表达操作符运算结果应用到子表达运算的操作符
+
+    其中如果操作符或者操作数为变量，则直接在环境中进行查找即可！
+
+*** 函数调用的运算
+程序设计中通过表达式的组合和命名就可以定义函数，对代码块进行抽象！例如：
+#+BEGIN_SRC scheme -n -l :exports both
+(define (square x) (* x x))
+
+(square 10)
+#+END_SRC
+
+#+RESULTS:
+: 100
+
+其中， =square= 为函数名，后续可以该对象进行调用；x 为参数； =(* x x)= 为代码块，为函数的计算逻辑。这可以理解为定义一个函数，叫做 =square= ，参数为 =x= ，执行 =(* x x)= 。
+
+在调用该函数时，参数 x 会被替换为10，然后执行 =(* 10 10)= 函数体，得到100。
+
+*** 函数调用的替换计算模型
+在替换计算模型中，函数体内的形式参数会被替换为对应的实际参数！例如：
+#+BEGIN_SRC scheme -n -l
+  (define (sum-of-square x y)
+    (+ (square x) (square y)))
+
+  (define (f x)
+    (sum-of-square (+ x 1) (* x 2)))
+
+  (f 5)
+#+END_SRC
+
+其中 =(f 5)= 会被替换成 =(sum-of-square (+ 5 1) (* 5 2))=
+
+然后计算子表达式得到 =(sum-of-square 6 10)=
+
+继续替换为 =(+ (square 6) (square 10))=
+
+继续替换为 =(+ 36 100)= ，执行该组合表达式，即可得到对应结果！
+
+这种函数体中形式参数替换为实际参数后，进行计算的过程就为最为简单的替换计算模型！这种模型在后续引入赋值后会出现一些问题，但是在函数编程模型 =function programings= 中可以使用。
+
+**** 应用序和正则序
+在替换计算模型中，函数调用的运算，首先运算对应的计算数，然后进行替换叫做应用序。还有一种替换方式，即不进行操作数计算，直接进行参数替换，替换完成后，在进行运算：
+#+BEGIN_EXAMPLE
+(f 5)
+=>
+(sum-of-square (+ 5 1) (* 5 2))
+=>
+(+ (square (+ 5 1)) (square (* 5 2)))
+=>
+(+ (* (+ 5 1) (+ 5 1)) (* (* 5 2) (* 5 2)))
+#+END_EXAMPLE
+
+替换完成后续进行计算，得到对应结果！
+
+可以看出，正则序会在规约计算的时候，出现多余的计算量，所以大部分的编译器和解释器使用应用序！
+
+*** 例子：计算平方根 - 牛顿方法
+平方根定义为：
+$\sqrt{x}\ =\ y\ the\ y\ such\ that\ y\ \ge 0\ and\ y^2 = x$
+
+上述定义了一个数据公式，用于判断一个值 =y= 是否是 =x= 的平方根！但是并没有定义一个平方根的计算过程！
+
+牛顿法计算平方根的方法为：首先猜测一个y，然后通过对 =y= 和 =x/y= 求平均获取一个更为接近平方根的结果！例如：
+
+#+CAPTON: 2的平方根求值
+|  Guess | Quotient          | Average                    |
+|--------+-------------------+----------------------------|
+|      1 | (2/1)=2           | ((2+1)/2)=1.5              |
+|    1.5 | (2/1.5)=1.333     | ((1.3333+1.5)/2)=1.4167    |
+| 1.4167 | (2/1.4167)=1.4118 | ((1.4167+1.4118)/2)=1.4142 |
+| ....   |                   |                            |
+
+迭代过程如下：
+#+BEGIN_SRC scheme -n -l
+  (define (sqrt-iter guess x)
+    (if (good-enough? guess x)
+        guess
+        (sqrt-iter (improve guess x)
+                   x)))
+
+  (define (improve guess x)
+    (average guess (/ x guess)))
+
+  (d
+
+static CONCATx(Router,USE_ROUTER) DEFAULT_ROUTER;
+static RouterIf * DEFAULT_ROUTER_PTR = & DEFAULT_ROUTER;
+efine (average x y)
+    (/ (+ x y) 2))
+
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
+
+  (define (sqrt x)
+    (sqrt-iter 1.0 x))
+#+END_SRC
+** 函数和其计算过程
+通过对程序设计语言的学习，基本了解如何组合表达式，通过命名抽象变量和函数！但是并没有了解一个函数的执行的计算过程，只有充分了解了程序的计算过程，我们才能写出更多健壮和模块化的程序！
+
+主要讨论一个函数的运行过程 =computational process= ，计算过程涉及的计算资源 （计算时间和计算使用的空间）。
+
+*** 线性递归和迭代
+
+考量计算阶乘
+#+BEGIN_SRC scheme -n -l
+  (define (factorial n)
+    (if (= n 1)
+        1
+        (* n (factorial (- n 1)))))
+#+END_SRC
+
+这种计算过程，为递归计算过程 =linear recursive process= ，计算 =n!= 的结果，需要计算出 =(n-1)!= ，然后再乘以 =n= 获取结果！
+
+-----
+
+还有另外一个计算过程，计算阶乘 =n!= ，采取 =1*2*3*...*n= 的计算顺序，只需要记录一个计数器 =counter= ，从1到n；记录一个阶乘结果保证为 =counter!= 。
+
+#+BEGIN_SRC scheme -n -l
+  (define (fact-iter product counter max-count)
+    (if (> counter max-count)
+        product
+        (fact-iter (* product counter) (+ counter 1) max-counter)))
+
+  (define (factorial n) (fact-iter 1 1 n))
+#+END_SRC
+
+这种计算过程叫做迭代计算过程 =iterative process= ！
+
+-----
+
+上述两种计算过程的在于，递归计算过程，需要使用数据结构 =栈= 来保存函数递归调用的路径和对应的值返回后需要乘以的值。迭代计算过程内部使用了一个辅助函数来记录内部状态！这样并不需要像递归计算用栈来保存计算上下文，计算空间为常量！
+
+*** 计算复杂度 - Order of Growth
+
+=n= 表示问题的输入的参数的一种度量方式， =R(n)= 表示计算过程中所需要的资源。
+
+那么，如果说某个程序具有 \theta(f(n)) 的计算复杂度，那么即是说无论n多大或者多小，都能够与 =f(n)= 具有纤细ing
+
+$k_{1}f(n) \le R(n) \le k_{2}f(n)$
+
+** 高阶函数抽象 - Formulating Abstractions with Higher-Order Procedures
+
+我们可以通过表达式的组合及代码块的命令来对一般的计算函数进行抽象，从而可以允许他人或者系统里其他部分的代码饮用该函数，而无需关心函数的具体实现情况！
+
+其中，函数的参数和返回可以是任何对象，并不仅仅局限于变量，常量值等！可以是函数对象。这样能够接受以函数为参数或者返回值的的函数叫做 =高阶函数= 。从而达到更为高级的抽象。
+
+*** 函数作为参数
+
+我们考虑如下3个函数：
+
+第一个是计算从a到b的和：
+#+BEGIN_SRC scheme -n -l
+  (define (sum-integers a b)
+    (if (> a b)
+        0
+        (+ a (sum-integers (+ a 1) b))))
+#+END_SRC
+
+第二是用于计算从a到b的立方和：
+#+BEGIN_SRC scheme -n -l
+  (define (sum-cubes a b)
+    (if (> a b)
+        0
+        (+ (cube a) (sum-cubes (+ a 1) b))))
+#+END_SRC
+
+第三个是计算如下的等式，其值约等于 \pi/8 ：
+$$ \frac{1}{1*3} + \frac{1}{5*7} + \frac{1}{9*11} + ... $$
+
+#+BEGIN_SRC scheme -n -l
+  (define (sum-pi a b)
+    (if (> a b)
+        0
+        (+ (/ 1.0 (* a (+ a 2))) (sum-pi (+ a 4) b))))
+#+END_SRC
+
+可以看出上述3个计算函数基本具有相似的代码风格，这样我们就可以通过规则上述代码模版，然后传入差异化的函数参数，实现不通的函数！
+
+#+BEGIN_SRC scheme -n -l
+  (define (sum-template a b value next)
+    (if (> a b)
+        0
+        (+ (value a) (sum-template (next a) b))))
+
+#+END_SRC
+
+其中： =value= 为需要求和的值的函数，例如立方等； =next= 为求出下一个求和的值的函数；通过上述我们就可以传入不同的 =value= 和 =next= 就可以实现不同的函数过程！
