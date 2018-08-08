@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Image Classification: Data-driven Approach, k-Nearest Neighbor, train/val/test splits</title>
+<!-- 2018-08-08 Wed 22:44 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Image Classification: Data-driven Approach, k-Nearest Neighbor, train/val/test splits</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Image Classification</a>
+<ul>
+<li><a href="#sec-1-1">Motivation</a></li>
+<li><a href="#sec-1-2">Example</a></li>
+<li><a href="#sec-1-3">Challenges</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">Nearest Neighbor Classifier</a>
+<ul>
+<li><a href="#sec-2-1">Example Image classification dataset: CIFAR-10</a></li>
+<li><a href="#sec-2-2">The choice of distance</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">K-Nearest Neighbor Classifier</a></li>
+<li><a href="#sec-4">Validation sets for Hyperparameter tuning</a>
+<ul>
+<li><a href="#sec-4-1">Cross-validation</a></li>
+<li><a href="#sec-4-2">In practice</a></li>
+<li><a href="#sec-4-3">Pros and Cons of Nearest Neighbor classifier</a></li>
+<li><a href="#sec-4-4">Summary: Applying kNN in practice</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+本讲义翻译自 *cs231n:image-classification*<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>。主要目标给没有做过计算机视觉的
+人，介绍一下图像分类和数据驱动的学习方法。
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Image Classification</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Motivation</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+图像分类(<i>Image Classification</i>)主要是对输入图像分到某一个类别的问题。该问题是计
+算机视觉的一个核心问题，虽然比较简单，但是有很大应用场景。而且随着学习的深入，我
+们可以看到其他的一些问题(目标识别、场景分割)也是基于图像分类来做的。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Example</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+例如：下图图示1显示了输入一个图像，对该图像分类，分到4个类别{cat,dog,hat,mug}。
+如图所示，一个图像在计算机看来就是3维数组。如例子所示，该猫咪图像248像素宽，400
+像素高，同时有3个颜色通道，分别为红色、绿色、蓝色（RGB）。因此，一个图像由
+248*400*3个数字，总共297600个数字组成。每一个数字的范围为0（黑色）到255（白色）。
+图像分类就是根据这些数字进行分类到某个标签，例如 'cat'。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/classify.png" alt="classify.png" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> 图像分类说明</p>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Challenges</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+虽然图像分类任务相对人来说是一个比较简单的，但是对于计算机来说只是看到了一堆数字，
+并不是非常简单。如下是计算机视觉在图像分类会遇到的一些挑战：
+</p>
+<dl class="org-dl">
+<dt> <code>Viewpoint variation</code> </dt><dd>同一个对象，采取不同的视角进行拍摄，图像的最后变现具
+有很大的变化
+</dd>
+<dt> <code>Scale varlation</code> </dt><dd>同一类对象，在现实中也不是完全一样大小的
+</dd>
+<dt> <code>Deformation</code> </dt><dd>很对对象可以具有很多形态
+</dd>
+<dt> <code>Occusion</code> </dt><dd>对象可以被遮挡，很多时候只会露出局部
+</dd>
+<dt> <code>Illumination conditions</code> </dt><dd>光照情况会极大的影响图像数组呈现的数值
+</dd>
+<dt> <code>Background clutter</code> </dt><dd>感兴趣的对象有可能和背景色相似，增加辨识难度
+</dd>
+<dt> <code>Intra-class variation</code> </dt><dd>即使是同一类对象，内部也会具有一定差异
+</dd>
+</dl>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/challenges.jpeg" alt="challenges.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 图像识别中的一些挑战</p>
+</div>
+<hr  />
+
+<p>
+一个表现较好的图像分类模型需要能够克服如上的一些影响，保持类之间的分类性能。
+</p>
+</div>
+
+
+<ul class="org-ul"><li><a id="sec-1-3-1" name="sec-1-3-1"></a>Data-driven approach<br  /><div class="outline-text-4" id="text-1-3-1">
+<p>
+思考，如何去构建一个算法来对图像进行分类呢？这个算法并不像排序算法，因为并没有一
+个很明确的算法过程可以保证图像正确分类。一大堆if-else语句？
+</p>
+
+<p>
+因此，这里常常采取的方法类似教小孩子识别图像一样。获取大量的样本图像，然后开发一
+个学习算法去学习这些样本图像。这个方法叫做： <b>data-driven approach</b> 。
+</p>
+
+<p>
+图像分类的训练集如下图所示，每个类别里都要包含若干张图片。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/trainset.jpg" alt="trainset.jpg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> 训练数据集</p>
+</div>
+<hr  />
+</div>
+</li>
+
+<li><a id="sec-1-3-2" name="sec-1-3-2"></a>The Image classification pipeline<br  /><div class="outline-text-4" id="text-1-3-2">
+<p>
+图像分类可以抽象为输入一个像素数组，代表输入的图像；然后根据像素数组来分配一个或
+多个类别。整体的流程如下：
+</p>
+<dl class="org-dl">
+<dt> <code>Input</code> </dt><dd>输入为N个图像，并且每一个图像都有一个类别，分属于k类中的一个。
+这些数据叫做训练集
+</dd>
+<dt> <code>Learning</code> </dt><dd>构建一个模型根据输入的训练集进行学习如何将像素数组分到不同的类别，
+这个过程叫做 <b>training a classifier</b>
+</dd>
+<dt> <code>Evaluation</code> </dt><dd>最后，需要对这个训练的分类器进行评估。使用一个测试集，即这个集
+合中的数据模型是没有使用来进行训练，根据预测的类别去评估效果。
+这里的每个图像的真实类别叫做 <b>ground truth</b>
+</dd>
+</dl>
+</div>
+</li></ul>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Nearest Neighbor Classifier</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+训练的第一个分类器叫做最近近邻分类器(<b>Nearest Neighbor Classifier</b>)。该分类器在
+实际场景中基本不会得到应用，而且和卷积神经网络一点关系都没有，但是可以通过这个简
+单的分类器先去学习一些图像分类的思想。
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Example Image classification dataset: CIFAR-10</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+*CIFAR-10*<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup> 是一个较为简单的图像分类数据集。由60K 32*32像素的图像组成。总共有10类
+的类别标签。下图是CIFAR-10的示例：
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn.jpg" alt="nn.jpg" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> CIFAR-10</p>
+</div>
+<blockquote>
+<p>
+左图：CIFAR-10不同类别下的图像示例；右图：第一列是一些测试图像，其他列是top-10最
+近近邻的图像。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+将CIFAR-10分为两部分，50K的用来作为训练集，每个列别具有5K的图像。剩下的10K图像作
+为测试集。最近近邻分类器会对每一个测试集中的图像计算在训练集中的最近近邻图像，然
+后测试图像的类别就标记为在训练集中的最近近邻图像的标签。
+</p>
+
+<p>
+如何定义两张图像的距离呢？最简单的做法就是将两张图像逐像素的进行比较，然后对差值
+加和即可。例如：两张图像表示为向量 <i>I<sub>1</sub>,I<sub>2</sub></i> ， <b>L1 distance</b> 如下公式：
+</p>
+
+\begin{equation}
+d_{1}(I_{1},I_{2}) = \sum_{p}{\lvert I_{1}^p-I_{2}^P \rvert}
+\end{equation}
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nneg.jpeg" alt="nneg.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;5&nbsp;</span> L1 distance</p>
+</div>
+
+<blockquote>
+<p>
+如图所示：逐像素进行距离计算，然后对这些差值加和，就是 <b>L1 distance</b>
+</p>
+</blockquote>
+<hr  />
+
+<p>
+那么如何实现最近近邻算法，首先需要准备训练集和测试集。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="nn-prepare-dataset"><span style="font-weight: bold; font-style: italic;">Xtr</span>, <span style="font-weight: bold; font-style: italic;">Ytr</span>, <span style="font-weight: bold; font-style: italic;">Xte</span>, <span style="font-weight: bold; font-style: italic;">Yte</span> = load_CIFAR10(<span style="color: #daa520; font-style: italic;">'data/cifar10/'</span>) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">a magic function we provide</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">flatten out all images to be one-dimensional</span>
+<span style="font-weight: bold; font-style: italic;">Xtr_rows</span> = Xtr.reshape(Xtr.shape[0], 32 * 32 * 3) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Xtr_rows becomes 50000 x 3072</span>
+<span style="font-weight: bold; font-style: italic;">Xte_rows</span> = Xte.reshape(Xte.shape[0], 32 * 32 * 3) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Xte_rows becomes 10000 x 3072</span>
+</pre>
+</div>
+
+<p>
+加载 <b>CIFAR-10</b> 数据集，获得4个数组：training data/label和test data/label。
+<b>Xtr</b> 为训练集数组，数据维度为50K*32*32*3，对应的 <b>Ytr</b> 为训练集数据的类别，数据
+维度为50K，并且数值在[0-9]。
+</p>
+
+<p>
+接着训练和评估分类器：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="nn-train-evaluate"><span style="font-weight: bold; font-style: italic;">nn</span> = NearestNeighbor() <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">create a Nearest Neighbor classifier class</span>
+nn.train(Xtr_rows, Ytr) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">train the classifier on the training images and labels</span>
+<span style="font-weight: bold; font-style: italic;">Yte_predict</span> = nn.predict(Xte_rows) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">predict labels on the test images</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">and now print the classification accuracy, which is the average number</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">of examples that are correctly predicted (i.e. label matches)</span>
+<span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'accuracy: %f'</span> % ( np.mean(Yte_predict == Yte) )
+</pre>
+</div>
+
+<p>
+<b>accuracy</b> 用来评估分类器在测试集上的分类效果。需要注意的是分类器一般都具有两个
+API： <i>train(X,y)</i> 接受训练数据进行模型训练； <i>predict(X)</i> 接受新的数据进行分类。
+</p>
+
+<p>
+如下是一个简单的最近近邻分类器实现，采取 <b>L1 distance</b> ：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="nn-model"><span style="color: #00bfff; font-weight: bold;">import</span> numpy <span style="color: #00bfff; font-weight: bold;">as</span> np
+
+<span style="color: #00bfff; font-weight: bold;">class</span> <span style="font-weight: bold; text-decoration: underline;">NearestNeighbor</span>(<span style="font-weight: bold;">object</span>):
+  <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">__init__</span>(<span style="color: #00bfff; font-weight: bold;">self</span>):
+    <span style="color: #00bfff; font-weight: bold;">pass</span>
+
+  <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">train</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, X, y):
+    <span style="color: #daa520; font-style: italic;">""" X is N x D where each row is an example. Y is 1-dimension of size N """</span>
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the nearest neighbor classifier simply remembers all the training data</span>
+    <span style="color: #00bfff; font-weight: bold;">self</span>.Xtr = X
+    <span style="color: #00bfff; font-weight: bold;">self</span>.ytr = y
+
+  <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">predict</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, X):
+    <span style="color: #daa520; font-style: italic;">""" X is N x D where each row is an example we wish to predict label for """</span>
+    <span style="font-weight: bold; font-style: italic;">num_test</span> = X.shape[0]
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">lets make sure that the output type matches the input type</span>
+    <span style="font-weight: bold; font-style: italic;">Ypred</span> = np.zeros(num_test, dtype = <span style="color: #00bfff; font-weight: bold;">self</span>.ytr.dtype)
+
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">loop over all test rows</span>
+    <span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">xrange</span>(num_test):
+      <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">find the nearest training image to the i'th test image</span>
+      <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">using the L1 distance (sum of absolute value differences)</span>
+      <span style="font-weight: bold; font-style: italic;">distances</span> = np.<span style="font-weight: bold;">sum</span>(np.<span style="font-weight: bold;">abs</span>(<span style="color: #00bfff; font-weight: bold;">self</span>.Xtr - X[i,:]), axis = 1)
+      <span style="font-weight: bold; font-style: italic;">min_index</span> = np.argmin(distances) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">get the index with smallest distance</span>
+      <span style="font-weight: bold; font-style: italic;">Ypred</span>[i] = <span style="color: #00bfff; font-weight: bold;">self</span>.ytr[min_index] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">predict the label of the nearest example</span>
+
+    <span style="color: #00bfff; font-weight: bold;">return</span> Ypred
+</pre>
+</div>
+
+<p>
+<b>L1 distance</b> 的最近近邻算法在CIFAR-10上的准确性为 <b>38.6%</b> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">The choice of distance</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+还有很多中距离度量函数，另外一个常用的距离度量为 <b>L2 distance</b> ，在几何学叫做
+<b>euclidean distance</b>.计算公式如下：
+</p>
+
+\begin{equation}
+d_{2}(I_{1},I_{2}) = \sqrt{\sum_{p}{(I_{1}^p-I_{2}^p)^2}}
+\end{equation}
+
+<p>
+使用 <b>numpy</b> 只需要修改一行计算距离的代码即可：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python" id="l2-distance"><span style="font-weight: bold; font-style: italic;">distances</span> = np.sqrt(np.<span style="font-weight: bold;">sum</span>(np.square(<span style="color: #00bfff; font-weight: bold;">self</span>.Xtr - X[i,:]), axis = 1))
+</pre>
+</div>
+
+<p>
+<b>L2 distance</b> 的最近近邻算法在CIFAR-10上的准确性为 <b>35.4%</b> ，略低于 <b>L1
+distance</b> 。
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">K-Nearest Neighbor Classifier</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+最近近邻算法由于只考虑了一个最近样本的类别信息，在距离差距差不多的时候，容易形成
+错分。所以可以多考虑 <i>k</i> 个最近的样本的类别信息进行分类，能够提高分类准确性，这种方
+法叫做 <b>k-Nearest Neighbor Classifier</b> 。当 <i>k=1</i> 的时候就退化成了最近近邻算法。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/knn.jpeg" alt="knn.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;6&nbsp;</span> knn</p>
+</div>
+<blockquote>
+<p>
+NN和KNN算法的差别。二维数据，3个类别（红蓝绿），显示了不同区域所属于的标签区域。
+可以看到NN算法中，会有一些异常点（绿色单点被蓝色包围）；在KNN中这些点的区域就显
+得比较平滑，不会出现异常的检测区域。白色的区域就是无法判断的区域,例如最近的5个点
+中，2个红色，2个绿色，1个蓝色，就是无法区分的情况。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+一般情况都会使用KNN算法，来增加结果的可信度。那么，如何选择k值呢？
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Validation sets for Hyperparameter tuning</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<b>k nearest neighbor classifier</b> 需要设定一个 <i>k</i> 值。那么如何选择呢？其次，存在
+这么多的距离计算函数： L1 norm，L2 norm等等。
+</p>
+
+<p>
+这些选择叫做 超参(<b>hyperparameters</b>)，这些参数控制着模型的变现，并且没有一个指导标准
+告诉我们应该选择什么样的超参。
+</p>
+
+<p>
+一个比较实践的方法是：设置不同的超参，然后进行测试和评估，找到一组结果最好的作为
+选择。这里需要注意的是，超参的选择使用的评估集不能是测试集(<b>test dataset</b>)。
+主要原因是，超参的选择如果在测试集上进行评估，那么这时测试集可以看作是参超的训练
+集，那么这样评估和训练都在测试集上进行，那么最后模型的超参选择很有可能对测试数据
+过拟合(<b>overfit</b>)。
+</p>
+
+<p>
+这里要记得一个准则：
+</p>
+<blockquote>
+<p>
+测试集的测试只做最后一次，并且是在所有参数，包括超参都确定之后。
+</p>
+</blockquote>
+
+<p>
+那么，如果不使用测试集来进行模型的超参调试呢？一样的道理，可以将训练集分为两个部
+分：一个小规模的数据集，用来进行超参的调试，叫做验证集(<b>validation set</b>)。例如：
+CIFAR-10上，使用49K的数据进行训练；1k的数据用来验证，调整超参。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python" id="tuning-hyperparameters"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assume we have Xtr_rows, Ytr, Xte_rows, Yte as before</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">recall Xtr_rows is 50,000 x 3072 matrix</span>
+<span style="font-weight: bold; font-style: italic;">Xval_rows</span> = Xtr_rows[:1000, :] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">take first 1000 for validation</span>
+<span style="font-weight: bold; font-style: italic;">Yval</span> = Ytr[:1000]
+<span style="font-weight: bold; font-style: italic;">Xtr_rows</span> = Xtr_rows[1000:, :] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">keep last 49,000 for train</span>
+<span style="font-weight: bold; font-style: italic;">Ytr</span> = Ytr[1000:]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">find hyperparameters that work best on the validation set</span>
+<span style="font-weight: bold; font-style: italic;">validation_accuracies</span> = []
+<span style="color: #00bfff; font-weight: bold;">for</span> k <span style="color: #00bfff; font-weight: bold;">in</span> [1, 3, 5, 10, 20, 50, 100]:
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">use a particular value of k and evaluation on validation data</span>
+  <span style="font-weight: bold; font-style: italic;">nn</span> = NearestNeighbor()
+  nn.train(Xtr_rows, Ytr)
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">here we assume a modified NearestNeighbor class that can take a k as input</span>
+  <span style="font-weight: bold; font-style: italic;">Yval_predict</span> = nn.predict(Xval_rows, k = k)
+  <span style="font-weight: bold; font-style: italic;">acc</span> = np.mean(Yval_predict == Yval)
+  <span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'accuracy: %f'</span> % (acc,)
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">keep track of what works on the validation set</span>
+  validation_accuracies.append((k, acc))
+</pre>
+</div>
+
+<p>
+这样，我们可以在最后画出不同 <i>k</i> 值下的准确率，使用该 <i>k</i> 值在测试集上进行最后的
+测试。
+</p>
+
+<blockquote>
+<p>
+将训练集进行切分出一个小的验证集，在验证集上去对超参进行调整。最后，使用调整后的
+超参在测试集上进行测试，并得出性能评估报告。
+</p>
+</blockquote>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Cross-validation</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+如果训练数据集本身就很小，那么一般需要使用交叉验证(<b>cross-validation</b>)来进行超参
+的调整。将训练集分成N份，然后遍历的以1份作为验证集，其他N-1份作为训练集进行训练。
+然后将准确性取平均作为最终的指标。
+</p>
+
+<p>
+例如在CIFAR-10上做5-fold cross validation，来去k进行调参：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/cvplot.png" alt="cvplot.png" />
+</p>
+<p><span class="figure-number">&#22270;7&nbsp;</span> knn-5-cross-validation</p>
+</div>
+
+<blockquote>
+<p>
+5折交叉验证，在不同的k值的情况下的准确性。可以看出在k=7的时候，准确性最高。
+</p>
+</blockquote>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">In practice</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+在实际中，如果交叉验证计算量较大，一般单独分割出一个验证集来作超参调参。一般取
+50%-90%作为训练集，其它作为验证集。具体取的比例取决于调整的参数的数量是否比较大，
+从而需要一个较大的验证集。如果验证集数量较少，最好还是需要做一下交叉验证。常规的
+交叉验证为3-fold、5-fold或者10-fold。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/crossval.jpeg" alt="crossval.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;8&nbsp;</span> cross-validation</p>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3">Pros and Cons of Nearest Neighbor classifier</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+NN算法的优点在于算法简单，通俗易懂，并且非常容易实现；此外，不需要训练，只需要对
+训练数据进行存储即可。
+</p>
+
+<p>
+NN算法的缺点在于预测的时候，需要遍历一遍训练集，在训练集较大的时候，需要大量的计
+算量和内存存储。
+</p>
+
+<p>
+很多时候，训练的时间和计算量没有太大的关系；反而，推断需要较为快速。
+</p>
+
+<p>
+为了克服NN算法在推断的时候需要遍历计算的缺点，有很多近似近邻算法发明
+(<b>Approximate Nearest Neighbor(ANN)</b>)和lib库用来加速近邻查找(<a href="http://www.cs.ubc.ca/research/flann/">FLANN</a>和<a href="https://github.com/facebookresearch/faiss">FAISS</a>)。这些
+算法大多基于 <i>kdtree</i> 或者 <i>kmeans</i> 聚类后进行加速计算。
+</p>
+
+<p>
+如果数据维度较少的时候，NN算法是一个较好的选择。但是实际中，很多数量都具有比较高
+的维度，计算两个数据之间的距离对维度较为敏感。下图 <b>L2 distance</b> 都一样的图像。
+</p>
+
+<hr  />
+
+<div id="same-norm" class="figure">
+<p><img src="assets/samenorm.png" alt="samenorm.png" />
+</p>
+</div>
+
+<blockquote>
+<p>
+高维度基于像素间的距离计算并不是非常直观。原图(左图)和三个不同的图像之间的L2距离
+一样。显然，基于像素间的距离计算并能很好的度量图像之间的不同。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+下图是根据L2距离进行图集可视化，距离相近的图像在下图中较为相近。
+</p>
+<hr  />
+
+<div id="pixels_embed_cifar10" class="figure">
+<p><img src="assets/pixels_embed_cifar10.jpg" alt="pixels_embed_cifar10.jpg" />
+</p>
+</div>
+<hr  />
+<p>
+从图中，可以看出NN算法会将相似颜色分布的图片放在一起，或者背景颜色相近的归为一类。
+并没有考虑图像中的语义信息。后续讲义将不直接依赖于像素进行分类。
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-4-4" class="outline-3">
+<h3 id="sec-4-4">Summary: Applying kNN in practice</h3>
+<div class="outline-text-3" id="text-4-4">
+<p>
+如果真的需要采取kNN模型进行分类任务，如下有一些实践优化：
+</p>
+<dl class="org-dl">
+<dt> <code>对数据进行预处理</code> </dt><dd>对数据集进行归一化处理
+</dd>
+<dt> <code>对数据进行降维</code> </dt><dd>采取降维算法对高维原始数据进行降维，例如PCA（<a href="http://cs229.stanford.edu/notes/cs229-notes10.pdf">cs229</a><a href="https://en.wikipedia.org/wiki/Principal_component_analysis">, wiki</a>)
+或者随机映射(<a href="http://scikit-learn.org/stable/modules/random_projection.html">Random Projection</a>)
+</dd>
+<dt> <code>采取近似近邻算法</code> </dt><dd>如果kNN运行时间太长，考虑使用近似近邻算法
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+<a href="http://cs231n.github.io/classification/">http://cs231n.github.io/classification/</a>
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+<a href="http://www.cs.toronto.edu/~kriz/cifar.html">http://www.cs.toronto.edu/~kriz/cifar.html</a>
+</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

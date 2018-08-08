@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
 <head>
-<title>Index</title>
+<title>tmux - terminal multiplexer</title>
 <!-- 2018-08-08 Wed 22:44 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
@@ -60,8 +60,81 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
-<h1 class="title">Index</h1>
+<h1 class="title">tmux - terminal multiplexer</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">tmux</a></li>
+<li><a href="#sec-2">tmux的使用</a>
+<ul>
+<li><a href="#sec-2-1">打开第一个session</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">参考资源</a></li>
+</ul>
+</div>
+</div>
 
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">tmux</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+tmux 叫做终端复用（terminal multiplexer）。类似io复用一样，在一个终端窗口可以同时处理多个命令或者打开多个应用程序。
+</p>
+
+<p>
+tmux由session，windows，panes三个关键概念。
+</p>
+
+<p>
+一个tmux可以拥有多个session，一个session可以拥有多个window，一个window可以拥有
+多个panes。session就像一个浏览器实例，window就像浏览器中的tab页，pane就像tab页
+可以分割成多个显示区域。
+</p>
+
+<p>
+并且tmux允许你随时将一个session放到后台（detach），然后switch到一个新的session
+，去处理别的事务。随后再switch到detach的session，重新处理这个session中的事务。
+并且这些操作都只需要打开一个终端，复用一个ssh通信通道。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">tmux的使用</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+本文中tmux的使用只覆盖最基本的使用。
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">打开第一个session</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+打开终端，并且输入如下命令：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-sh">tmux
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">参考资源</h2>
+<div class="outline-text-2" id="text-3">
+<ul class="org-ul">
+<li><a href="https://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/">https://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/</a>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </body>
 </html>

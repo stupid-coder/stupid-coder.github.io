@@ -1,0 +1,31 @@
+#+TITLE: tmux - terminal multiplexer
+#+ALT_TITLE: 终端复用软件 tmux
+#+AUTHOR: stupid-coder
+#+EMAIL: stupd_coder@163.com
+
+* tmux
+  tmux 叫做终端复用（terminal multiplexer）。类似io复用一样，在一个终端窗口可以同时处理多个命令或者打开多个应用程序。
+
+  tmux由session，windows，panes三个关键概念。
+
+  一个tmux可以拥有多个session，一个session可以拥有多个window，一个window可以拥有
+  多个panes。session就像一个浏览器实例，window就像浏览器中的tab页，pane就像tab页
+  可以分割成多个显示区域。
+
+  并且tmux允许你随时将一个session放到后台（detach），然后switch到一个新的session
+  ，去处理别的事务。随后再switch到detach的session，重新处理这个session中的事务。
+  并且这些操作都只需要打开一个终端，复用一个ssh通信通道。
+
+* tmux的使用
+  本文中tmux的使用只覆盖最基本的使用。
+
+** 打开第一个session
+   打开终端，并且输入如下命令：
+   #+BEGIN_SRC sh
+     tmux
+   #+END_SRC
+   
+   
+
+* 参考资源
+  + https://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/

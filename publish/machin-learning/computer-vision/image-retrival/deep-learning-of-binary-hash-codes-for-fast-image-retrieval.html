@@ -4,10 +4,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
 <head>
 <title>deep learning of binary hash codes for fast image retrieval</title>
-<!-- 2018-08-07 Tue 12:59 -->
+<!-- 2018-08-08 Wed 22:44 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="qixiang@staff.sina.com.cn" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -109,25 +112,13 @@ for the JavaScript code in this tag.
 <li><a href="#sec-1-1">abstract</a></li>
 <li><a href="#sec-1-2">introduction</a></li>
 <li><a href="#sec-1-3">related work</a></li>
-<li><a href="#sec-1-4">method</a>
-<ul>
-<li><a href="#sec-1-4-1">Learning Hash-like Binary Codes</a></li>
-<li><a href="#sec-1-4-2">Image Retrieval via Hierarchical Deep Search</a></li>
-</ul>
-</li>
-<li><a href="#sec-1-5">Experimental Results</a>
-<ul>
-<li><a href="#sec-1-5-1">Datasets</a></li>
-<li><a href="#sec-1-5-2">Ealuation Metrics</a></li>
-<li><a href="#sec-1-5-3">Results on MNIST Dataset</a></li>
-</ul>
-</li>
+<li><a href="#sec-1-4">method</a></li>
+<li><a href="#sec-1-5">Experimental Results</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-
 
 
 <div id="outline-container-sec-1" class="outline-2">
@@ -151,7 +142,7 @@ for the JavaScript code in this tag.
 <h3 id="sec-1-2">introduction</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
-<code>Content-Based Image Retrieval</code> 通过对图像内容进行分析，然后检索相似图像。因
+<b>Content-Based Image Retrieval</b> 通过对图像内容进行分析，然后检索相似图像。因
 此，图像内容的描述和相似度衡量便是关键。在深度学习以前，主要是通过人工构建图
 像描述符来描述图像内容；深度学习爆发后，基于CNN的图像技术使得图像处理的相关技
 术都得到的大量的提升。
@@ -159,16 +150,16 @@ for the JavaScript code in this tag.
 
 
 <p>
-得益于CNN网络能够学习丰富的中级图像描述符， =AlexNet=<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup> 使用第7层的特征作为特征
+得益于CNN网络能够学习丰富的中级图像描述符， *AlexNet*<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup> 使用第7层的特征作为特征
 描述符进行图像抽取，获取了较好的结果。然而由于直接在CNN高维特征（4096）进行相
-似度计算是比较低效的，可以对特征进行 <code>PCA</code> 降维<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>。
+似度计算是比较低效的，可以对特征进行 <b>PCA</b> 降维<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>。
 </p>
 
 
 <p>
-<code>CBIR</code> 中图像描述和相似计算都是比较关键的。在大规模图像抽取中，由于面对的是高
-维特征，常规的检索方式并不适合该场景。近似近邻(<code>Approximate Nearest
-   Neighbor</code>)或者基于哈希的方法(<code>Hasing Based Method</code>)比较适合该场景。将高维特征
+<b>CBIR</b> 中图像描述和相似计算都是比较关键的。在大规模图像抽取中，由于面对的是高
+维特征，常规的检索方式并不适合该场景。近似近邻(<b>Approximate Nearest
+Neighbor</b>)或者基于哈希的方法(<b>Hasing Based Method</b>)比较适合该场景。将高维特征
 映射到低维空间，然后生成二值码，通过二值匹配或者Hamming距离计算，可以快速的实
 现相似度计算。有些方法<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>都需要构建一个图片近似矩阵，来构建pair-wised的训练集，
 从而在低维空间拉近相似图片的距离。
@@ -202,9 +193,9 @@ for the JavaScript code in this tag.
 </p>
 
 <p>
-无监督方法使用没有标记的数据学习哈希函数。 =Locality-Sensitive
-Hashing(LSH)=<sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup> 通过最大化相似数据分到相似二值码的概率。 =Spectral
-Hashing(SH)=<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup> 通过对数据做PCA降维，在PCA主方向上取阈值截断获取二值码。
+无监督方法使用没有标记的数据学习哈希函数。 *Locality-Sensitive
+Hashing(LSH)*<sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup> 通过最大化相似数据分到相似二值码的概率。 *Spectral
+Hashing(SH)*<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup> 通过对数据做PCA降维，在PCA主方向上取阈值截断获取二值码。
 </p>
 
 <p>
@@ -213,7 +204,7 @@ Hashing(SH)=<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></
 </p>
 
 <p>
-大多数深度结构用于哈希函数学习都是使用 <code>auto-encoder</code> 结构<sup><a id="fnr.9" name="fnr.9" class="footref" href="#fn.9">9</a></sup><sup>, </sup><sup><a id="fnr.10" name="fnr.10" class="footref" href="#fn.10">10</a></sup>。
+大多数深度结构用于哈希函数学习都是使用 <b>auto-encoder</b> 结构<sup><a id="fnr.9" name="fnr.9" class="footref" href="#fn.9">9</a></sup><sup>, </sup><sup><a id="fnr.10" name="fnr.10" class="footref" href="#fn.10">10</a></sup>。
 </p>
 
 <p>
@@ -231,7 +222,7 @@ Hashing(SH)=<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></
 图示1为本文提出的深度学习框架。主要包含3部分：
 </p>
 <ol class="org-ol">
-<li>预训练好的深度网络，本文采取的 <code>AlexNet</code>
+<li>预训练好的深度网络，本文采取的 <b>AlexNet</b>
 </li>
 <li>对隐特征进行微调，学习图像标签数据和哈希函数
 </li>
@@ -244,23 +235,21 @@ Hashing(SH)=<sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></
 <div class="figure">
 <p><img src="assets/deep-learning-of-binary-hash-codes-for-fast-image-retrieval-1.png" alt="deep-learning-of-binary-hash-codes-for-fast-image-retrieval-1.png" />
 </p>
-<p><span class="figure-number">&#22270;1&nbsp;</span> 图示1</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> binary hash code algorithm架构</p>
 </div>
 </div>
 
-<div id="outline-container-sec-1-4-1" class="outline-4">
-<h4 id="sec-1-4-1">Learning Hash-like Binary Codes</h4>
-<div class="outline-text-4" id="text-1-4-1">
+<ul class="org-ul"><li><a id="sec-1-4-1" name="sec-1-4-1"></a>Learning Hash-like Binary Codes<br  /><div class="outline-text-4" id="text-1-4-1">
 <p>
-很多文章都证明了 <code>Alexet</code> 的 F<sub>6-8</sub> 都可以作为图像的描述，直接使用这些高维特征进行图像检索，需要消耗大量的计算。
+很多文章都证明了 <b>Alexet</b> 的 F<sub>6-8</sub> 都可以作为图像的描述，直接使用这些高维特征进行图像检索，需要消耗大量的计算。
 </p>
 
 <p>
 本文提出了基于图像标签进行图像描述学习和哈希函数获取二值码进行图像检索的方法。
-假设分类层F<sub>8</sub>的结果依赖于 <code>Latent Layer</code> h个节点的 <code>on or off</code> 的状态。即相
+假设分类层F<sub>8</sub>的结果依赖于 <b>Latent Layer</b> h个节点的 <b>on or off</b> 的状态。即相
 似的二值码会推导出相同的标签。通过在F<sub>7</sub>和F<sub>8</sub>层之间引入一个隐层H，该隐层为一
 个全链接层，该层节点状态由后续的分类层F<sub>8</sub>层根据分类结果决定，该层的节点的激
-活函数为 <code>sigmoid</code> ，所以该节点的值在[0-1]之间。
+活函数为 <b>sigmoid</b> ，所以该节点的值在[0-1]之间。
 </p>
 
 <p>
@@ -268,13 +257,11 @@ CNN网络的权重值为预训练的AlexNet，隐层H和分类层F<sub>8</sub>�
 向传播进行学习。
 </p>
 </div>
-</div>
+</li>
 
-<div id="outline-container-sec-1-4-2" class="outline-4">
-<h4 id="sec-1-4-2">Image Retrieval via Hierarchical Deep Search</h4>
-<div class="outline-text-4" id="text-1-4-2">
+<li><a id="sec-1-4-2" name="sec-1-4-2"></a>Image Retrieval via Hierarchical Deep Search<br  /><div class="outline-text-4" id="text-1-4-2">
 <p>
-=ZFNet=<sup><a id="fnr.11" name="fnr.11" class="footref" href="#fn.11">11</a></sup> 分析了深度CNN网络的浅层网络用来学习局部可视化描述符，深层网络
+*ZFNet*<sup><a id="fnr.11" name="fnr.11" class="footref" href="#fn.11">11</a></sup> 分析了深度CNN网络的浅层网络用来学习局部可视化描述符，深层网络
 用来获取语义信息来识别。本文采取一个由粗到细的检索策略，用于快速和准确地进行
 图像检索。首先采用H层的二值码进行召唤，然后采用最深层的中间图像描述进行排序。
 </p>
@@ -320,7 +307,7 @@ Euclidean距离越小，相似度越高。
 </p>
 </div>
 </li></ul>
-</div>
+</li></ul>
 </div>
 
 
@@ -328,15 +315,13 @@ Euclidean距离越小，相似度越高。
 <h3 id="sec-1-5">Experimental Results</h3>
 <div class="outline-text-3" id="text-1-5">
 <p>
-首先介绍一下实验用的数据集（MNIST，CIFAR-10），然后和其他一些算法进行对比。最后会在 <code>Yahoo-1M</code> 数据集上进行验证。
+首先介绍一下实验用的数据集（MNIST，CIFAR-10），然后和其他一些算法进行对比。最后会在 <b>Yahoo-1M</b> 数据集上进行验证。
 </p>
 </div>
 
-<div id="outline-container-sec-1-5-1" class="outline-4">
-<h4 id="sec-1-5-1">Datasets</h4>
-<div class="outline-text-4" id="text-1-5-1">
+<ul class="org-ul"><li><a id="sec-1-5-1" name="sec-1-5-1"></a>Datasets<br  /><div class="outline-text-4" id="text-1-5-1">
 <p>
-<code>MNIST Dataset</code> 是一个具有10个类别的手写体数字识别数据集。60K的训练数据和
+<b>MNIST Dataset</b> 是一个具有10个类别的手写体数字识别数据集。60K的训练数据和
 10000的测试数据。所有的图像都已经归一化成了28*28的灰度图像。
 </p>
 
@@ -348,7 +333,7 @@ Euclidean距离越小，相似度越高。
 </div>
 
 <p>
-<code>CIFAR—10 Dataset</code> 是一个具有10个类别的，每个类别包括6k图像，总共具有60K图像
+<b>CIFAR—10 Dataset</b> 是一个具有10个类别的，每个类别包括6k图像，总共具有60K图像
 的数据集，训练和测试数据集分成50K和10K。
 </p>
 
@@ -360,7 +345,7 @@ Euclidean距离越小，相似度越高。
 </div>
 
 <p>
-<code>Yahoo-1M Dataset</code> 包括大概1M的电商产品图像，分为了116类。
+<b>Yahoo-1M Dataset</b> 包括大概1M的电商产品图像，分为了116类。
 </p>
 
 
@@ -376,12 +361,10 @@ Euclidean距离越小，相似度越高。
 Yahoo-1M上去评测的图像检索的效果。
 </p>
 </div>
-</div>
+</li>
 
 
-<div id="outline-container-sec-1-5-2" class="outline-4">
-<h4 id="sec-1-5-2">Ealuation Metrics</h4>
-<div class="outline-text-4" id="text-1-5-2">
+<li><a id="sec-1-5-2" name="sec-1-5-2"></a>Ealuation Metrics<br  /><div class="outline-text-4" id="text-1-5-2">
 <p>
 采取了给予排序的评测方法<sup><a id="fnr.12" name="fnr.12" class="footref" href="#fn.12">12</a></sup>，有一个请求图片 <i>q</i> 和一个相似度度量函数，每
 一个图片都可以得到一个排序。对top-k的图片进行评测计算：
@@ -396,19 +379,16 @@ Precision@k = \frac{\sum_{i=1}^{k}Rel(i)}{k}
 标签图片， <i>Rel(i)</i> &isin; {0, 1}。
 </p>
 </div>
-</div>
+</li>
 
-<div id="outline-container-sec-1-5-3" class="outline-4">
-<h4 id="sec-1-5-3">Results on MNIST Dataset</h4>
-<div class="outline-text-4" id="text-1-5-3">
-</div><ul class="org-ul"><li><a id="sec-1-5-3-1" name="sec-1-5-3-1"></a>Performance of Image Classification<br  /><div class="outline-text-5" id="text-1-5-3-1">
+<li><a id="sec-1-5-3" name="sec-1-5-3"></a>Results on MNIST Dataset<br  /><ul class="org-ul"><li><a id="sec-1-5-3-1" name="sec-1-5-3-1"></a>Performance of Image Classification<br  /><div class="outline-text-5" id="text-1-5-3-1">
 <p>
 F<sub>8</sub> 设置为10-way softmax去预测10个数字类别。为了评估隐层H，设置H层的节点
 数 <i>h</i> 为48和128。采取SGD训练CNN，50000迭代次数，0.001学习率。
 </p>
 </div>
 </li></ul>
-</div>
+</li></ul>
 </div>
 </div>
 <div id="footnotes">

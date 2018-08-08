@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-08 Wed 13:16 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Image Classification: Data-driven Approach, k-Nearest Neighbor, train/val/test splits</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Image Classification: Data-driven Approach, k-Nearest Neighbor, train/val/test splits</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org6256cd8">Image Classification</a>
+<ul>
+<li><a href="#org29252cd">Motivation</a></li>
+<li><a href="#org98fafd9">Example</a></li>
+<li><a href="#org274f32e">Challenges</a></li>
+</ul>
+</li>
+<li><a href="#org638e2d7">Nearest Neighbor Classifier</a>
+<ul>
+<li><a href="#orgcdb3b6d">Example Image classification dataset: CIFAR-10</a></li>
+<li><a href="#org1743f3f">The choice of distance</a></li>
+</ul>
+</li>
+<li><a href="#org5b98678">K-Nearest Neighbor Classifier</a></li>
+</ul>
+</div>
+</div>
+<p>
+本讲义翻译自 <b>cs231n:image-classification</b><sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>。主要目标给没有做过计算机视觉的
+人，介绍一下图像分类和数据驱动的学习方法。
+</p>
+
+<div id="outline-container-org6256cd8" class="outline-2">
+<h2 id="org6256cd8">Image Classification</h2>
+<div class="outline-text-2" id="text-org6256cd8">
+</div>
+<div id="outline-container-org29252cd" class="outline-3">
+<h3 id="org29252cd">Motivation</h3>
+<div class="outline-text-3" id="text-org29252cd">
+<p>
+图像分类(<i>Image Classification</i>)主要是对输入图像分到某一个类别的问题。该问题是计
+算机视觉的一个核心问题，虽然比较简单，但是有很大应用场景。而且随着学习的深入，我
+们可以看到其他的一些问题(目标识别、场景分割)也是基于图像分类来做的。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org98fafd9" class="outline-3">
+<h3 id="org98fafd9">Example</h3>
+<div class="outline-text-3" id="text-org98fafd9">
+<p>
+例如：下图图示1显示了输入一个图像，对该图像分类，分到4个类别{cat,dog,hat,mug}。
+如图所示，一个图像在计算机看来就是3维数组。如例子所示，该猫咪图像248像素宽，400
+像素高，同时有3个颜色通道，分别为红色、绿色、蓝色（RGB）。因此，一个图像由
+248*400*3个数字，总共297600个数字组成。每一个数字的范围为0（黑色）到255（白色）。
+图像分类就是根据这些数字进行分类到某个标签，例如 'cat'。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/classify.png" alt="classify.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>图像分类说明</p>
+</div>
+<hr />
+</div>
+</div>
+
+<div id="outline-container-org274f32e" class="outline-3">
+<h3 id="org274f32e">Challenges</h3>
+<div class="outline-text-3" id="text-org274f32e">
+<p>
+虽然图像分类任务相对人来说是一个比较简单的，但是对于计算机来说只是看到了一堆数字，
+并不是非常简单。如下是计算机视觉在图像分类会遇到的一些挑战：
+</p>
+<dl class="org-dl">
+<dt><code>Viewpoint variation</code></dt><dd>同一个对象，采取不同的视角进行拍摄，图像的最后变现具
+有很大的变化</dd>
+<dt><code>Scale varlation</code></dt><dd>同一类对象，在现实中也不是完全一样大小的</dd>
+<dt><code>Deformation</code></dt><dd>很对对象可以具有很多形态</dd>
+<dt><code>Occusion</code></dt><dd>对象可以被遮挡，很多时候只会露出局部</dd>
+<dt><code>Illumination conditions</code></dt><dd>光照情况会极大的影响图像数组呈现的数值</dd>
+<dt><code>Background clutter</code></dt><dd>感兴趣的对象有可能和背景色相似，增加辨识难度</dd>
+<dt><code>Intra-class variation</code></dt><dd>即使是同一类对象，内部也会具有一定差异</dd>
+</dl>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/challenges.jpeg" alt="challenges.jpeg" />
+</p>
+<p><span class="figure-number">Figure 2: </span>图像识别中的一些挑战</p>
+</div>
+<hr />
+
+<p>
+一个表现较好的图像分类模型需要能够克服如上的一些影响，保持类之间的分类性能。
+</p>
+</div>
+
+
+<ul class="org-ul">
+<li><a id="org26d7b04"></a>Data-driven approach<br />
+<div class="outline-text-4" id="text-org26d7b04">
+<p>
+思考，如何去构建一个算法来对图像进行分类呢？这个算法并不像排序算法，因为并没有一
+个很明确的算法过程可以保证图像正确分类。一大堆if-else语句？
+</p>
+
+<p>
+因此，这里常常采取的方法类似教小孩子识别图像一样。获取大量的样本图像，然后开发一
+个学习算法去学习这些样本图像。这个方法叫做： <b>data-driven approach</b> 。
+</p>
+
+<p>
+图像分类的训练集如下图所示，每个类别里都要包含若干张图片。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/trainset.jpg" alt="trainset.jpg" />
+</p>
+<p><span class="figure-number">Figure 3: </span>train-dataset</p>
+</div>
+<hr />
+</div>
+</li>
+
+<li><a id="org2bb2f11"></a>The Image classification pipeline<br />
+<div class="outline-text-4" id="text-org2bb2f11">
+<p>
+图像分类可以抽象为输入一个像素数组，代表输入的图像；然后根据像素数组来分配一个或
+多个类别。整体的流程如下：
+</p>
+<dl class="org-dl">
+<dt><code>Input</code></dt><dd>输入为N个图像，并且每一个图像都有一个类别，分属于k类中的一个。
+这些数据叫做训练集</dd>
+<dt><code>Learning</code></dt><dd>构建一个模型根据输入的训练集进行学习如何将像素数组分到不同的类别，
+这个过程叫做 <b>training a classifier</b></dd>
+<dt><code>Evaluation</code></dt><dd>最后，需要对这个训练的分类器进行评估。使用一个测试集，即这个集
+合中的数据模型是没有使用来进行训练，根据预测的类别去评估效果。
+这里的每个图像的真实类别叫做 <b>ground truth</b></dd>
+</dl>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org638e2d7" class="outline-2">
+<h2 id="org638e2d7">Nearest Neighbor Classifier</h2>
+<div class="outline-text-2" id="text-org638e2d7">
+<p>
+训练的第一个分类器叫做最近近邻分类器(<b>Nearest Neighbor Classifier</b>)。该分类器在
+实际场景中基本不会得到应用，而且和卷积神经网络一点关系都没有，但是可以通过这个简
+单的分类器先去学习一些图像分类的思想。
+</p>
+</div>
+
+<div id="outline-container-orgcdb3b6d" class="outline-3">
+<h3 id="orgcdb3b6d">Example Image classification dataset: CIFAR-10</h3>
+<div class="outline-text-3" id="text-orgcdb3b6d">
+<p>
+<b>CIFAR-10</b><sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup> 是一个较为简单的图像分类数据集。由60K 32*32像素的图像组成。总共有10类
+的类别标签。下图是CIFAR-10的示例：
+</p>
+
+<hr />
+<p>
+<img src="assets/nn.jpg" alt="nn.jpg" />
+左图：CIFAR-10不同类别下的图像示例；右图：第一列是一些测试图像，其他列是top-10最
+近近邻的图像。
+</p>
+<hr />
+
+<p>
+将CIFAR-10分为两部分，50K的用来作为训练集，每个列别具有5K的图像。剩下的10K图像作
+为测试集。最近近邻分类器会对每一个测试集中的图像计算在训练集中的最近近邻图像，然
+后测试图像的类别就标记为在训练集中的最近近邻图像的标签。
+</p>
+
+<p>
+如何定义两张图像的距离呢？最简单的做法就是将两张图像逐像素的进行比较，然后对差值
+加和即可。例如：两张图像表示为向量 <i>I<sub>1</sub>,I<sub>2</sub></i> ， <b>L1 distance</b> 如下公式：
+</p>
+
+\begin{equation}
+d_{1}(I_{1},I_{2}) = \sum_{p}{\lvert I_{1}^p-I_{2}^P \rvert}
+\end{equation}
+
+<hr />
+<p>
+<img src="assets/nneg.jpeg" alt="nneg.jpeg" />
+如图所示：逐像素进行距离计算，然后对这些差值加和，就是 <b>L1 distance</b>
+</p>
+<hr />
+
+<p>
+那么如何实现最近近邻算法，首先需要准备训练集和测试集。
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python" id="org88288a7"><span style="color: #BA36A5;">Xtr</span>, <span style="color: #BA36A5;">Ytr</span>, <span style="color: #BA36A5;">Xte</span>, <span style="color: #BA36A5;">Yte</span> = load_CIFAR10<span style="color: #707183;">(</span><span style="color: #008000;">'data/cifar10/'</span><span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">a magic function we provide</span>
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">flatten out all images to be one-dimensional</span>
+<span style="color: #BA36A5;">Xtr_rows</span> = Xtr.reshape<span style="color: #707183;">(</span>Xtr.shape<span style="color: #7388D6;">[</span><span style="color: #D0372D;">0</span><span style="color: #7388D6;">]</span>, <span style="color: #D0372D;">32</span> * <span style="color: #D0372D;">32</span> * <span style="color: #D0372D;">3</span><span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">Xtr_rows becomes 50000 x 3072</span>
+<span style="color: #BA36A5;">Xte_rows</span> = Xte.reshape<span style="color: #707183;">(</span>Xte.shape<span style="color: #7388D6;">[</span><span style="color: #D0372D;">0</span><span style="color: #7388D6;">]</span>, <span style="color: #D0372D;">32</span> * <span style="color: #D0372D;">32</span> * <span style="color: #D0372D;">3</span><span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">Xte_rows becomes 10000 x 3072</span>
+</pre>
+</div>
+
+<p>
+加载 <b>CIFAR-10</b> 数据集，获得4个数组：training data/label和test data/label。
+<b>Xtr</b> 为训练集数组，数据纬度为50K*32*32*3，对应的 <b>Ytr</b> 为训练集数据的类别，数据
+纬度为50K，并且数值在[0-9]。
+</p>
+
+<p>
+接着训练和评估分类器：
+</p>
+<div class="org-src-container">
+<pre class="src src-python" id="org79a09b6"><span style="color: #BA36A5;">nn</span> = NearestNeighbor<span style="color: #707183;">()</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">create a Nearest Neighbor classifier class</span>
+nn.train<span style="color: #707183;">(</span>Xtr_rows, Ytr<span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">train the classifier on the training images and labels</span>
+<span style="color: #BA36A5;">Yte_predict</span> = nn.predict<span style="color: #707183;">(</span>Xte_rows<span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">predict labels on the test images</span>
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">and now print the classification accuracy, which is the average number</span>
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">of examples that are correctly predicted (i.e. label matches)</span>
+<span style="color: #0000FF;">print</span> <span style="color: #008000;">'accuracy: %f'</span> % <span style="color: #707183;">(</span> np.mean<span style="color: #7388D6;">(</span>Yte_predict == Yte<span style="color: #7388D6;">)</span> <span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<b>accuracy</b> 用来评估分类器在测试集上的分类效果。需要注意的是分类器一般都具有两个
+API： <i>train(X,y)</i> 接受训练数据进行模型训练； <i>predict(X)</i> 接受新的数据进行分类。
+</p>
+
+<p>
+如下是一个简单的最近近邻分类器实现，采取 <b>L1 distance</b> ：
+</p>
+<div class="org-src-container">
+<pre class="src src-python" id="org41e2112"><span style="color: #0000FF;">import</span> numpy <span style="color: #0000FF;">as</span> np
+
+<span style="color: #0000FF;">class</span> <span style="color: #6434A3;">NearestNeighbor</span><span style="color: #707183;">(</span><span style="color: #006FE0;">object</span><span style="color: #707183;">)</span>:
+  <span style="color: #0000FF;">def</span> <span style="color: #006699;">__init__</span><span style="color: #707183;">(</span><span style="color: #0000FF;">self</span><span style="color: #707183;">)</span>:
+    <span style="color: #0000FF;">pass</span>
+
+  <span style="color: #0000FF;">def</span> <span style="color: #006699;">train</span><span style="color: #707183;">(</span><span style="color: #0000FF;">self</span>, X, y<span style="color: #707183;">)</span>:
+    <span style="color: #008000;">""" X is N x D where each row is an example. Y is 1-dimension of size N """</span>
+    <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">the nearest neighbor classifier simply remembers all the training data</span>
+    <span style="color: #0000FF;">self</span>.Xtr = X
+    <span style="color: #0000FF;">self</span>.ytr = y
+
+  <span style="color: #0000FF;">def</span> <span style="color: #006699;">predict</span><span style="color: #707183;">(</span><span style="color: #0000FF;">self</span>, X<span style="color: #707183;">)</span>:
+    <span style="color: #008000;">""" X is N x D where each row is an example we wish to predict label for """</span>
+    <span style="color: #BA36A5;">num_test</span> = X.shape<span style="color: #707183;">[</span><span style="color: #D0372D;">0</span><span style="color: #707183;">]</span>
+    <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">lets make sure that the output type matches the input type</span>
+    <span style="color: #BA36A5;">Ypred</span> = np.zeros<span style="color: #707183;">(</span>num_test, dtype = <span style="color: #0000FF;">self</span>.ytr.dtype<span style="color: #707183;">)</span>
+
+    <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">loop over all test rows</span>
+    <span style="color: #0000FF;">for</span> i <span style="color: #0000FF;">in</span> <span style="color: #006FE0;">xrange</span><span style="color: #707183;">(</span>num_test<span style="color: #707183;">)</span>:
+      <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">find the nearest training image to the i'th test image</span>
+      <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">using the L1 distance (sum of absolute value differences)</span>
+      <span style="color: #BA36A5;">distances</span> = np.<span style="color: #006FE0;">sum</span><span style="color: #707183;">(</span>np.<span style="color: #006FE0;">abs</span><span style="color: #7388D6;">(</span><span style="color: #0000FF;">self</span>.Xtr - X<span style="color: #909183;">[</span>i,:<span style="color: #909183;">]</span><span style="color: #7388D6;">)</span>, axis = <span style="color: #D0372D;">1</span><span style="color: #707183;">)</span>
+      <span style="color: #BA36A5;">min_index</span> = np.argmin<span style="color: #707183;">(</span>distances<span style="color: #707183;">)</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">get the index with smallest distance</span>
+      <span style="color: #BA36A5;">Ypred</span><span style="color: #707183;">[</span>i<span style="color: #707183;">]</span> = <span style="color: #0000FF;">self</span>.ytr<span style="color: #707183;">[</span>min_index<span style="color: #707183;">]</span> <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">predict the label of the nearest example</span>
+
+    <span style="color: #0000FF;">return</span> Ypred
+</pre>
+</div>
+
+<p>
+<b>L1 distance</b> 的最近近邻算法在CIFAR-10上的准确性为 <b>38.6%</b> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1743f3f" class="outline-3">
+<h3 id="org1743f3f">The choice of distance</h3>
+<div class="outline-text-3" id="text-org1743f3f">
+<p>
+还有很多中距离度量函数，另外一个常用的距离度量为 <b>L2 distance</b> ，在几何学叫做
+<b>euclidean distance</b>.计算公式如下：
+</p>
+
+\begin{equation}
+d_{2}(I_{1},I_{2}) = \sqrt{\sum_{p}{(I_{1}^p-I_{2}^p)^2}}
+\end{equation}
+
+<p>
+使用 <b>numpy</b> 只需要修改一行计算距离的代码即可：
+</p>
+<div class="org-src-container">
+<pre class="src src-python" id="org318764c"><span style="color: #BA36A5;">distances</span> = np.sqrt<span style="color: #707183;">(</span>np.<span style="color: #006FE0;">sum</span><span style="color: #7388D6;">(</span>np.square<span style="color: #909183;">(</span><span style="color: #0000FF;">self</span>.Xtr - X<span style="color: #709870;">[</span>i,:<span style="color: #709870;">]</span><span style="color: #909183;">)</span>, axis = <span style="color: #D0372D;">1</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<b>L2 distance</b> 的最近近邻算法在CIFAR-10上的准确性为 <b>35.4%</b> ，略低于 <b>L1
+distance</b> 。
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-org5b98678" class="outline-2">
+<h2 id="org5b98678">K-Nearest Neighbor Classifier</h2>
+<div class="outline-text-2" id="text-org5b98678">
+<p>
+最近近邻算法由于只考虑了一个最近样本的类别信息，在距离差距差不多的时候，容易形成
+错分。所以可以多考虑 <i>k</i> 个最近的样本的类别信息进行分类，能够提高分类准确性，这种方
+法叫做 <b>k-Nearest Neighbor Classifier</b> 。当 <i>k=1</i> 的时候就退化成了最近近邻算法。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/knn.jpeg" alt="knn.jpeg" />
+</p>
+<p><span class="figure-number">Figure 4: </span>knn</p>
+</div>
+<blockquote>
+<p>
+NN和KNN算法的差别。
+二维数据，3个类别（红蓝绿），显示了不同区域所属于的标签区域。
+</p>
+</blockquote>
+<hr />
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+<a href="http://cs231n.github.io/classification/">http://cs231n.github.io/classification/</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+<a href="http://www.cs.toronto.edu/~kriz/cifar.html">http://www.cs.toronto.edu/~kriz/cifar.html</a>
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-08-08 Wed 13:16</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

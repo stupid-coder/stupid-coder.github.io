@@ -1,6 +1,7 @@
 #+TITLE: deep learning of binary hash codes for fast image retrieval
 #+AUTHOR: qixiang@staff.sina.com.cn
-
+#+OPTIONS: num:nil H:2
+#+STARTUP: indent
 
 
 * Deep Learning of Binary Hash Codes for Fast Image Retrieval
@@ -14,20 +15,20 @@
 
 
 ** introduction
-   =Content-Based Image Retrieval= 通过对图像内容进行分析，然后检索相似图像。因
+   *Content-Based Image Retrieval* 通过对图像内容进行分析，然后检索相似图像。因
    此，图像内容的描述和相似度衡量便是关键。在深度学习以前，主要是通过人工构建图
    像描述符来描述图像内容；深度学习爆发后，基于CNN的图像技术使得图像处理的相关技
    术都得到的大量的提升。
 
 
-   得益于CNN网络能够学习丰富的中级图像描述符， =AlexNet=[fn:1] 使用第7层的特征作为特征
+   得益于CNN网络能够学习丰富的中级图像描述符， *AlexNet*[fn:1] 使用第7层的特征作为特征
    描述符进行图像抽取，获取了较好的结果。然而由于直接在CNN高维特征（4096）进行相
-   似度计算是比较低效的，可以对特征进行 =PCA= 降维[fn:2]。
+   似度计算是比较低效的，可以对特征进行 *PCA* 降维[fn:2]。
 
 
-   =CBIR= 中图像描述和相似计算都是比较关键的。在大规模图像抽取中，由于面对的是高
-   维特征，常规的检索方式并不适合该场景。近似近邻(=Approximate Nearest
-   Neighbor=)或者基于哈希的方法(=Hasing Based Method=)比较适合该场景。将高维特征
+   *CBIR* 中图像描述和相似计算都是比较关键的。在大规模图像抽取中，由于面对的是高
+   维特征，常规的检索方式并不适合该场景。近似近邻(*Approximate Nearest
+   Neighbor*)或者基于哈希的方法(*Hasing Based Method*)比较适合该场景。将高维特征
    映射到低维空间，然后生成二值码，通过二值匹配或者Hamming距离计算，可以快速的实
    现相似度计算。有些方法[fn:3]都需要构建一个图片近似矩阵，来构建pair-wised的训练集，
    从而在低维空间拉近相似图片的距离。
@@ -45,14 +46,14 @@
 ** related work
    哈希算法可以分为两大类：有监督和无监督方法。
 
-   无监督方法使用没有标记的数据学习哈希函数。 =Locality-Sensitive
-   Hashing(LSH)=[fn:4] 通过最大化相似数据分到相似二值码的概率。 =Spectral
-   Hashing(SH)=[fn:5] 通过对数据做PCA降维，在PCA主方向上取阈值截断获取二值码。
+   无监督方法使用没有标记的数据学习哈希函数。 *Locality-Sensitive
+   Hashing(LSH)*[fn:4] 通过最大化相似数据分到相似二值码的概率。 *Spectral
+   Hashing(SH)*[fn:5] 通过对数据做PCA降维，在PCA主方向上取阈值截断获取二值码。
 
    有监督方法可以更好地提升检索性能。有监督方法[fn:6][fn:7][fn:8]引入标注数据，
    并且使用pair-wised数据来学习哈希函数。
 
-   大多数深度结构用于哈希函数学习都是使用 =auto-encoder= 结构[fn:9][fn:10]。
+   大多数深度结构用于哈希函数学习都是使用 *auto-encoder* 结构[fn:9][fn:10]。
 
    方法[fn:3]采取对相似矩阵进行矩阵分解，然后学习隐特征的方法，获取较好的效果，
    但是受限于需要标注大量数据，无法很好的扩展到大规模数据集上。
@@ -60,28 +61,28 @@
 
 ** method
    图示1为本文提出的深度学习框架。主要包含3部分：
-   1. 预训练好的深度网络，本文采取的 =AlexNet=
+   1. 预训练好的深度网络，本文采取的 *AlexNet*
    2. 对隐特征进行微调，学习图像标签数据和哈希函数
    3. 图像抽取功能
 
 
-   #+CAPTION: 图示1
+   #+CAPTION: binary hash code algorithm架构
    [[file:assets/deep-learning-of-binary-hash-codes-for-fast-image-retrieval-1.png]]
    
 *** Learning Hash-like Binary Codes
-    很多文章都证明了 =Alexet= 的 F_{6-8} 都可以作为图像的描述，直接使用这些高维特征进行图像检索，需要消耗大量的计算。
+    很多文章都证明了 *Alexet* 的 F_{6-8} 都可以作为图像的描述，直接使用这些高维特征进行图像检索，需要消耗大量的计算。
 
     本文提出了基于图像标签进行图像描述学习和哈希函数获取二值码进行图像检索的方法。
-    假设分类层F_{8}的结果依赖于 =Latent Layer= h个节点的 =on or off= 的状态。即相
+    假设分类层F_{8}的结果依赖于 *Latent Layer* h个节点的 *on or off* 的状态。即相
     似的二值码会推导出相同的标签。通过在F_{7}和F_{8}层之间引入一个隐层H，该隐层为一
     个全链接层，该层节点状态由后续的分类层F_{8}层根据分类结果决定，该层的节点的激
-    活函数为 =sigmoid= ，所以该节点的值在[0-1]之间。
+    活函数为 *sigmoid* ，所以该节点的值在[0-1]之间。
 
     CNN网络的权重值为预训练的AlexNet，隐层H和分类层F_{8}随机初始化。整个网络通过反
     向传播进行学习。
 
 *** Image Retrieval via Hierarchical Deep Search
-    =ZFNet=[fn:11] 分析了深度CNN网络的浅层网络用来学习局部可视化描述符，深层网络
+    *ZFNet*[fn:11] 分析了深度CNN网络的浅层网络用来学习局部可视化描述符，深层网络
     用来获取语义信息来识别。本文采取一个由粗到细的检索策略，用于快速和准确地进行
     图像检索。首先采用H层的二值码进行召唤，然后采用最深层的中间图像描述进行排序。
 
@@ -116,22 +117,22 @@
 
 
 ** Experimental Results
-   首先介绍一下实验用的数据集（MNIST，CIFAR-10），然后和其他一些算法进行对比。最后会在 =Yahoo-1M= 数据集上进行验证。
+   首先介绍一下实验用的数据集（MNIST，CIFAR-10），然后和其他一些算法进行对比。最后会在 *Yahoo-1M* 数据集上进行验证。
 
 *** Datasets
-    =MNIST Dataset= 是一个具有10个类别的手写体数字识别数据集。60K的训练数据和
+    *MNIST Dataset* 是一个具有10个类别的手写体数字识别数据集。60K的训练数据和
     10000的测试数据。所有的图像都已经归一化成了28*28的灰度图像。
 
     #+CAPTION: MNIST Dataset
     [[file:assets/deep-learning-of-binary-hash-codes-for-fast-image-retrieval-2.png]]
 
-    =CIFAR—10 Dataset= 是一个具有10个类别的，每个类别包括6k图像，总共具有60K图像
+    *CIFAR—10 Dataset* 是一个具有10个类别的，每个类别包括6k图像，总共具有60K图像
     的数据集，训练和测试数据集分成50K和10K。
 
     #+CAPTION: CIFAR-10 Dataset
     [[file:assets/deep-learning-of-binary-hash-codes-for-fast-image-retrieval-3.png]]
 
-    =Yahoo-1M Dataset= 包括大概1M的电商产品图像，分为了116类。
+    *Yahoo-1M Dataset* 包括大概1M的电商产品图像，分为了116类。
     
     #+CAPTION: Yahoo-1M Dataset
     [[file:assets/deep-learning-of-binary-hash-codes-for-fast-image-retrieval-4.png]]
