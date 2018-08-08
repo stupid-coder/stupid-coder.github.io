@@ -95,7 +95,7 @@
            :publishing-function org-publish-attachment)
           ("stupid-coder-images"
            :base-directory ,blog-base-directory
-           :base-extension "png\\|jpg\\|gif\\|pdf\\|csv\\|css\\|tex"
+           :base-extension "png\\|jpg\\|gif\\|pdf\\|csv\\|css\\|tex\\|jpeg"
            :publishing-directory ,blog-publish-directory
            :recursive t
            :publishing-function org-publish-attachment)

@@ -6,7 +6,7 @@
 #+OPTIONS: H:2 num:nil
 
 
-本讲义翻译自 *cs231n:image-classification*[fn:1]。主要目标给没有做过计算机视觉的
+本讲义翻译自 *cs231n:image-classification* [fn:1]。主要目标给没有做过计算机视觉的
 人，介绍一下图像分类和数据驱动的学习方法。
 
 * Image Classification
@@ -77,7 +77,7 @@
 单的分类器先去学习一些图像分类的思想。
 
 ** Example Image classification dataset: CIFAR-10
-*CIFAR-10*[fn:2] 是一个较为简单的图像分类数据集。由60K 32*32像素的图像组成。总共有10类
+*CIFAR-10* [fn:2] 是一个较为简单的图像分类数据集。由60K 32*32像素的图像组成。总共有10类
 的类别标签。下图是CIFAR-10的示例：
 
 -----
@@ -187,7 +187,6 @@ d_{2}(I_{1},I_{2}) = \sqrt{\sum_{p}{(I_{1}^p-I_{2}^p)^2}}
 
 *L2 distance* 的最近近邻算法在CIFAR-10上的准确性为 *35.4%* ，略低于 *L1
 distance* 。
-
 
 * K-Nearest Neighbor Classifier
 最近近邻算法由于只考虑了一个最近样本的类别信息，在距离差距差不多的时候，容易形成
