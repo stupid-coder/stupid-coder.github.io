@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Linear classification: Support Vector Machine, Softmax</title>
+<!-- 2018-08-14 Tue 23:20 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Linear classification: Support Vector Machine, Softmax</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Linear Classification</a></li>
+<li><a href="#sec-2">Parameterized mapping from images to label scores</a></li>
+<li><a href="#sec-3">Linear classifier</a></li>
+<li><a href="#sec-4">Interpreting a linear classifier</a>
+<ul>
+<li><a href="#sec-4-1">Analogy of images as high-dimensional points</a></li>
+<li><a href="#sec-4-2">Interpretation of linear classifiers as template matching</a></li>
+<li><a href="#sec-4-3">Bias trick</a></li>
+<li><a href="#sec-4-4">Image data preprocessing</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">Loss function</a>
+<ul>
+<li><a href="#sec-5-1">Multiclass Support Vector Machine loss</a>
+<ul>
+<li><a href="#sec-5-1-1">Regularization</a></li>
+</ul>
+</li>
+<li><a href="#sec-5-2">Softmax classifier</a>
+<ul>
+<li><a href="#sec-5-2-1">Information theory view</a></li>
+<li><a href="#sec-5-2-2">Probabilistic interpretation</a></li>
+<li><a href="#sec-5-2-3">Practical Issues: Numeric stability</a></li>
+</ul>
+</li>
+<li><a href="#sec-5-3">SVM vs. Softmax</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">Summary</a></li>
+<li><a href="#sec-7">Further Reading</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Linear Classification</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+在上部分，介绍了图像分类的问题。根据输入的图像，分类器会给图像分配一个标签，该
+标签是在规定的类别(<b>categories</b>)中。 <i>kNN</i> 通过比较输入图像和训练集中的图像的
+相似度，获取前 k 的图像标记进行投票。 <i>kNN</i> 很明显具有如下缺点：
+</p>
+<ul class="org-ul">
+<li>分类器必须记录所有的训练集样本。在训练集较大时，需要消耗大量的内存进行存储
+</li>
+<li>预测时候，需要进行逐一比较，需要消耗大量的计算
+</li>
+</ul>
+
+
+<p>
+文本将去开发一个更为有效的方法进行图像分类，并且后续很容易扩展成神经网络
+(<i>Neural Networks</i>)和卷积神经网络(<i>Convolutional Neural Networks</i>)。该方法具有
+两个主要的模块： <b>score function</b> 将原始数据映射到类别得分； <b>loss function</b>
+用来度量预估的得分和实际真的标签的差距。这样，可以看作通过调整得分函数的参数最
+小化损失函数的优化问题。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Parameterized mapping from images to label scores</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<b>score function</b> 用来将原图像数据射到每一个类别，并且得到对应的置信得分
+ (<i>confidence scores</i>)。
+</p>
+
+<p>
+假设具有一个图像训练集，其中的图像 <i>x<sub>i</sub> &isin; R<sup>D</sup></i> ，都具有一个标签数据
+<i>y<sub>i</sub></i> ， <i>i = 1 &#x2026; N</i> 并且 <i>y<sub>i</sub> &isin; 1 &#x2026; K</i> 。也就是说总共具有 <i>N</i> 样本
+(每个样本具有的数据维度是 <i>D</i>)和 <i>K</i> 个类别。例如：在 CIFAR-10 中，总共有
+<i>N=50K</i> 的训练图像数据，每一个图像具有 <i>D=32*32*3</i> 的维度像素；并且 <i>K=10</i> ，
+表示总共有 10 类(dog,cat,car,etc)。这里定义 <b>score function</b> <i>f: R<sup>D</sup> -&gt;
+R<sup>K</sup></i> ，用于将原始图像像素映射到类别得分。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Linear classifier</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+本文先介绍一个最简单的得分函数，线性分类：
+</p>
+
+\begin{equation}
+f(x_{i},W,b) = Wx_{i} + b
+\end{equation}
+
+<p>
+在上述的等式中，假设输入图像 <i>x<sub>i</sub></i> ，将 3 维图像数组压平成一维列数组 <i>形状 [D,1]</i>
+。矩阵 <i>W</i> (形状 <i>[K, D]</i>)和向量 <i>b</i> (形状 <i>[K, 1]</i>)为得分函数的参数空间。
+<i>W</i> 一般称为权重值 <i>weights</i> ， <i>b</i> 一般成为偏置 <i>bias</i> 。
+</p>
+
+<p>
+这里有一些事情需要关注：
+</p>
+<ul class="org-ul">
+<li>矩阵运算 <i>Wx<sub>i</sub></i> 一次可以直接并行计算 K 个不同类别的分类器，每个分类器是权值
+矩阵 <i>W</i> 的一行。
+</li>
+<li>基于输入的样本，主要是要控制参数 <i>W，b</i> 使得最后的类别得分能够和真实的类别
+标签像匹配，并且真实的类别标签的得分高于其他标签的得分。
+</li>
+<li>这种学习的方法的优点在于，只需要去学习调整参数 <i>W，b</i> ，最后只需要记住 <i>W，
+b</i> 即可，而不需要记住全部的训练样本。
+</li>
+<li>预测阶段，只需要计算一次矩阵乘法运算和偏置加法运算，要比遍历训练数据集的
+<b>kNN</b> 算法要快很多
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Interpreting a linear classifier</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<b>linear classifier</b> 就是将每个通道的像素值进行权值加和。权值影响着每一个位置的
+和通道的像素对类别的关联程度(正值是正相关、负值是负相关、零代表无关)。例如：类
+别为 <b>船</b> 的图像背景像素常常会是蓝色(<i>大海的颜色</i>)。这样在这些像素区域和蓝色通
+道上会有一个较大的权值，会增加分到类别 <b>船</b> 的分数变大。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/imagemap.jpg" alt="imagemap.jpg" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> 图像线性分类器</p>
+</div>
+<hr  />
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Analogy of images as high-dimensional points</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+每张图像会被拉伸成一维的高维向量，所以可以将这些图像看作是高维空间的一个坐标
+点(CIFAR-10 中每张图像的维度为 3072=32*32*3)。整个样本集可以看作是这些坐标点组
+成的。
+</p>
+
+<p>
+我们无法可视化这么高维度的空间，但是如果假设我们可以对这些高维压缩到只有 2 维，
+那么我们就可以可视化这个分类器到底是做什么？
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/pixelspace.jpeg" alt="pixelspace.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 可视化分类器</p>
+</div>
+<blockquote>
+<p>
+每一个图片都是一个坐标点，其中可视化了 3 个分类器。红色的线是汽车的分类器，在该
+线上的坐标点代表都是获得类别是汽车得分为 0 的点。箭头代表分数的增加方向，所以所
+有在红色分类器右边的点都具有类别是汽车得分大于 0 的点，所有在红色分类器左边的点
+的类别是汽车的得分都是小于 0 的点。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+在权值矩阵 <i>W</i> 中的每一行都对应一个类别的分类器。并且控制着线性分类器的方向
+(梯度)。偏置 <i>b</i> 代表着该类别的分类器在 0 点的分类点，如果所有的分类器的偏置为 0，
+那么在 <i>x_i=0</i> ，则所有的分类器都会交叉到原点。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">Interpretation of linear classifiers as template matching</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+另外一种解释，可以将权值矩阵 <i>w</i> 的每一行为对应列别的模板。类别的得分就是用内
+积来计算图像与模板的匹配程度。这样，分类器就是去学习不同类别的模板，然后分类
+器用这些模板去进行分类。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/templates.jpg" alt="templates.jpg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> 分类器模板匹配</p>
+</div>
+<blockquote>
+<p>
+上图是在 CIFAR-10 上学习到的线性分类器权值矩阵在不同类别上的可视化结果。可以看
+到 <b>船</b> 类别的模板大多数都是蓝色，也就是说如果图像中的像素点很多都是蓝色的，
+那么 <b>船</b> 类别的得分会比较高
+</p>
+</blockquote>
+<hr  />
+
+<p>
+从上图，可以看到 <i>马</i> 类别的模板上，有马头朝左和朝右，主要原因是数据集中包含
+了马头朝左的图像，也包含了马头朝右的图像。线性分类器将这两种马的图像模板合并
+到了一个模板中。 <i>汽车</i> 类别的模板融合了各个朝向和个种颜色的模板，最后模板呈
+现红色，代表 CIFAR-10 中的汽车图像红色车较多。线性分类器描述能力太弱，不足以区
+分不同颜色的汽车图像。神经网络(<i>neural network</i>)可以通过隐含层的中间节点来检
+测任何类型的汽车图像(绿色车头向左，红色车头向前)，下一层的神经元可以将这些信
+息进行合并，并获取较高分数，从而能够分辨出各种各样的汽车图像。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3">Bias trick</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+现在我们有两个主要参数类型： <i>W</i> 和 <i>b</i> 。定义的得分函数：
+</p>
+
+\begin{equation}
+f(x_{i},W,b) = Wx_{i} + b
+\end{equation}
+
+<p>
+如果对 <i>x<sub>i</sub></i> 进行扩展一列，并保持该列为 1(<i>bias dimension</i>)，那么上述的公式
+可以改写为：
+</p>
+
+\begin{equation}
+f(x_{i},W) = Wx_{i}
+\end{equation}
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/wb.jpeg" alt="wb.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> 融合权值矩阵和偏置向量</p>
+</div>
+<blockquote>
+<p>
+通过对输入向量进行行扩展，并且保持该行的为常量 1，那么就可以将权值矩阵和偏置向
+量融合成一个新的权值矩阵。
+</p>
+</blockquote>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-4-4" class="outline-3">
+<h3 id="sec-4-4">Image data preprocessing</h3>
+<div class="outline-text-3" id="text-4-4">
+<p>
+在机器学习中，有一个很重要的技巧就是对输入数据进行归一化。图像中，首先计算训
+练集中图像的像素均值，然后每个像素点减去该均值，使得图像的像素值在范围[-127,
+127]之间，然后归一化到[-1, 1]之间。后续在进行最优化求解的时候，可以看到归一化
+的好处。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Loss function</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+<b>Linear classifier</b> 看到了，通过对输入的图像像素乘以权值矩阵 <i>W</i> 后，从而获得
+ 多个类别分类得分。整个过程不会对输入样本 <i>(x<sub>i</sub>,y<sub>i</sub>)</i> 进行改变，只是控制权值矩
+ 阵 <i>W</i> 来达到得分函数的输出类别的最高得分与训练数据中的真类别一样。
+</p>
+
+<p>
+例如，在<a href="#sec-4">Interpreting a linear classifier</a>中，输入猫的图像，最后得到三种种类的
+得分。可以看到在结果中，类别是猫的的得分并不理想(-96.8)，那么这里需要有一个函
+数(<b>loss function</b> 有时候也叫 <b>cost function</b>)来度量这种结果的不理想。在分类
+器分类效果越差，损失函数的分数应该越高。
+</p>
+</div>
+
+<div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1">Multiclass Support Vector Machine loss</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+机器学习中定义了多种损失函数，介绍的第一个损失函数为支持向量机损失函数
+(<b>Multiclass Support Vector Machine(svm) Loss</b>)。SVM loss 希望分类正确的得分和
+分类错误的得分具有一个明显的分界(<b>margin &Delta;</b>)，如果满足这种条件，最后的损
+失函数为 0。
+</p>
+
+<p>
+假设，输入的 i-th 样本为图像 <i>x<sub>i</sub></i> 和样本标签 <i>y<sub>i</sub></i> ，得分函数根据输入的
+图像像素计算的最后样本得分向量 <i>f(x<sub>i</sub>, W)</i> ，缩写为 <i>s</i> 。那么第 j-th 类别
+的得分就为 <i>s<sub>j</sub> = f(x<sub>i</sub>, W)<sub>j</sub></i> 。那么第 i-th 样本的多分类 SVM Loss 为：
+</p>
+\begin{equation}
+L_{i} = \sum_{y \neq y_{i}}max(0, s_{j}-s_{y_{i}} + \Delta)
+\end{equation}
+
+<p>
+如果得分函数为线性得分函数(<i>f(x<sub>i</sub>;W)=Wx<sub>i</sub></i>)，那么我们上述损失函数就可以写
+为：
+</p>
+\begin{equation}
+L_{i} = \sum_{j \neq y_{i}}{max(0, w_{j}^{T}x_{i} - w_{y_i}^{T}x_{i} +
+\Delta)}
+\end{equation}
+<p>
+其中， <i>w<sub>j</sub></i> 是权值矩阵 <i>W</i> 的 j-th 行向量转置成的列向量。
+</p>
+
+<p>
+SVM Loss 最后一点需要注意的是， <i>max(0,-)</i> 函数成为铃损失(<b>hinge loss</b>)。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/margin.jpg" alt="margin.jpg" />
+</p>
+<p><span class="figure-number">&#22270;5&nbsp;</span> SVM Loss 中的分解</p>
+</div>
+<hr  />
+</div>
+
+<div id="outline-container-sec-5-1-1" class="outline-4">
+<h4 id="sec-5-1-1">Regularization</h4>
+<div class="outline-text-4" id="text-5-1-1">
+<p>
+在 SVM Loss 如果有一个 <i>W</i> 可以使的所有的样本的损失 <i>L_i</i> 都为 0。那么问题来了，
+这个 <i>W</i> 并不是唯一的。只需要对 <i>W</i> 乘以一个大于 1 的参数即可。
+</p>
+
+<p>
+那么如果克服这个情况呢，来使得某一个 <i>W</i> 由于其他的 <i>W</i> 。正则化
+(<b>regulartizaton penalty R(W)</b>)是一个很好的选择，最常用的是 <b>L2 norm</b> ，对多
+大的权值进行 2 次惩罚：
+</p>
+\begin{equation}
+R(W) = \sum_{k}\sum_{l}W_{k,l}^2
+\end{equation}
+
+<p>
+正则化惩罚只和权值有关，SVM Loss 就由两部分租车：样本损失和正则化损失。
+</p>
+\begin{equation}
+L = \underbrace{\frac{1}{n} \sum_{i}{L_{i}}}_{data\ loss} +
+\underbrace{\lambda R(w)}_{regularization\ loss}
+\end{equation}
+
+<p>
+其中 <i>&lambda;</i> 控制着正则惩罚项对 loss 的贡献。而且该超参的选择只能通过交叉
+验证来设定。
+</p>
+
+<p>
+引入正则项，会带来一个最重要性质：
+</p>
+<blockquote>
+<p>
+对大权值的惩罚会带来泛化能力的提升，因为这就使得权重值较为平均，不容易出现某
+个特征维度会对结果具有巨大的影响。
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2">Softmax classifier</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+另外一个常用的损失方法是对得分函数的输出进行变换，采取 <b>softmax function</b> ，
+采用该得分函数的分类器叫做 <b>softmaxclassifier</b> 。 <b>softmax classifier</b> 是二分
+类逻辑斯特分类器(<b>binary logisticregression classifier</b>)的一般形式。 <b>softmax
+classifier</b> 的得分函数输出可以被视作不同类别的概率值未归一化的对数值，并且将
+<b>svm loss</b> 中的岭损失换成交叉熵(<b>cross-entropy loss</b>)损失：
+</p>
+\begin{equation}
+L_{i} = -log(\frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}}) \ or\ equaivalently\ L_{i} =
+-f_{y_i} + log\sum_{j}{e^{f_j}}
+\end{equation}
+
+<p>
+<i>f<sub>j</sub></i> 表示得分函数输出的得分向量。其中 <i>\(f_j(z) =
+   \frac{e^{z_j}}{\sum_{k}e^{z_{k}}}\)</i> 叫做 <b>softmax function</b> 。
+</p>
+</div>
+
+<div id="outline-container-sec-5-2-1" class="outline-4">
+<h4 id="sec-5-2-1">Information theory view</h4>
+<div class="outline-text-4" id="text-5-2-1">
+<p>
+交叉熵(<b>cross entropy</b>) 是用来度量真实概率分布 <i>p</i> 和假设概率分布 <i>q</i> 的相似
+度：
+</p>
+\begin{equation}
+H(p,q) = - \sum_{x}p(x)logq(x) 
+\end{equation}
+<p>
+该交叉熵等式，可以改写成 p 的熵和 KL 距离的和， <i>\(H(p,q) = H(p) +
+    D_{KL}(p||q)\)</i> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2-2" class="outline-4">
+<h4 id="sec-5-2-2">Probabilistic interpretation</h4>
+<div class="outline-text-4" id="text-5-2-2">
+<p>
+重新审视一下 <b>maxsoft</b> 得分函数：
+\begin<sub>equation</sub>
+P(y<sub>i</sub>|x<sub>i</sub>;W) = \frac{e<sup>f<sub>y_i</sub></sup>}{&sum;<sub>j</sub>e<sup>f_j</sup>}
+\end{equation}
+可以被设为在参数 <i>W</i> 情况下，输入图像 <i>x_i</i> 得到的归一化后 <i>y_i</i> 类别概率。
+<b>softmax classifier</b> 将输入的线性得分向量 <i>f</i> 是做未归一化的对数概率。那么最
+小化负值对数似然概率(<b>negative log likelihood</b>)可以看作是最大化似然概率
+(<b>Maximum Likelihood Estimation(MLE)</b>)。同样，正则化损失 <i>R(W)</i> 可以看作是权
+值矩阵 <i>W</i> 满足高斯先验概率，执行最大后验概率估计(<b>Maximum a posteriori estimation</b>)。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2-3" class="outline-4">
+<h4 id="sec-5-2-3">Practical Issues: Numeric stability</h4>
+<div class="outline-text-4" id="text-5-2-3">
+<p>
+在执行 softmax function 计算的的时候，因为中间值具有指数形式，所以有可能会产生
+数值越界的可能。在归一化的除法操作，除以一个较大的数值，会直接影响最后的数值
+的稳定性。这里需要一个归一化技巧，考虑如果我们对归一化的上下乘以一个常数：
+</p>
+\begin{equation}
+\frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}} =
+\frac{Ce^{f_{y_i}}}{C\sum_{j}e^{f_{j}}} =
+\frac{e^{f_{y_{i}}+logC}}{\sum_{j}e^{f_{j}+logC}}
+\end{equation}
+<p>
+可以通过选择一个合适的 <i>C</i> 来提高数值计算的结果的稳定性。常规的选择是
+<i>\(logC=-max_{j}f_{j}\)</i> 。
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3">SVM vs. Softmax</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+下图用来说明 SVM 分类器和 Softmax 分类器的区别：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/svmvssoftmax.png" alt="svmvssoftmax.png" />
+</p>
+<p><span class="figure-number">&#22270;6&nbsp;</span> svm vs. softmax</p>
+</div>
+<blockquote>
+<p>
+svm 分类器只关注样本正确分类大于错误分类超过一个阈值(margin)即可。softmax 分类
+器期望是使得正确分类的概率分布越大越好。
+</p>
+</blockquote>
+<hr  />
+<p>
+可以理解为，svmloss 只关注分类点在阈值以内的样本点。softmaxloss 会关注所有的样
+本点。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Summary</h2>
+<div class="outline-text-2" id="text-6">
+<ul class="org-ul">
+<li>定义了得分函数(<b>score function</b>) 
+</li>
+<li>介绍了偏置技巧，将偏置项给集成到权值矩阵中
+</li>
+<li>定义了两种损失函数
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">Further Reading</h2>
+<div class="outline-text-2" id="text-7">
+<ul class="org-ul">
+<li><a href="https://arxiv.org/abs/1306.0239">Deep Learning using Linear Support Vector Machines</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>
