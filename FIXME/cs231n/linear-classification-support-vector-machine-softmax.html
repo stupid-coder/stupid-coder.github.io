@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-12 Sun 16:58 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Linear classification: Support Vector Machine, Softmax</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Linear classification: Support Vector Machine, Softmax</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org27e5c58">1. Linear Classification</a></li>
+<li><a href="#org079818f">2. Parameterized mapping from images to label scores</a></li>
+<li><a href="#orgba129ce">3. Linear classifier</a></li>
+<li><a href="#org6405136">4. Interpreting a linear classifier</a>
+<ul>
+<li><a href="#orgb694eb4">4.1. Analogy of images as high-dimensional points</a></li>
+<li><a href="#orgd28738a">4.2. Interpretation of linear classifiers as template matching</a></li>
+<li><a href="#org84e5026">4.3. Bias trick</a></li>
+<li><a href="#org4f3c6a2">4.4. Image data preprocessing</a></li>
+</ul>
+</li>
+<li><a href="#org8d9a092">5. Loss function</a>
+<ul>
+<li><a href="#org6c0a085">5.1. Multiclass Support Vector Machine loss</a>
+<ul>
+<li><a href="#orga0cd029">5.1.1. Regularization</a></li>
+</ul>
+</li>
+<li><a href="#org5d7f87f">5.2. Softmax classifier</a>
+<ul>
+<li><a href="#orga6864b3">5.2.1. Information theory view</a></li>
+<li><a href="#org10561fe">5.2.2. Probabilistic interpretation</a></li>
+<li><a href="#org91809cb">5.2.3. Practical Issues: Numeric stability</a></li>
+</ul>
+</li>
+<li><a href="#org1e5b7e1">5.3. SVM vs. Softmax</a></li>
+</ul>
+</li>
+<li><a href="#orgf9617d0">6. Summary</a></li>
+<li><a href="#orgc9b74e3">7. Further Reading</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org27e5c58" class="outline-2">
+<h2 id="org27e5c58"><span class="section-number-2">1</span> Linear Classification</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+在上部分，介绍了图像分类的问题。根据输入的图像，分类器会给图像分配一个标签，该标签是在规定的类别(<b>categories</b>)中。 <i>kNN</i> 通过比较输入图像和训练集中的图像的相似度，获取前 k 的图像标记进行投票。 <i>kNN</i> 很明显具有如下缺点：
+</p>
+<ul class="org-ul">
+<li>分类器必须记录所有的训练集样本。在训练集较大时，需要消耗大量的内存进行存储</li>
+<li>预测时候，需要进行逐一比较，需要消耗大量的计算</li>
+</ul>
+
+
+<p>
+文本将去开发一个更为有效的方法进行图像分类，并且后续很容易扩展成神经网络
+(<i>Neural Networks</i>)和卷积神经网络(<i>Convolutional Neural Networks</i>)。该方法具有两个主要的模块： <b>score function</b> 将原始数据映射到类别得分； <b>loss function</b>
+用来度量预估的得分和实际真的标签的差距。这样，可以看作通过调整得分函数的参数最小化损失函数的优化问题。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org079818f" class="outline-2">
+<h2 id="org079818f"><span class="section-number-2">2</span> Parameterized mapping from images to label scores</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<b>score function</b> 用来将原图像数据射到每一个类别，并且得到对应的置信得分
+ (<i>confidence scores</i>)。
+</p>
+
+<p>
+假设具有一个图像训练集，其中的图像 <i>x<sub>i</sub> &isin; R<sup>D</sup></i> ，都具有一个标签数据
+<i>y<sub>i</sub></i> ， <i>i = 1 &#x2026; N</i> 并且 <i>y<sub>i</sub> &isin; 1 &#x2026; K</i> 。也就是说总共具有 <i>N</i> 样本
+(每个样本具有的数据维度是 <i>D</i>)和 <i>K</i> 个类别。例如：在 CIFAR-10 中，总共有
+<i>N=50K</i> 的训练图像数据，每一个图像具有 <i>D=32*32*3</i> 的维度像素；并且 <i>K=10</i> ，表示总共有 10 类(dog,cat,car,etc)。这里定义 <b>score function</b> <i>f: R<sup>D</sup> -&gt;
+R<sup>K</sup></i> ，用于将原始图像像素映射到类别得分。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgba129ce" class="outline-2">
+<h2 id="orgba129ce"><span class="section-number-2">3</span> Linear classifier</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+本文先介绍一个最简单的得分函数，线性分类：
+</p>
+
+\begin{equation}
+f(x_{i},W,b) = Wx_{i} + b
+\end{equation}
+
+<p>
+在上述的等式中，假设输入图像 <i>x<sub>i</sub></i> ，将 3 维图像数组压平成一维列数组 <i>形状 [D,1]</i>
+。矩阵 <i>W</i> (形状 <i>[K, D]</i>)和向量 <i>b</i> (形状 <i>[K, 1]</i>)为得分函数的参数空间。
+<i>W</i> 一般称为权重值 <i>weights</i> ， <i>b</i> 一般成为偏置 <i>bias</i> 。
+</p>
+
+<p>
+这里有一些事情需要关注：
+</p>
+<ul class="org-ul">
+<li>矩阵运算 <i>Wx<sub>i</sub></i> 一次可以直接并行计算 K 个不同类别的分类器，每个分类器是权值矩阵 <i>W</i> 的一行。</li>
+<li>基于输入的样本，主要是要控制参数 <i>W，b</i> 使得最后的类别得分能够和真实的类别标签像匹配，并且真实的类别标签的得分高于其他标签的得分。</li>
+<li>这种学习的方法的优点在于，只需要去学习调整参数 <i>W，b</i> ，最后只需要记住 <i>W，
+b</i> 即可，而不需要记住全部的训练样本。</li>
+<li>预测阶段，只需要计算一次矩阵乘法运算和偏置加法运算，要比遍历训练数据集的
+*kNN*算法要快很多</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org6405136" class="outline-2">
+<h2 id="org6405136"><span class="section-number-2">4</span> Interpreting a linear classifier</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<b>linear classifier</b> 就是将每个通道的像素值进行权值加和。权值影响着每一个位置的和通道的像素对类别的关联程度(正值是正相关、负值是负相关、零代表无关)。例如：类别为 <b>船</b> 的图像背景像素常常会是蓝色(<i>大海的颜色</i>)。这样在这些像素区域和蓝色通道上会有一个较大的权值，会增加分到类别 <b>船</b> 的分数变大。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/imagemap.jpg" alt="imagemap.jpg" />
+</p>
+<p><span class="figure-number">Figure 1: </span>图像线性分类器</p>
+</div>
+<hr />
+</div>
+
+<div id="outline-container-orgb694eb4" class="outline-3">
+<h3 id="orgb694eb4"><span class="section-number-3">4.1</span> Analogy of images as high-dimensional points</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+每张图像会被拉伸成一维的高维向量，所以可以将这些图像看作是高维空间的一个坐标点(CIFAR-10 中每张图像的维度为 3072=32*32*3)。整个样本集可以看作是这些坐标点组成的。
+</p>
+
+<p>
+我们无法可视化这么高维度的空间，但是如果假设我们可以对这些高维压缩到只有 2 维，那么我们就可以可视化这个分类器到底是做什么？
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/pixelspace.jpeg" alt="pixelspace.jpeg" />
+</p>
+<p><span class="figure-number">Figure 2: </span>可视化分类器</p>
+</div>
+<blockquote>
+<p>
+每一个图片都是一个坐标点，其中可视化了 3 个分类器。红色的线是汽车的分类器，在该线上的坐标点代表都是获得类别是汽车得分为 0 的点。箭头代表分数的增加方向，所以所有在红色分类器右边的点都具有类别是汽车得分大于 0 的点，所有在红色分类器左边的点的类别是汽车的得分都是小于 0 的点。
+</p>
+</blockquote>
+<hr />
+
+<p>
+在权值矩阵 <i>W</i> 中的每一行都对应一个类别的分类器。并且控制着线性分类器的方向
+(梯度)。偏置 <i>b</i> 代表着该类别的分类器在 0 点的分类点，如果所有的分类器的偏置为 0，那么在 <i>x<sub>i</sub>=0</i> ，则所有的分类器都会交叉到原点。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd28738a" class="outline-3">
+<h3 id="orgd28738a"><span class="section-number-3">4.2</span> Interpretation of linear classifiers as template matching</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+另外一种解释，可以将权值矩阵 <i>w</i> 的每一行为对应列别的模板。类别的得分就是用内积来计算图像与模板的匹配程度。这样，分类器就是去学习不同类别的模板，然后分类器用这些模板去进行分类。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/templates.jpg" alt="templates.jpg" />
+</p>
+<p><span class="figure-number">Figure 3: </span>分类器模板匹配</p>
+</div>
+<blockquote>
+<p>
+上图是在 CIFAR-10 上学习到的线性分类器权值矩阵在不同类别上的可视化结果。可以看到 <b>船</b> 类别的模板大多数都是蓝色，也就是说如果图像中的像素点很多都是蓝色的，那么 <b>船</b> 类别的得分会比较高
+</p>
+</blockquote>
+<hr />
+
+<p>
+从上图，可以看到 <i>马</i> 类别的模板上，有马头朝左和朝右，主要原因是数据集中包含了马头朝左的图像，也包含了马头朝右的图像。线性分类器将这两种马的图像模板合并到了一个模板中。 <i>汽车</i> 类别的模板融合了各个朝向和个种颜色的模板，最后模板呈现红色，代表 CIFAR-10 中的汽车图像红色车较多。线性分类器描述能力太弱，不足以区分不同颜色的汽车图像。神经网络(<i>neural network</i>)可以通过隐含层的中间节点来检测任何类型的汽车图像(绿色车头向左，红色车头向前)，下一层的神经元可以将这些信息进行合并，并获取较高分数，从而能够分辨出各种各样的汽车图像。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org84e5026" class="outline-3">
+<h3 id="org84e5026"><span class="section-number-3">4.3</span> Bias trick</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+现在我们有两个主要参数类型： <i>W</i> 和 <i>b</i> 。定义的得分函数：
+</p>
+
+\begin{equation}
+f(x_{i},W,b) = Wx_{i} + b
+\end{equation}
+
+<p>
+如果对 <i>x<sub>i</sub></i> 进行扩展一列，并保持该列为 1(<i>bias dimension</i>)，那么上述的公式可以改写为：
+</p>
+
+\begin{equation}
+f(x_{i},W) = Wx_{i}
+\end{equation}
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/wb.jpeg" alt="wb.jpeg" />
+</p>
+<p><span class="figure-number">Figure 4: </span>融合权值矩阵和偏置向量</p>
+</div>
+<blockquote>
+<p>
+通过对输入向量进行行扩展，并且保持该行的为常量 1，那么就可以将权值矩阵和偏置向量融合成一个新的权值矩阵。
+</p>
+</blockquote>
+<hr />
+</div>
+</div>
+
+<div id="outline-container-org4f3c6a2" class="outline-3">
+<h3 id="org4f3c6a2"><span class="section-number-3">4.4</span> Image data preprocessing</h3>
+<div class="outline-text-3" id="text-4-4">
+<p>
+在机器学习中，有一个很重要的技巧就是对输入数据进行归一化。图像中，首先计算训练集中图像的像素均值，然后每个像素点减去该均值，使得图像的像素值在范围[-127,
+127]之间，然后归一化到[-1, 1]之间。后续在进行最优化求解的时候，可以看到归一化的好处。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8d9a092" class="outline-2">
+<h2 id="org8d9a092"><span class="section-number-2">5</span> Loss function</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+<b>Linear classifier</b> 看到了，通过对输入的图像像素乘以权值矩阵 <i>W</i> 后，从而获得多个类别分类得分。整个过程不会对输入样本 <i>(x<sub>i,y</sub><sub>i</sub>)</i> 进行改变，只是控制权值矩阵 <i>W</i> 来达到得分函数的输出类别的最高得分与训练数据中的真类别一样。
+</p>
+
+<p>
+例如，在<a href="#org6405136">Interpreting a linear classifier</a>中，输入猫的图像，最后得到三种种类的得分。可以看到在结果中，类别是猫的的得分并不理想(-96.8)，那么这里需要有一个函数(<b>loss function</b> 有时候也叫 <b>cost function</b>)来度量这种结果的不理想。在分类器分类效果越差，损失函数的分数应该越高。
+</p>
+</div>
+
+<div id="outline-container-org6c0a085" class="outline-3">
+<h3 id="org6c0a085"><span class="section-number-3">5.1</span> Multiclass Support Vector Machine loss</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+机器学习中定义了多种损失函数，介绍的第一个损失函数为支持向量机损失函数
+(<b>Multiclass Support Vector Machine(svm) Loss</b>)。SVM loss 希望分类正确的得分和分类错误的得分具有一个明显的分界(<b>margin &Delta;</b>)，如果满足这种条件，最后的损失函数为 0。
+</p>
+
+<p>
+假设，输入的 i-th 样本为图像 <i>x<sub>i</sub></i> 和样本标签 <i>y<sub>i</sub></i> ，得分函数根据输入的图像像素计算的最后样本得分向量 <i>f(x<sub>i</sub>, W)</i> ，缩写为 <i>s</i> 。那么第 j-th 类别的得分就为 <i>s<sub>j</sub> = f(x<sub>i</sub>, W)<sub>j</sub></i> 。那么第 i-th 样本的多分类 SVM Loss 为：
+</p>
+\begin{equation}
+L_{i} = \sum_{y \neq y_{i}}max(0, s_{j}-s_{y_{i}} + \Delta)
+\end{equation}
+
+<p>
+如果得分函数为线性得分函数(<i>f(x<sub>i</sub>;W)=Wx<sub>i</sub></i>)，那么我们上述损失函数就可以写为：
+</p>
+\begin{equation}
+L_{i} = \sum_{j \neq y_{i}}{max(0, w_{j}^{T}x_{i} - w_{y_i}^{T}x_{i} +
+\Delta)}
+\end{equation}
+<p>
+其中， <i>w<sub>j</sub></i> 是权值矩阵 <i>W</i> 的 j-th 行向量转置成的列向量。
+</p>
+
+<p>
+SVM Loss 最后一点需要注意的是， <i>max(0,-)</i> 函数成为铃损失(<b>hinge loss</b>)。
+</p>
+
+<hr />
+
+<div class="figure">
+<p><img src="assets/margin.jpg" alt="margin.jpg" />
+</p>
+<p><span class="figure-number">Figure 5: </span>SVM Loss 中的分解</p>
+</div>
+<hr />
+</div>
+
+<div id="outline-container-orga0cd029" class="outline-4">
+<h4 id="orga0cd029"><span class="section-number-4">5.1.1</span> Regularization</h4>
+<div class="outline-text-4" id="text-5-1-1">
+<p>
+在 SVM Loss 如果有一个 <i>W</i> 可以使的所有的样本的损失 <i>L<sub>i</sub></i> 都为 0。那么问题来了，这个 <i>W</i> 并不是唯一的。只需要对 <i>W</i> 乘以一个大于 1 的参数即可。
+</p>
+
+<p>
+那么如果克服这个情况呢，来使得某一个 <i>W</i> 由于其他的 <i>W</i> 。正则化
+(<b>regulartizaton penalty R(W)</b>)是一个很好的选择，最常用的是 <b>L2 norm</b> ，对多大的权值进行 2 次惩罚：
+</p>
+\begin{equation}
+R(W) = \sum_{k}\sum_{l}W_{k,l}^2
+\end{equation}
+
+<p>
+正则化惩罚只和权值有关，SVM Loss 就由两部分租车：样本损失和正则化损失。
+</p>
+\begin{equation}
+L = \underbrace{\frac{1}{n} \sum_{i}{L_{i}}}_{data\ loss} +
+\underbrace{\lambda R(w)}_{regularization\ loss}
+\end{equation}
+
+<p>
+其中 <i>&lambda;</i> 控制着正则惩罚项对 loss 的贡献。而且该超参的选择只能通过交叉验证来设定。
+</p>
+
+<p>
+引入正则项，会带来一个最重要性质：
+</p>
+<blockquote>
+<p>
+对大权值的惩罚会带来泛化能力的提升，因为这就使得权重值较为平均，不容易出现某个特征维度会对结果具有巨大的影响。
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5d7f87f" class="outline-3">
+<h3 id="org5d7f87f"><span class="section-number-3">5.2</span> Softmax classifier</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+另外一个常用的损失方法是对得分函数的输出进行变换，采取 <b>softmax function</b> ，采用该得分函数的分类器叫做 <b>softmaxclassifier</b> 。 <b>softmax classifier</b> 是二分类逻辑斯特分类器(<b>binary logisticregression classifier</b>)的一般形式。 <b>softmax
+classifier</b> 的得分函数输出可以被视作不同类别的概率值未归一化的对数值，并且将
+<b>svm loss</b> 中的岭损失换成交叉熵(<b>cross-entropy loss</b>)损失：
+</p>
+\begin{equation}
+L_{i} = -log(\frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}}) \ or\ equaivalently\ L_{i} =
+-f_{y_i} + log\sum_{j}{e^{f_j}}
+\end{equation}
+
+<p>
+<i>f<sub>j</sub></i> 表示得分函数输出的得分向量。其中 <i>\(f_j(z) =
+   \frac{e^{z_j}}{\sum_{k}e^{z_{k}}}\)</i> 叫做 <b>softmax function</b> 。
+</p>
+</div>
+
+<div id="outline-container-orga6864b3" class="outline-4">
+<h4 id="orga6864b3"><span class="section-number-4">5.2.1</span> Information theory view</h4>
+<div class="outline-text-4" id="text-5-2-1">
+<p>
+交叉熵(<b>cross entropy</b>) 是用来度量真实概率分布 <i>p</i> 和假设概率分布 <i>q</i> 的相似度：
+</p>
+\begin{equation}
+H(p,q) = - \sum_{x}p(x)logq(x) 
+\end{equation}
+<p>
+该交叉熵等式，可以改写成 p 的熵和 KL 距离的和， <i>\(H(p,q) = H(p) +
+    D_{KL}(p||q)\)</i> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org10561fe" class="outline-4">
+<h4 id="org10561fe"><span class="section-number-4">5.2.2</span> Probabilistic interpretation</h4>
+<div class="outline-text-4" id="text-5-2-2">
+<p>
+重新审视一下 <b>maxsoft</b> 得分函数：
+\begin<sub>equation</sub>
+P(y<sub>i</sub>|x<sub>i</sub>;W) = \frac{e<sup>f<sub>y<sub>i</sub></sub></sup>}{&sum;<sub>j</sub>e<sup>f<sub>j</sub></sup>}
+\end{equation}
+可以被设为在参数 <i>W</i> 情况下，输入图像 <i>x<sub>i</sub></i> 得到的归一化后 <i>y<sub>i</sub></i> 类别概率。
+<b>softmax classifier</b> 将输入的线性得分向量 <i>f</i> 是做未归一化的对数概率。那么最小化负值对数似然概率(<b>negative log likelihood</b>)可以看作是最大化似然概率
+(<b>Maximum Likelihood Estimation(MLE)</b>)。同样，正则化损失 <i>R(W)</i> 可以看作是权值矩阵 <i>W</i> 满足高斯先验概率，执行最大后验概率估计(<b>Maximum a posteriori estimation</b>)。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org91809cb" class="outline-4">
+<h4 id="org91809cb"><span class="section-number-4">5.2.3</span> Practical Issues: Numeric stability</h4>
+<div class="outline-text-4" id="text-5-2-3">
+<p>
+在执行 softmax function 计算的的时候，因为中间值具有指数形式，所以有可能会产生数值越界的可能。在归一化的除法操作，除以一个较大的数值，会直接影响最后的数值的稳定性。这里需要一个归一化技巧，考虑如果我们对归一化的上下乘以一个常数：
+</p>
+\begin{equation}
+\frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}} =
+\frac{Ce^{f_{y_i}}}{C\sum_{j}e^{f_{j}}} =
+\frac{e^{f_{y_{i}}+logC}}{\sum_{j}e^{f_{j}+logC}}
+\end{equation}
+<p>
+可以通过选择一个合适的 <i>C</i> 来提高数值计算的结果的稳定性。常规的选择是
+<i>\(logC=-max_{j}f_{j}\)</i> 。
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org1e5b7e1" class="outline-3">
+<h3 id="org1e5b7e1"><span class="section-number-3">5.3</span> SVM vs. Softmax</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+下图用来说明 SVM 分类器和 Softmax 分类器的区别：
+</p>
+<hr />
+
+<div class="figure">
+<p><img src="assets/svmvssoftmax.png" alt="svmvssoftmax.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span>svm vs. softmax</p>
+</div>
+<blockquote>
+<p>
+svm 分类器只关注样本正确分类大于错误分类超过一个阈值(margin)即可。softmax 分类器期望是使得正确分类的概率分布越大越好。
+</p>
+</blockquote>
+<hr />
+<p>
+可以理解为，svmloss 只关注分类点在阈值以内的样本点。softmaxloss 会关注所有的样本点。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf9617d0" class="outline-2">
+<h2 id="orgf9617d0"><span class="section-number-2">6</span> Summary</h2>
+<div class="outline-text-2" id="text-6">
+<ul class="org-ul">
+<li>定义了得分函数(<b>score function</b>)</li>
+<li>介绍了偏置技巧，将偏置项给集成到权值矩阵中</li>
+<li>定义了两种损失函数</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgc9b74e3" class="outline-2">
+<h2 id="orgc9b74e3"><span class="section-number-2">7</span> Further Reading</h2>
+<div class="outline-text-2" id="text-7">
+<ul class="org-ul">
+<li><a href="https://arxiv.org/abs/1306.0239">Deep Learning using Linear Support Vector Machines</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-08-12 Sun 16:58</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

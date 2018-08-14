@@ -4,7 +4,7 @@
 #+EMAIL: stupid_coder@163.com
 #+STARTUP: indent 
 #+OPTIONS: H:2 num:nil
-#+INDEX: cs231n nerual-network
+#+INDEX: cs231n
 
 本讲义翻译自 *cs231n:image-classification* [fn:1]。主要目标给没有做过计算机视觉的
 人，介绍一下图像分类和数据驱动的学习方法。

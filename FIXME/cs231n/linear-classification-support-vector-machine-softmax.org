@@ -1,0 +1,269 @@
+#+TITLE: Linear classification: Support Vector Machine, Softmax
+#+ALT_TITLE: parameteric approach, bias trick, hinge loss, cross-entropy loss, L2 regularization, web demo
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+INDEX: cs231n
+
+* Linear Classification
+  在上部分，介绍了图像分类的问题。根据输入的图像，分类器会给图像分配一个标签，该
+  标签是在规定的类别(*categories*)中。 /kNN/ 通过比较输入图像和训练集中的图像的
+  相似度，获取前 k 的图像标记进行投票。 /kNN/ 很明显具有如下缺点：
+  + 分类器必须记录所有的训练集样本。在训练集较大时，需要消耗大量的内存进行存储
+  + 预测时候，需要进行逐一比较，需要消耗大量的计算
+
+
+  文本将去开发一个更为有效的方法进行图像分类，并且后续很容易扩展成神经网络
+  (/Neural Networks/)和卷积神经网络(/Convolutional Neural Networks/)。该方法具有
+  两个主要的模块： *score function* 将原始数据映射到类别得分； *loss function*
+  用来度量预估的得分和实际真的标签的差距。这样，可以看作通过调整得分函数的参数最
+  小化损失函数的优化问题。
+
+* Parameterized mapping from images to label scores
+  *score function* 用来将原图像数据射到每一个类别，并且得到对应的置信得分
+   (/confidence scores/)。
+
+   假设具有一个图像训练集，其中的图像 /x_{i} \in R^{D}/ ，都具有一个标签数据
+   /y_{i}/ ， /i = 1 ... N/ 并且 /y_{i} \in 1 ... K/ 。也就是说总共具有 /N/ 样本
+   (每个样本具有的数据维度是 /D/)和 /K/ 个类别。例如：在 CIFAR-10 中，总共有
+   /N=50K/ 的训练图像数据，每一个图像具有 /D=32*32*3/ 的维度像素；并且 /K=10/ ，
+   表示总共有 10 类(dog,cat,car,etc)。这里定义 *score function* /f: R^{D} ->
+   R^{K}/ ，用于将原始图像像素映射到类别得分。
+
+* Linear classifier
+  本文先介绍一个最简单的得分函数，线性分类：
+
+  \begin{equation}
+  f(x_{i},W,b) = Wx_{i} + b
+  \end{equation}
+   
+  在上述的等式中，假设输入图像 /x_{i}/ ，将 3 维图像数组压平成一维列数组 /形状 [D,1]/
+  。矩阵 /W/ (形状 /[K, D]/)和向量 /b/ (形状 /[K, 1]/)为得分函数的参数空间。
+  /W/ 一般称为权重值 /weights/ ， /b/ 一般成为偏置 /bias/ 。
+
+  这里有一些事情需要关注：
+  + 矩阵运算 /Wx_{i}/ 一次可以直接并行计算 K 个不同类别的分类器，每个分类器是权值
+    矩阵 /W/ 的一行。
+  + 基于输入的样本，主要是要控制参数 /W，b/ 使得最后的类别得分能够和真实的类别
+    标签像匹配，并且真实的类别标签的得分高于其他标签的得分。
+  + 这种学习的方法的优点在于，只需要去学习调整参数 /W，b/ ，最后只需要记住 /W，
+    b/ 即可，而不需要记住全部的训练样本。
+  + 预测阶段，只需要计算一次矩阵乘法运算和偏置加法运算，要比遍历训练数据集的
+    *kNN*算法要快很多
+
+* Interpreting a linear classifier
+  *linear classifier* 就是将每个通道的像素值进行权值加和。权值影响着每一个位置的
+  和通道的像素对类别的关联程度(正值是正相关、负值是负相关、零代表无关)。例如：类
+  别为 *船* 的图像背景像素常常会是蓝色(/大海的颜色/)。这样在这些像素区域和蓝色通
+  道上会有一个较大的权值，会增加分到类别 *船* 的分数变大。
+
+  -----
+  #+CAPTION: 图像线性分类器
+  [[file:assets/imagemap.jpg]]
+  -----
+
+** Analogy of images as high-dimensional points
+   每张图像会被拉伸成一维的高维向量，所以可以将这些图像看作是高维空间的一个坐标
+   点(CIFAR-10 中每张图像的维度为 3072=32*32*3)。整个样本集可以看作是这些坐标点组
+   成的。
+
+   我们无法可视化这么高维度的空间，但是如果假设我们可以对这些高维压缩到只有 2 维，
+   那么我们就可以可视化这个分类器到底是做什么？
+
+   -----
+   #+CAPTION: 可视化分类器
+   [[file:assets/pixelspace.jpeg]]
+   #+BEGIN_QUOTE
+   每一个图片都是一个坐标点，其中可视化了 3 个分类器。红色的线是汽车的分类器，在该
+   线上的坐标点代表都是获得类别是汽车得分为 0 的点。箭头代表分数的增加方向，所以所
+   有在红色分类器右边的点都具有类别是汽车得分大于 0 的点，所有在红色分类器左边的点
+   的类别是汽车的得分都是小于 0 的点。
+   #+END_QUOTE
+   -----
+
+   在权值矩阵 /W/ 中的每一行都对应一个类别的分类器。并且控制着线性分类器的方向
+   (梯度)。偏置 /b/ 代表着该类别的分类器在 0 点的分类点，如果所有的分类器的偏置为 0，
+   那么在 /x_i=0/ ，则所有的分类器都会交叉到原点。
+   
+** Interpretation of linear classifiers as template matching
+   另外一种解释，可以将权值矩阵 /w/ 的每一行为对应列别的模板。类别的得分就是用内
+   积来计算图像与模板的匹配程度。这样，分类器就是去学习不同类别的模板，然后分类
+   器用这些模板去进行分类。
+
+   -----
+   #+CAPTION: 分类器模板匹配
+   [[file:assets/templates.jpg]]
+   #+BEGIN_QUOTE
+   上图是在 CIFAR-10 上学习到的线性分类器权值矩阵在不同类别上的可视化结果。可以看
+   到 *船* 类别的模板大多数都是蓝色，也就是说如果图像中的像素点很多都是蓝色的，
+   那么 *船* 类别的得分会比较高
+   #+END_QUOTE
+   -----
+
+   从上图，可以看到 /马/ 类别的模板上，有马头朝左和朝右，主要原因是数据集中包含
+   了马头朝左的图像，也包含了马头朝右的图像。线性分类器将这两种马的图像模板合并
+   到了一个模板中。 /汽车/ 类别的模板融合了各个朝向和个种颜色的模板，最后模板呈
+   现红色，代表 CIFAR-10 中的汽车图像红色车较多。线性分类器描述能力太弱，不足以区
+   分不同颜色的汽车图像。神经网络(/neural network/)可以通过隐含层的中间节点来检
+   测任何类型的汽车图像(绿色车头向左，红色车头向前)，下一层的神经元可以将这些信
+   息进行合并，并获取较高分数，从而能够分辨出各种各样的汽车图像。
+
+** Bias trick
+   现在我们有两个主要参数类型： /W/ 和 /b/ 。定义的得分函数：
+
+   \begin{equation}
+   f(x_{i},W,b) = Wx_{i} + b
+   \end{equation}
+
+   如果对 /x_{i}/ 进行扩展一列，并保持该列为 1(/bias dimension/)，那么上述的公式
+   可以改写为：
+
+   \begin{equation}
+   f(x_{i},W) = Wx_{i}
+   \end{equation}
+
+   -----
+   #+CAPTION: 融合权值矩阵和偏置向量
+   [[file:assets/wb.jpeg]]
+   #+BEGIN_QUOTE
+   通过对输入向量进行行扩展，并且保持该行的为常量 1，那么就可以将权值矩阵和偏置向
+   量融合成一个新的权值矩阵。
+   #+END_QUOTE
+   -----
+
+** Image data preprocessing
+   在机器学习中，有一个很重要的技巧就是对输入数据进行归一化。图像中，首先计算训
+   练集中图像的像素均值，然后每个像素点减去该均值，使得图像的像素值在范围[-127,
+   127]之间，然后归一化到[-1, 1]之间。后续在进行最优化求解的时候，可以看到归一化
+   的好处。
+
+* Loss function
+  *Linear classifier* 看到了，通过对输入的图像像素乘以权值矩阵 /W/ 后，从而获得
+   多个类别分类得分。整个过程不会对输入样本 /(x_i,y_i)/ 进行改变，只是控制权值矩
+   阵 /W/ 来达到得分函数的输出类别的最高得分与训练数据中的真类别一样。
+
+   例如，在[[*Interpreting a linear classifier][Interpreting a linear classifier]]中，输入猫的图像，最后得到三种种类的
+   得分。可以看到在结果中，类别是猫的的得分并不理想(-96.8)，那么这里需要有一个函
+   数(*loss function* 有时候也叫 *cost function*)来度量这种结果的不理想。在分类
+   器分类效果越差，损失函数的分数应该越高。
+
+** Multiclass Support Vector Machine loss
+   机器学习中定义了多种损失函数，介绍的第一个损失函数为支持向量机损失函数
+   (*Multiclass Support Vector Machine(svm) Loss*)。SVM loss 希望分类正确的得分和
+   分类错误的得分具有一个明显的分界(*margin \Delta*)，如果满足这种条件，最后的损
+   失函数为 0。
+
+   假设，输入的 i-th 样本为图像 /x_{i}/ 和样本标签 /y_{i}/ ，得分函数根据输入的
+   图像像素计算的最后样本得分向量 /f(x_{i}, W)/ ，缩写为 /s/ 。那么第 j-th 类别
+   的得分就为 /s_{j} = f(x_{i}, W)_{j}/ 。那么第 i-th 样本的多分类 SVM Loss 为：
+   \begin{equation}
+   L_{i} = \sum_{y \neq y_{i}}max(0, s_{j}-s_{y_{i}} + \Delta)
+   \end{equation}
+
+   如果得分函数为线性得分函数(/f(x_{i};W)=Wx_{i}/)，那么我们上述损失函数就可以写
+   为：
+   \begin{equation}
+   L_{i} = \sum_{j \neq y_{i}}{max(0, w_{j}^{T}x_{i} - w_{y_i}^{T}x_{i} +
+   \Delta)}
+   \end{equation}
+   其中， /w_{j}/ 是权值矩阵 /W/ 的 j-th 行向量转置成的列向量。
+
+   SVM Loss 最后一点需要注意的是， /max(0,-)/ 函数成为铃损失(*hinge loss*)。
+
+   -----
+   #+CAPTION: SVM Loss 中的分解
+   [[file:assets/margin.jpg]]
+   -----
+
+*** Regularization
+    在 SVM Loss 如果有一个 /W/ 可以使的所有的样本的损失 /L_i/ 都为 0。那么问题来了，
+    这个 /W/ 并不是唯一的。只需要对 /W/ 乘以一个大于 1 的参数即可。
+
+    那么如果克服这个情况呢，来使得某一个 /W/ 由于其他的 /W/ 。正则化
+    (*regulartizaton penalty R(W)*)是一个很好的选择，最常用的是 *L2 norm* ，对多
+    大的权值进行 2 次惩罚：
+    \begin{equation}
+    R(W) = \sum_{k}\sum_{l}W_{k,l}^2
+    \end{equation}
+    
+    正则化惩罚只和权值有关，SVM Loss 就由两部分租车：样本损失和正则化损失。
+    \begin{equation}
+    L = \underbrace{\frac{1}{n} \sum_{i}{L_{i}}}_{data\ loss} +
+    \underbrace{\lambda R(w)}_{regularization\ loss}
+    \end{equation}
+
+    其中 /\lambda/ 控制着正则惩罚项对 loss 的贡献。而且该超参的选择只能通过交叉
+    验证来设定。
+
+    引入正则项，会带来一个最重要性质：
+    #+BEGIN_QUOTE
+    对大权值的惩罚会带来泛化能力的提升，因为这就使得权重值较为平均，不容易出现某
+    个特征维度会对结果具有巨大的影响。
+    #+END_QUOTE
+
+** Softmax classifier
+   另外一个常用的损失方法是对得分函数的输出进行变换，采取 *softmax function* ，
+   采用该得分函数的分类器叫做 *softmaxclassifier* 。 *softmax classifier* 是二分
+   类逻辑斯特分类器(*binary logisticregression classifier*)的一般形式。 *softmax
+   classifier* 的得分函数输出可以被视作不同类别的概率值未归一化的对数值，并且将
+   *svm loss* 中的岭损失换成交叉熵(*cross-entropy loss*)损失：
+   \begin{equation}
+   L_{i} = -log(\frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}}) \ or\ equaivalently\ L_{i} =
+   -f_{y_i} + log\sum_{j}{e^{f_j}}
+   \end{equation}
+   
+   /f_{j}/ 表示得分函数输出的得分向量。其中 /$f_j(z) =
+   \frac{e^{z_j}}{\sum_{k}e^{z_{k}}}$/ 叫做 *softmax function* 。
+
+*** Information theory view
+    交叉熵(*cross entropy*) 是用来度量真实概率分布 /p/ 和假设概率分布 /q/ 的相似
+    度：
+    \begin{equation}
+    H(p,q) = - \sum_{x}p(x)logq(x) 
+    \end{equation}
+    该交叉熵等式，可以改写成 p 的熵和 KL 距离的和， /$H(p,q) = H(p) +
+    D_{KL}(p||q)$/ 。
+
+*** Probabilistic interpretation
+    重新审视一下 *maxsoft* 得分函数：
+    \begin_{equation}
+    P(y_{i}|x_{i};W) = \frac{e^{f_{y_i}}}{\sum_{j}e^{f_j}}
+    \end{equation}
+    可以被设为在参数 /W/ 情况下，输入图像 /x_i/ 得到的归一化后 /y_i/ 类别概率。
+    *softmax classifier* 将输入的线性得分向量 /f/ 是做未归一化的对数概率。那么最
+    小化负值对数似然概率(*negative log likelihood*)可以看作是最大化似然概率
+    (*Maximum Likelihood Estimation(MLE)*)。同样，正则化损失 /R(W)/ 可以看作是权
+    值矩阵 /W/ 满足高斯先验概率，执行最大后验概率估计(*Maximum a posteriori estimation*)。
+
+*** Practical Issues: Numeric stability
+    在执行 softmax function 计算的的时候，因为中间值具有指数形式，所以有可能会产生
+    数值越界的可能。在归一化的除法操作，除以一个较大的数值，会直接影响最后的数值
+    的稳定性。这里需要一个归一化技巧，考虑如果我们对归一化的上下乘以一个常数：
+    \begin{equation}
+    \frac{e^{f_{y_i}}}{\sum_{j}e^{f_{j}}} =
+    \frac{Ce^{f_{y_i}}}{C\sum_{j}e^{f_{j}}} =
+    \frac{e^{f_{y_{i}}+logC}}{\sum_{j}e^{f_{j}+logC}}
+    \end{equation}
+    可以通过选择一个合适的 /C/ 来提高数值计算的结果的稳定性。常规的选择是
+    /$logC=-max_{j}f_{j}$/ 。
+    
+
+** SVM vs. Softmax
+   下图用来说明 SVM 分类器和 Softmax 分类器的区别：
+   -----
+   #+CAPTION: svm vs. softmax
+   [[file:assets/svmvssoftmax.png]]
+   #+BEGIN_QUOTE
+   svm 分类器只关注样本正确分类大于错误分类超过一个阈值(margin)即可。softmax 分类
+   器期望是使得正确分类的概率分布越大越好。
+   #+END_QUOTE
+   -----
+   可以理解为，svmloss 只关注分类点在阈值以内的样本点。softmaxloss 会关注所有的样
+   本点。
+   
+* Summary
+  + 定义了得分函数(*score function*) 
+  + 介绍了偏置技巧，将偏置项给集成到权值矩阵中
+  + 定义了两种损失函数
+
+* Further Reading
+  + [[https://arxiv.org/abs/1306.0239][Deep Learning using Linear Support Vector Machines]]
