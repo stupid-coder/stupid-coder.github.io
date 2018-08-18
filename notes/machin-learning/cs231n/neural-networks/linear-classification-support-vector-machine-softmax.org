@@ -170,7 +170,7 @@
    SVM Loss 最后一点需要注意的是， /max(0,-)/ 函数成为铃损失(*hinge loss*)。
 
    -----
-   #+CAPTION: SVM Loss 中的分解
+   #+CAPTION: SVM Loss 中的分界
    [[file:assets/margin.jpg]]
    -----
 

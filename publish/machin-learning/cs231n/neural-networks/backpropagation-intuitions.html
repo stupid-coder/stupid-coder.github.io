@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Backpropagation, Intuitions</title>
+<!-- 2018-08-18 Sat 11:53 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Backpropagation, Intuitions</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Introduction</a></li>
+<li><a href="#sec-2">Simple expressions and interpretation of the gradient</a></li>
+<li><a href="#sec-3">Compound expressions with chain rule</a></li>
+<li><a href="#sec-4">Intuitive understanding of backpropagation</a></li>
+<li><a href="#sec-5">Modularity: Sigmoid example</a>
+<ul>
+<li><a href="#sec-5-1">Implementation protip: staged backpropagation</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">Backprop in practice: Staged computation</a></li>
+<li><a href="#sec-7">Patterns in backward flow</a></li>
+<li><a href="#sec-8">Gradients for vectorized operations</a></li>
+<li><a href="#sec-9">Summary</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文：<a href="http://cs231n.github.io/optimization-2/">Backpropagation-Intuitions</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+<b>Motivation</b> 本文将介绍反向传播(<b>backpropagation</b>)的相关知识，主要是利用链式法
+ 则(<b>chain rule</b>)来计算梯度值。理解和合理利用该方法是理解和设计神经网络的关键。
+</p>
+
+<p>
+<b>Problem statement</b> 主要的问题形式是：根据得分函数 <i>f(x)</i> ， <i>x</i> 为输入向量，
+ 运用链式法则来计算相关梯度 <i>&nabla; f(x)</i> 。
+</p>
+
+<p>
+<b>Motivation</b> 面向特定结构的神经网络， <i>f</i> 为对应的损失函数(<i>L</i>)，输入的参数
+ <i>x</i> 由训练数据和神经网络权值组成。例如：损失函数可以是 SVMLoss，输入为训练数
+ 据(<i>x<sub>i</sub>,i<sub>i</sub> for i = 1&#x2026;N</i>)和权值矩阵加偏置 <i>W,b</i> 。常常将输入数据为固定
+ 值，权值矩阵和偏置是我们需要调整的对象。即使我们可以很容易的计算对于输入数据
+ 的 (<i>x_i</i>) 计算梯度，实际中只会对参数(<i>W,b</i>)计算梯度，从而来更新实现损失函数
+ 的降低。然后，后续我们会发现，对于输入数据求解梯度在可视化和神经网络工作原理
+ 的解释很有作用。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Simple expressions and interpretation of the gradient</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+首先以一个简单的例子开始，考虑两个输入的乘法函数 <i>f(x,y)=xy</i> ，可以很快的计算
+出对应的导数：
+</p>
+\begin{equation}
+f(x,y) = x y \hspace{0.5in} \rightarrow \hspace{0.5in} \frac{\partial f}{\partial x} = y \hspace{0.5in} \frac{\partial f}{\partial y} = x
+\end{equation}
+
+<p>
+<b>Interpretation</b> 导数显示函数在某个点对应变量方向的变化率：
+</p>
+\begin{equation}
+\frac{df(x)}{dx} = \lim_{h\ \to 0} \frac{f(x + h) - f(x)}{h}
+\end{equation}
+
+<p>
+当 h 非常小的时候，函数可以认为是一条直线，导数就是该直线的斜率。也即是说，微
+分代表着变量对于该方向上变化的敏感程度。例如：如果 <i>x=4,y=-3</i> 那么
+<i>f(x,y)=-12</i> ，对于 <i>x</i> 导数为 <i>\(\frac{\partial f}{\partial x}=-3\)</i> 。这就表示如
+果在 <i>x</i> 维度上增加一个很小的值，那么整个函数的值会减少(因为导数为负数)，并且
+下降的数量为 3 倍于 <i>x</i> 维度上增加的量。重新调整上述等式(2)
+<i>\(f(x+h)=f(x)+h\frac{df(x)}{dx}\)</i> ， <i>\(\frac{\partial f}{\partial y}=4\)</i> ，可
+以得知在 <i>y</i> 这个维度上增加一个微小的量 <i>h</i> ，那么整个函数的值将增加 <i>4h</i> 。
+</p>
+
+<blockquote>
+<p>
+导数预示函数在各自数据维度的敏感度
+</p>
+</blockquote>
+
+<p>
+梯度(<i>&nabla; f</i>)为偏导数向量，所以 <i>\(\nabla f = [\frac{\partial f}{\partial
+  x}, \frac{\partial f}{\partial y}] = [y, x]\)</i> 。
+</p>
+
+<p>
+同样可以对加法函数进行求导：
+</p>
+\begin{equation}
+f(x,y) = x + y \hspace{0.5in} \rightarrow \hspace{0.5in} \frac{\partial
+f}{\partial x} = 1 \hspace{0.5in} \frac{\partial f}{\partial y} = 1
+\end{equation}
+
+<p>
+对 <i>x,y</i> 求导结果无关于对应的变量值。这里很好理解，最后增加的结果都和对应变量
+增加的量有关。
+</p>
+
+<p>
+考虑一下 max 操作：
+</p>
+\begin{equation}
+f(x,y) = \max(x, y) \hspace{0.5in} \rightarrow \hspace{0.5in} \frac{\partial
+f}{\partial x} = \mathbb{1}(x >= y) \hspace{0.5in} \frac{\partial f}{\partial
+y} = \mathbb{1}(y >= x)
+\end{equation}
+
+<p>
+偏导数告诉我们较大的变量的导数为 1，其他的为 0。例如： <i>x=4, y=2</i> ，max 为 4，并
+且结果对 y 的值不敏感。即对 y 增加一点点值，函数最后的输出还会保持为 4，因此对应的
+导数为 0.但是不能对 y 变量增加太大的值（超过 2），这时函数的结果会改变。导数并不能
+告诉我们增大如此大的值会对函数有什么影响；导数只是当前点的瞬间状态，如定义
+<i>lim<sub>h &rarr; 0</sub></i> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Compound expressions with chain rule</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+那么复合函数如何进行求导，例如 <i>f(x,y,z)=(x+y)z</i> 。该表达式也非常简单，可以直接
+计算出对应的导数，但是本部分将使用其他求导方法，该方法将有助于后续理解反向传播。
+上述表达式可以拆成两部分； <i>q=x+y</i> 和 <i>f=qz</i> 。我们知道这两个表达式如何各自求导。
+<i>f</i> 就是 <i>q</i> 和 <i>z</i> 的乘积，所以 \(\frac{\partial f}{\partial q} = z,
+\frac{\partial f}{\partial z} = q\) ， <i>q</i> 为 <i>x</i> 和 <i>y</i> 的加法，所以
+\(\frac{\partial q}{\partial x} = 1, \frac{\partial q}{\partial y} = 1\) 。我们并
+需要关心中间值 <i>q</i> 的导数，我们只关心最终的导数。链式法则(<b>chain rule</b>)告诉我们
+正确的只需要将这些导数乘在一起即可。 \(\frac{\partial f}{\partial x} =
+\frac{\partial f}{\partial q} \frac{\partial q}{\partial x}\) ：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">set some inputs</span>
+<span style="font-weight: bold; font-style: italic;">x</span> = -2; <span style="font-weight: bold; font-style: italic;">y</span> = 5; <span style="font-weight: bold; font-style: italic;">z</span> = -4
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform the forward pass</span>
+<span style="font-weight: bold; font-style: italic;">q</span> = x + y <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">q becomes 3</span>
+<span style="font-weight: bold; font-style: italic;">f</span> = q * z <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">f becomes -12</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform the backward pass (backpropagation) in reverse order:</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">first backprop through f = q * z</span>
+<span style="font-weight: bold; font-style: italic;">dfdz</span> = q <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">df/dz = q, so gradient on z becomes 3</span>
+<span style="font-weight: bold; font-style: italic;">dfdq</span> = z <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">df/dq = z, so gradient on q becomes -4</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">now backprop through q = x + y</span>
+<span style="font-weight: bold; font-style: italic;">dfdx</span> = 1.0 * dfdq <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">dq/dx = 1. And the multiplication here is the chain rule!</span>
+<span style="font-weight: bold; font-style: italic;">dfdy</span> = 1.0 * dfdq <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">dq/dy = 1</span>
+</pre>
+</div>
+
+<p>
+这个计算过程可以使用有向无环图来可视化：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/backpropagation_visual.png" alt="backpropagation_visual.png" />
+</p>
+</div>
+<blockquote>
+<p>
+上图显示了整个计算的可视化过程。正向传播过程(<b>forward pass</b>)根据输入的数字计算函
+数的输出(绿色数值)。反向传播过程(<b>backward pass</b>)从函数的最终输出作为起点，递归
+执行链式法则来计算各个节点的导数(红色数值)。导数的求解过程可以视作从后向前传播。
+</p>
+</blockquote>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Intuitive understanding of backpropagation</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+反向传播是一个非常优美的局部过程。任意一个计算节点具有一些输入，作两种计算：1 正
+向计算该计算节点的输出值；2 计算局部梯度。可以看出这些节点的计算过程是完全独立，
+和计算图中的其他计算节点都没有关系。一旦向前传播完成计算，在反向传播过程中计算节
+点将最终函数计算的梯度和局部梯度乘在一起就能得到该节点对于输入参数的梯度值。
+</p>
+
+<p>
+重新思考一下上述例子：加法单元接受两个输入[-2,5]，计算输出值为 3.局部梯度都是+1。
+剩下的乘积单元计算出最终的值 -12。在反向传播，加法单元的输出的值对于最终函数的梯
+度为-4。如果最终的输出希望能够大一些，那么加法单元最后的输出值需要变小(因为梯度
+为负)，且影响的量为 4 倍。继续向后传播，加法单元的将梯度-4 乘以局部梯度 1(对于输入
+x,y 梯度都是 1*-4=-4)。这符合预期，即加法输入降低，那么会使得最加法单元的输出降
+低，这会带来最终的输出变大。
+</p>
+
+<p>
+反向传播可以看作是不同的计算单元对梯度信号的作用，从而确定本单元输入对最终的结果具有什
+么样的作用。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Modularity: Sigmoid example</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+计算单元可以是任何可导函数，或者可以是很多单元组成的，或者将一个函数拆成多个计算
+单元。例如：
+</p>
+\begin{equation}
+f(w,x) = \frac{1}{1+e^{-(w_0x_0 + w_1x_1 + w_2)}}
+\end{equation}
+
+<p>
+后续会知道上述表达式代表着 2 维神经元(输入 x 和权值 w)，然后经过 sigmoid 激活函数。现在
+将表达式只看作为一个函数，接收两个输入 w,x，最终计算的到一个输出。该函数有多个计
+算单元组成：
+</p>
+
+\begin{equation}
+f(x) = \frac{1}{x} 
+\hspace{1in} \rightarrow \hspace{1in} 
+\frac{df}{dx} = -1/x^2 
+\\\\
+f_c(x) = c + x
+\hspace{1in} \rightarrow \hspace{1in} 
+\frac{df}{dx} = 1 
+\\\\
+f(x) = e^x
+\hspace{1in} \rightarrow \hspace{1in} 
+\frac{df}{dx} = e^x
+\\\\
+f_a(x) = ax
+\hspace{1in} \rightarrow \hspace{1in} 
+\frac{df}{dx} = a
+\end{equation}
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/backpropagation_visual_2.png" alt="backpropagation_visual_2.png" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> sigmoid 函数反向传播</p>
+</div>
+<hr  />
+
+<p>
+上图 <b>sigmoid function(&sigma; (x))</b> 函数，根据输入 <i>w,x</i> 执行一系列计算。如下是
+sigmoid 函数求导：
+</p>
+\begin{equation}
+\sigma(x) = \frac{1}{1+e^{-x}} \\\\
+\rightarrow \hspace{0.3in} \frac{d\sigma(x)}{dx} = \frac{e^{-x}}{(1+e^{-x})^2} = \left( \frac{1 + e^{-x} - 1}{1 + e^{-x}} \right) \left( \frac{1}{1+e^{-x}} \right) 
+= \left( 1 - \sigma(x) \right) \sigma(x)
+\end{equation}
+
+<p>
+可以看出该函数的导数异常的简单。例如输入的为 1.0，则 sigmoid 的输出值为 0.73。局
+部求导为 <i>(1-0.73)*0.73~=0.2</i> 。该计算过程为上图的后半部分求出的局部导数。在实际
+应用中，一般将整个 sigmoid 函数的计算视作一个整体计算单元：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">w</span> = [2,-3,-3] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assume some random weights and data</span>
+<span style="font-weight: bold; font-style: italic;">x</span> = [-1, -2]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward pass</span>
+<span style="font-weight: bold; font-style: italic;">dot</span> = w[0]*x[0] + w[1]*x[1] + w[2]
+<span style="font-weight: bold; font-style: italic;">f</span> = 1.0 / (1 + math.exp(-dot)) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">sigmoid function</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backward pass through the neuron (backpropagation)</span>
+<span style="font-weight: bold; font-style: italic;">ddot</span> = (1 - f) * f <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">gradient on dot variable, using the sigmoid gradient derivation</span>
+<span style="font-weight: bold; font-style: italic;">dx</span> = [w[0] * ddot, w[1] * ddot] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop into x</span>
+<span style="font-weight: bold; font-style: italic;">dw</span> = [x[0] * ddot, x[1] * ddot, 1.0 * ddot] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop into w</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">we're done! we have the gradients on the inputs to the circuit</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1">Implementation protip: staged backpropagation</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+像上述代码所示，一般将向前传播计算拆成多个部分，以便后续反后传播计算时使用。例如，
+计算了中间值 <i>dot</i> ，保存 <i>w,x</i> 的点乘结果。在反向传播过程中，可以直接用来计算对
+应的 sigmoid 局部导数 <i>ddot</i> 。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Backprop in practice: Staged computation</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+看另外一个例子：
+</p>
+\begin{equation}
+f(x,y) = \frac{x + \sigma(y)}{\sigma(x) + (x+y)^2}
+\end{equation}
+
+<p>
+这个表达式直接求解导数结果较为复杂，但是并不需要直接来进计算对应的导数，只需要知
+道如何利用链式法则一步一步计算导数即可。如下为正向传导：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">x</span> = 3 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">example values</span>
+<span style="font-weight: bold; font-style: italic;">y</span> = -4
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward pass</span>
+<span style="font-weight: bold; font-style: italic;">sigy</span> = 1.0 / (1 + math.exp(-y)) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">sigmoid in numerator   #(1)</span>
+<span style="font-weight: bold; font-style: italic;">num</span> = x + sigy <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">numerator                               #(2)</span>
+<span style="font-weight: bold; font-style: italic;">sigx</span> = 1.0 / (1 + math.exp(-x)) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">sigmoid in denominator #(3)</span>
+<span style="font-weight: bold; font-style: italic;">xpy</span> = x + y                                              <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(4)</span>
+<span style="font-weight: bold; font-style: italic;">xpysqr</span> = xpy**2                                          <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(5)</span>
+<span style="font-weight: bold; font-style: italic;">den</span> = sigx + xpysqr <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">denominator                        #(6)</span>
+<span style="font-weight: bold; font-style: italic;">invden</span> = 1.0 / den                                       <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(7)</span>
+<span style="font-weight: bold; font-style: italic;">f</span> = num * invden <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">done!                                 #(8)</span>
+</pre>
+</div>
+
+<p>
+因为每一步的局部导数计算非常简单，所以计执行反向传播的过程只需要按着正向传播计算
+过程(sigy,num,sigx,xpy,xpysqr,den,invden)反序计算即可。每个变量都会有一个 <i>d</i> 作
+为前缀，为输出值关于对应变量的梯度。另外，下列代码每一块计算逻辑，都会先计算局部
+导数，然后和梯度乘在一起。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop f = num * invden</span>
+<span style="font-weight: bold; font-style: italic;">dnum</span> = invden <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">gradient on numerator                             #(8)</span>
+<span style="font-weight: bold; font-style: italic;">dinvden</span> = num                                                     <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(8)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop invden = 1.0 / den </span>
+<span style="font-weight: bold; font-style: italic;">dden</span> = (-1.0 / (den**2)) * dinvden                                <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(7)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop den = sigx + xpysqr</span>
+<span style="font-weight: bold; font-style: italic;">dsigx</span> = (1) * dden                                                <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(6)</span>
+<span style="font-weight: bold; font-style: italic;">dxpysqr</span> = (1) * dden                                              <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(6)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop xpysqr = xpy**2</span>
+<span style="font-weight: bold; font-style: italic;">dxpy</span> = (2 * xpy) * dxpysqr                                        <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(5)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop xpy = x + y</span>
+<span style="font-weight: bold; font-style: italic;">dx</span> = (1) * dxpy                                                   <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(4)</span>
+<span style="font-weight: bold; font-style: italic;">dy</span> = (1) * dxpy                                                   <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(4)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop sigx = 1.0 / (1 + math.exp(-x))</span>
+<span style="font-weight: bold; font-style: italic;">dx</span> += ((1 - sigx) * sigx) * dsigx <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Notice += !! See notes below  #(3)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop num = x + sigy</span>
+<span style="font-weight: bold; font-style: italic;">dx</span> += (1) * dnum                                                  <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(2)</span>
+<span style="font-weight: bold; font-style: italic;">dsigy</span> = (1) * dnum                                                <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(2)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backprop sigy = 1.0 / (1 + math.exp(-y))</span>
+<span style="font-weight: bold; font-style: italic;">dy</span> += ((1 - sigy) * sigy) * dsigy                                 <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">(1)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">done! phew</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">Patterns in backward flow</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+梯度反向传播的过程具有很好的解释性。例如：三个神经网络中最常用的计算单元
+(add,mul,max)，所有都具有很简单的解释性。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/sample-function-backpropagation.png" alt="sample-function-backpropagation.png" />
+</p>
+</div>
+<blockquote>
+<p>
+简单的三个计算函数组成的计算流，用来解释三个简单函数的反向传播的作用。加和函数将
+梯度分给各个输入。最大函数将梯度分给最大输入。乘法函数交换输入的值，然后乘以对应
+的梯度。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+从上图中，我们可以看出：
+<b>add function</b> 会将梯度分给所有的输入，而不管对应的输入值的大小。这符合加法函
+数局部梯度为 1。在上图中，也可以看到加法的反向传播并不影响梯度。
+</p>
+
+<p>
+<b>max function</b> 会对梯度进行分发。最大函数将梯度全部分给向前传播中具有最大值的变
+ 量。这是因为对于最大值的局部梯度为 1.0，对于其他变量的局部梯度为 0.0。
+</p>
+
+<p>
+<b>multiply function</b> 局部梯度为交换后的相关输入值。可以看到对于 <i>x</i> 的梯度
+为-8.0=-4.0*2.0。
+</p>
+
+<p>
+所以可以看到乘法函数中，如果两个输入的值，一大一小，那么小的输入局部梯度就为大的
+输入值，大的输入局部梯度为小的输入值。在线性分类器中，得分为 <i>W<sup>T</sup>x<sub>i</sub></i> ，表示
+输入的数据会影响对应的权值的局部梯度。如果对输入的数据全部放大 1000 倍，那么梯度就
+会放大 1000 倍，这个时候必须对学习率进行对应的缩小。这就是为什么对数据进行预处理
+具有很大的作用。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8">Gradients for vectorized operations</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+上述的讨论都面向于单个变量，但是这些操作都可以很容易推广到向量纬度。但是需要额外
+注意维度和转置操作。
+</p>
+
+<p>
+<b>Matrix multiply gradient</b> 额外需要注意的是矩阵乘法：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward pass</span>
+<span style="font-weight: bold; font-style: italic;">W</span> = np.random.randn(5, 10)
+<span style="font-weight: bold; font-style: italic;">X</span> = np.random.randn(10, 3)
+<span style="font-weight: bold; font-style: italic;">D</span> = W.dot(X)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">now suppose we had the gradient on D from above in the circuit</span>
+<span style="font-weight: bold; font-style: italic;">dD</span> = np.random.randn(*D.shape) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">same shape as D</span>
+<span style="font-weight: bold; font-style: italic;">dW</span> = dD.dot(X.T) <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">.T gives the transpose of the matrix</span>
+<span style="font-weight: bold; font-style: italic;">dX</span> = W.T.dot(dD)
+</pre>
+</div>
+
+<blockquote>
+<p>
+<b>Tips</b>: 对矩阵维度进行分析。计算矩阵乘法相关梯度时，并不需要记住求导的具体公式，
+ 只需要在计算的时候，分析以下维度即可。例如：我们知道对于权值的梯度 <i>dW</i> 必须和
+ <i>W</i> 具有相同的维度，而且肯定是 <i>X</i> 和 <i>dD</i> 的乘积(因为面向变量时，dW=X*dD 或者
+ dD*X)。这里只有一个方法去得到相同维度的举证。例如 <i>X</i> 维度为[10,3]， <i>dD</i> 维度
+ 为[5,3]。如果我们需要的 <i>dW</i> 和 <i>W</i> 的维度为[5,10]，那么只有一个乘法可以达到这
+ 个维度 <i>dD.dot(X.T)</i> 。
+</p>
+</blockquote>
+
+<p>
+<b>Work with small, explicit examples</b> 有时候直接在矩阵上作一些计算会非常不直观和
+ 困难。推荐先以一个维度较小的例子开始，推导梯度的计算，然后推广到一般形式。
+</p>
+
+<p>
+矩阵相关求导资料可参阅: <a href="http://cs231n.stanford.edu/vecDerivs.pdf">参考资料</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-9" class="outline-2">
+<h2 id="sec-9">Summary</h2>
+<div class="outline-text-2" id="text-9">
+<ul class="org-ul">
+<li>本文解释了梯度的具体意义，梯度如何通过反向传播在计算图中进行传递
+</li>
+<li>讨论了将计算分成多个部分，然后通过链式法则实现梯度的反向传播
+</li>
+</ul>
+
+<p>
+<a href="https://arxiv.org/abs/1502.05767">Automatic differentiation in machine learning: a survey</a>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

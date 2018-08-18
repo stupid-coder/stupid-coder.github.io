@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Optimization: Stochastic Gradient Descent</title>
+<!-- 2018-08-18 Sat 11:53 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Optimization: Stochastic Gradient Descent</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Introduction</a></li>
+<li><a href="#sec-2">Visualizing the loss function</a></li>
+<li><a href="#sec-3">Optimization</a>
+<ul>
+<li><a href="#sec-3-1">Strategy#1: A first very bad idea solution: Random search</a>
+<ul>
+<li><a href="#sec-3-1-1">Core idea: iterative refinement</a></li>
+</ul>
+</li>
+<li><a href="#sec-3-2">Strategy#2: Random Local Search</a></li>
+<li><a href="#sec-3-3">Strategy #3: Following the Gradient</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">Computing the gradient</a>
+<ul>
+<li><a href="#sec-4-1">Computing the gradient numerically with finite differences</a>
+<ul>
+<li><a href="#sec-4-1-1">Effect of step size</a></li>
+</ul>
+</li>
+<li><a href="#sec-4-2">Computing the gradient analytically with Calculus</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">Gradient Descent</a>
+<ul>
+<li><a href="#sec-5-1">Mini-batch gradient descent</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">Summary</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/optimization-1/">cs231n-note-3</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+前两个讲义在图像分类的场景下介绍了两个关键部分：
+</p>
+<dl class="org-dl">
+<dt> <code>score function</code> </dt><dd><b>得分函数</b> ，根据输入图像的像素数组计算的到对应分类类别的相应得分（eg：线性模型）
+</dd>
+<dt> <code>loss function</code> </dt><dd><b>损失函数</b> ，模型运行好坏的度量函数(eg: Softmax/SVM)
+</dd>
+</dl>
+
+
+<blockquote>
+<p>
+上述两部分分别对应李航老师定义的统计学习三要素其中的： <b>模型</b> <b>策略</b> 。第三个
+要素为 <b>算法</b> ，算法是用来进行优化模型，从而使得该模型在当前损失函数的度量下能
+够变现的更好。
+</p>
+</blockquote>
+
+
+<p>
+例如：线性得分函数具有 <i>\(f(x_{i},W)=Wx_{i}\)</i> ， <b>SVM</b> 损失函数有如下公式：
+</p>
+\begin{equation}
+L = \frac{1}{N}\sum_{i}\sum_{j \neq y_{i}}[max(0,\ f(x_{i};W)_{j} -
+f(x_{i};W)_{y_{i}}+1)] + \alpha R(W)
+\end{equation}
+
+<p>
+较好的参数 <i>W</i> 计算得到的类别得分分布和真的标签数据 <i>y<sub>i</sub></i> 相符。最终的损失值
+较低。那么较好的参数如何去设置，本笔记将介绍第三部分 <b>optimization</b> 算法，用来
+寻找 <i>W</i> ，能够使得最小化损失函数。
+</p>
+
+<p>
+一旦理解了三个核心部分的原理，那么后续只需要更改 <b>模型(parameterized function
+mapping)</b> ，将模型更改为更为复杂的：神经网络和卷积神经网络。而损失函数和优化算
+法都不需要改变。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Visualizing the loss function</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+损失函数常常都定义在高维空间（CIFAR-10 的线性分类器权值矩阵的纬度为 [10 by 3073])，
+使得较难直接进行可视化。不过，也可以在某一个维度或者两个维度进行可视化去获取一些
+灵感。例如，随机生成权值矩阵 <i>W</i> ，然后定一个随机的方向矩阵 <i>W<sub>1</sub></i> ，可以计算沿
+着这个方向的损失 <i>L(W+aW<sub>1</sub>)</i> ，这样可以记录不同 <i>a</i> 对应的损失。就可以画出图示，
+x-axis 为 <i>a</i> 值，y-axis 为 损失函数。同样，可以引入另外一个方向矩阵，计算损失
+<i>L(W+aW<sub>1</sub>+bW<sub>2</sub>)</i> ，这样就可以画出 x-axis 和 y-axis 分别代表 <i>a,b</i> ，不同颜色代
+表不同的损失值。
+</p>
+
+
+<hr  />
+<p>
+<img src="assets/svm1d.png" alt="svm1d.png" /> <img src="assets/svm_one.jpg" alt="svm_one.jpg" /> <img src="assets/svm_all.jpg" alt="svm_all.jpg" />
+</p>
+<blockquote>
+<p>
+SVM 多分类损失函数可视化（左图和中间都是面对一个样本）。右图为 100 的样本点的损失
+函数可视化。蓝色表示低损失，红色代表高损失。可以看出损失函数为分段函数。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+可以通过对损失函数进行分析来解释为什么损失函数是分段线性。
+</p>
+\begin{equation}
+L_{i} = \sum_{j \neq y_{i}}[max(0,\ w_{j}^{T}x_{i}-w_{y_{i}}^{T}x_{i}+1)]
+\end{equation}
+<p>
+可以看到损失函数就是关于 <i>W</i> 线性函数加和。并且具有 0 作为阈值的分段属性。例如，具
+有三个 1-d 的样本点的数据集，则 SVM 损失为：
+</p>
+\begin{equation}
+L_{0} = max(0,\ w_{1}^{T}x_{0}-w_{0}^{T}x_{0}+1)\ +\ max(0,\ w_{2}^{T}x_{0}-w_{0}^{T}x_{0}+1) \\
+L_{1} = max(0,\ w_{0}^{T}x_{1}-w_{1}^{T}x_{1}+1)\ +\ max(0,\ w_{2}^{T}x_{1}-w_{1}^{T}x_{1}+1) \\
+L_{2} = max(0,\ w_{0}^{T}x_{2}-w_{2}^{T}x_{2}+1)\ +\ max(0,\ w_{1}^{T}x_{2}-w_{2}^{T}x_{2}+1) \\
+L = (L_{0} + L_{1} + L_{2})/3
+\end{equation}
+
+<p>
+假设，固定除了 <i>w<sub>0</sub></i> 以外的其他变量，这损失函数就可以作是 <i>w<sub>0</sub></i> 的函数。则
+L<sub>0</sub> 对应则蓝色曲线，L<sub>12</sub> 对应这红色和绿色曲线。
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/svmbowl.png" alt="svmbowl.png" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> svm 分段可视化</p>
+</div>
+<hr  />
+<p>
+可以看出 svm 损失函数是凸函数(<i>convex function</i>)。有很多讲义来研究如何进行有效的
+凸优化(<i><a href="http://stanford.edu/~boyd/cvxbook/">convex optimization</a></i>)。一旦采取神经网络作为得分函数，那么损失函数就不再
+是一凸函数，可视化后不再是一个碗状，而是崎岖不平的。
+</p>
+
+<p>
+<b>Non-differentiable loss functions</b> 一些扭曲或者分段的损失函数中(<i>max</i>)，数学上
+讲有一些数值点是不可微分的。一般采取在分段求积分，来解决这些问题。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Optimization</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+损失函数用来度量当前参数(<i>W</i>)时模型的好坏。优化算法的目标就是找寻参数(<i>W</i>)，最小
+化损失函数。
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1">Strategy#1: A first very bad idea solution: Random search</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+既然可以使用损失函数来读量参数的好坏，那么第一个策略就是随机去尝试不同的参数，从
+中选取最好的参数即可。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assume X_train is the data where each column is an example (e.g. 3073 x 50,000)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assume Y_train are the labels (e.g. 1D array of 50,000)</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assume the function L evaluates the loss function</span>
+
+<span style="font-weight: bold; font-style: italic;">bestloss</span> = <span style="font-weight: bold;">float</span>(<span style="color: #daa520; font-style: italic;">"inf"</span>) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Python assigns the highest possible float value</span>
+<span style="color: #00bfff; font-weight: bold;">for</span> num <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">xrange</span>(1000):
+  <span style="font-weight: bold; font-style: italic;">W</span> = np.random.randn(10, 3073) * 0.0001 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">generate random parameters</span>
+  <span style="font-weight: bold; font-style: italic;">loss</span> = L(X_train, Y_train, W) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">get the loss over the entire training set</span>
+  <span style="color: #00bfff; font-weight: bold;">if</span> loss &lt; bestloss: <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">keep track of the best solution</span>
+    <span style="font-weight: bold; font-style: italic;">bestloss</span> = loss
+    <span style="font-weight: bold; font-style: italic;">bestW</span> = W
+  <span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'in attempt %d the loss was %f, best %f'</span> % (num, loss, bestloss)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">prints:</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 0 the loss was 9.401632, best 9.401632</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 1 the loss was 8.959668, best 8.959668</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 2 the loss was 9.044034, best 8.959668</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 3 the loss was 9.278948, best 8.959668</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 4 the loss was 8.857370, best 8.857370</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 5 the loss was 8.943151, best 8.857370</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">in attempt 6 the loss was 8.605604, best 8.605604</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">... (trunctated: continues for 1000 lines)</span>
+</pre>
+</div>
+
+<p>
+在上述代码中，随机初始化了多组权值举证，计算了损失函数，记下最好的参数。然后就可
+以在测试集上进行测试：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Assume X_test is [3073 x 10000], Y_test [10000 x 1]</span>
+<span style="font-weight: bold; font-style: italic;">scores</span> = Wbest.dot(Xte_cols) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">10 x 10000, the class scores for all test examples</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">find the index with max score in each column (the predicted class)</span>
+<span style="font-weight: bold; font-style: italic;">Yte_predict</span> = np.argmax(scores, axis = 0)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">and calculate accuracy (fraction of predictions that are correct)</span>
+np.mean(Yte_predict == Yte)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">returns 0.1555</span>
+</pre>
+</div>
+
+<p>
+获得了 <b>15.5%</b> 的准确率，比随机猜 <b>10%</b> 要好。
+</p>
+</div>
+
+<div id="outline-container-sec-3-1-1" class="outline-4">
+<h4 id="sec-3-1-1">Core idea: iterative refinement</h4>
+<div class="outline-text-4" id="text-3-1-1">
+<p>
+那么如何才能做到更好呢。核心思像就是，在很难或者不可能找到最优权值矩阵 <i>W</i> 的时
+候，但是通过微调当前的权值 <i>W</i> 就可以获取稍好的损失不是特别难的时候。我们可以通
+过随机选择不同的 <i>W</i> ，然后通过微调获取更好地损失结果。
+</p>
+
+<blockquote>
+<p>
+核心策略：随机初始化权值举证，然后通过微调来获取更低的损失值。
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2">Strategy#2: Random Local Search</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+第一种策略，可以看作是你尝试了在 <i>W</i> 权值矩阵空间的一个点，如果损失下降了，就保
+留结果。本策略为随机初始化权值矩阵 <i>W</i> ，然后随机生成一个扰动 <i>&delta; W</i> ，计算
+<i>W+&delta; W</i> 的损失值，如果结果是好的，那么就执行一次更新。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">W</span> = np.random.randn(10, 3073) * 0.001 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">generate random starting W</span>
+<span style="font-weight: bold; font-style: italic;">bestloss</span> = <span style="font-weight: bold;">float</span>(<span style="color: #daa520; font-style: italic;">"inf"</span>)
+<span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">xrange</span>(1000):
+  <span style="font-weight: bold; font-style: italic;">step_size</span> = 0.0001
+  <span style="font-weight: bold; font-style: italic;">Wtry</span> = W + np.random.randn(10, 3073) * step_size
+  <span style="font-weight: bold; font-style: italic;">loss</span> = L(Xtr_cols, Ytr, Wtry)
+  <span style="color: #00bfff; font-weight: bold;">if</span> loss &lt; bestloss:
+    <span style="font-weight: bold; font-style: italic;">W</span> = Wtry
+    <span style="font-weight: bold; font-style: italic;">bestloss</span> = loss
+  <span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'iter %d loss is %f'</span> % (i, bestloss)
+</pre>
+</div>
+
+<p>
+采取跟之前一样的计算，本次结果能够获取一个更好的测试准确率 <b>21.4%</b> 。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3">Strategy #3: Following the Gradient</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+策略 2 是在权值空间随机选取一个方向，然后看是否能够降低损失。其实，根据损失函数是
+可以直接选取一个下降最快的方向。该方向就是损失函数的梯度。
+</p>
+
+<p>
+梯度定义了函数在某点的斜率，可以是看作函数在某个点 <i>x</i> 产生一点扰动后，对该点
+求一个除：
+</p>
+
+\begin{equation}
+\frac{df(x)}{dx} = \lim_{h \to 0}\frac{f(x+h)-f(x)}{h}
+\end{equation}
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Computing the gradient</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+有两种计算梯度的方法： <b>数值梯度</b> (<i>numerical gradient</i>)，该方法较为简单，但是计
+算较慢，近似结果； <b>解析梯度</b> (<i>analytic gradient</i>)，该方法容易出错，但是快速和
+准确。
+</p>
+</div>
+
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Computing the gradient numerically with finite differences</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+利用上述求解梯度公式(4)，可以快速实现一个泛化函数，根据输入的函数 <i>f</i> 和向量 <i>x</i>
+计算数值梯度。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">eval_numerical_gradient</span>(f, x):
+  <span style="color: #daa520; font-style: italic;">""" </span>
+<span style="color: #daa520; font-style: italic;">  a naive implementation of numerical gradient of f at x </span>
+<span style="color: #daa520; font-style: italic;">  - f should be a function that takes a single argument</span>
+<span style="color: #daa520; font-style: italic;">  - x is the point (numpy array) to evaluate the gradient at</span>
+<span style="color: #daa520; font-style: italic;">  """</span> 
+
+  <span style="font-weight: bold; font-style: italic;">fx</span> = f(x) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">evaluate function value at original point</span>
+  <span style="font-weight: bold; font-style: italic;">grad</span> = np.zeros(x.shape)
+  <span style="font-weight: bold; font-style: italic;">h</span> = 0.00001
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">iterate over all indexes in x</span>
+  <span style="font-weight: bold; font-style: italic;">it</span> = np.nditer(x, flags=[<span style="color: #daa520; font-style: italic;">'multi_index'</span>], op_flags=[<span style="color: #daa520; font-style: italic;">'readwrite'</span>])
+  <span style="color: #00bfff; font-weight: bold;">while</span> <span style="color: #00bfff; font-weight: bold;">not</span> it.finished:
+
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">evaluate function at x+h</span>
+    <span style="font-weight: bold; font-style: italic;">ix</span> = it.multi_index
+    <span style="font-weight: bold; font-style: italic;">old_value</span> = x[ix]
+    <span style="font-weight: bold; font-style: italic;">x</span>[ix] = old_value + h <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">increment by h</span>
+    <span style="font-weight: bold; font-style: italic;">fxh</span> = f(x) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">evalute f(x + h)</span>
+    <span style="font-weight: bold; font-style: italic;">x</span>[ix] = old_value <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">restore to previous value (very important!)</span>
+
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">compute the partial derivative</span>
+    <span style="font-weight: bold; font-style: italic;">grad</span>[ix] = (fxh - fx) / h <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the slope</span>
+    it.iternext() <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">step to next dimension</span>
+
+  <span style="color: #00bfff; font-weight: bold;">return</span> grad
+</pre>
+</div>
+
+<p>
+上述代码遍历输入的向量的维度，然后添加一个微小的扰动 <i>h</i> ，然后计算在该维度上的
+偏导数，最后返回梯度向量。
+</p>
+
+<blockquote>
+<p>
+<b>Practical considerations</b>
+在计算数值梯度的时候，常常需要使得 <i>h</i> 接近于 0。实际应用中，只需要设置一个非常小
+的数字即可(1e-5)。更好的计算方法是采取中心微分公式： <i>[f(x+h)-f(x-h)]/2h</i> ，可以
+获取更好的结果。
+</p>
+</blockquote>
+
+
+<p>
+例如我们利用上述公式在 CIFAR-10 计算随机权值时的损失函数的梯度：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">to use the generic code above we want a function that takes a single argument</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">(the weights in our case) so we close over X_train and Y_train</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">CIFAR10_loss_fun</span>(W):
+  <span style="color: #00bfff; font-weight: bold;">return</span> L(X_train, Y_train, W)
+
+<span style="font-weight: bold; font-style: italic;">W</span> = np.random.rand(10, 3073) * 0.001 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">random weight vector</span>
+<span style="font-weight: bold; font-style: italic;">df</span> = eval_numerical_gradient(CIFAR10_loss_fun, W) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">get the gradient</span>
+</pre>
+</div>
+
+<p>
+梯度值可以告诉我们损失函数在各个维度上的斜率，可以利用这些信息对权值进行更新：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">loss_original</span> = CIFAR10_loss_fun(W) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the original loss</span>
+<span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'original loss: %f'</span> % (loss_original, )
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">lets see the effect of multiple step sizes</span>
+<span style="color: #00bfff; font-weight: bold;">for</span> step_size_log <span style="color: #00bfff; font-weight: bold;">in</span> [-10, -9, -8, -7, -6, -5,-4,-3,-2,-1]:
+  <span style="font-weight: bold; font-style: italic;">step_size</span> = 10 ** step_size_log
+  <span style="font-weight: bold; font-style: italic;">W_new</span> = W - step_size * df <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">new position in the weight space</span>
+  <span style="font-weight: bold; font-style: italic;">loss_new</span> = CIFAR10_loss_fun(W_new)
+  <span style="color: #00bfff; font-weight: bold;">print</span> <span style="color: #daa520; font-style: italic;">'for step size %f new loss: %f'</span> % (step_size, loss_new)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">prints:</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">original loss: 2.200718</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-10 new loss: 2.200652</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-09 new loss: 2.200057</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-08 new loss: 2.194116</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-07 new loss: 2.135493</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-06 new loss: 1.647802</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-05 new loss: 2.844355</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-04 new loss: 25.558142</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-03 new loss: 254.086573</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-02 new loss: 2539.370888</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for step size 1.000000e-01 new loss: 25392.214036</span>
+</pre>
+</div>
+
+<blockquote>
+<p>
+<b>Update in negative gradient direction</b>
+目标是最小化损失函数，所以权值更新为梯度的反方向。
+</p>
+</blockquote>
+</div>
+
+<div id="outline-container-sec-4-1-1" class="outline-4">
+<h4 id="sec-4-1-1">Effect of step size</h4>
+<div class="outline-text-4" id="text-4-1-1">
+<p>
+梯度告诉了损失函数的最速下降方向，但是并没有告诉我们在该方向上采取多大的长度能够
+达到最大的下降。在后续的讲义中，可以看到步长的选择(<i>learning rate</i>)可以看作是最
+为重要的几个超参之一。大步长能够使得损失函数快速下降，需要较少的迭代次数。但是需
+要看到的是如果步长太长，会造成损失函数上升。
+</p>
+
+<hr  />
+
+<div class="figure">
+<p><img src="assets/stepsize.jpg" alt="stepsize.jpg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 可视化步长对损失函数的影响</p>
+</div>
+<blockquote>
+<p>
+图中显示了步长对损失函数的影响。在某个节点，计算梯度方向（白色代表着负方向）。小
+步长会使得损失具有一个缓慢的下降过程。大步长会带来更快速的下降和不下降的风险。
+</p>
+</blockquote>
+<hr  />
+
+<blockquote>
+<p>
+<b>A problem of efficiency</b>
+可以注意到，在求解数值梯度时，因为需要遍历各个维度来计算偏导数。在高维度参数情况
+下，做一次参数更新就需要带来巨大的计算量。在神经网络模型中，由于参数规模急剧增大，
+所以数值梯度计算并不能很好的应该这种场景。
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">Computing the gradient analytically with Calculus</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+解析梯度是直接对损失函数进行分析，通过运用数学知识直接得到对应的梯度计算公式。从
+而可以快速的直接计算出对应的精准梯度。由于需要对损失函数进行解析，从而获取梯度公
+式，该方法容易出错，并且不易检查。所以很多情况下，采取数值梯度和解析梯度值进行对
+比，来检测解析梯度计算是否正确。
+</p>
+
+<p>
+参考一下 SVM Loss 在单点情况：
+</p>
+\begin{equation}
+L_{i} = \sum_{j \neq y_{i}}[max(0,\ w_{j}^{T}x_{i}-w_{y_{i}}^{T}x_{i} + \delta)]
+\end{equation}
+
+<p>
+可以对上述公式直接求微分：
+</p>
+\begin{equation}
+\nabla_{w_{y_{i}}}L_{i} = -\lgroup \sum_{j \neq y_{i}}{\Uparrow(w_{j}^{T}x_{i} - w_{y_i}^{T}x_{i} + \Delta > 0)}   \rgroup x_i
+\end{equation}
+
+<p>
+&uArr; 为判别函数，如果条件满足则为 1，否则为 0。
+</p>
+
+<p>
+对与 j &ne; y<sub>i</sub> ，梯度公式如下：
+</p>
+\begin{equation}
+\nabla_{w_{j}}L_{i} = \Uparrow(w_{j}^{T}x_{i} - w_{y_i}^{T}x_{i} + \Delta > 0)x_i
+\end{equation}
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Gradient Descent</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+迭代的计算损失函数的梯度值，然后更新参数，改过成叫做梯度下降(<i>Gradient Descent</i>)：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Vanilla Gradient Descent</span>
+
+<span style="color: #00bfff; font-weight: bold;">while</span> <span style="font-weight: bold; text-decoration: underline;">True</span>:
+  <span style="font-weight: bold; font-style: italic;">weights_grad</span> = evaluate_gradient(loss_fun, data, weights)
+  <span style="font-weight: bold; font-style: italic;">weights</span> += - step_size * weights_grad <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform parameter update</span>
+</pre>
+</div>
+
+<p>
+上述的梯度下降就是所有神经网络优化的核心。
+</p>
+</div>
+
+<div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1">Mini-batch gradient descent</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+在训练数据规模较大的时候，计算全部样本集的损失值将会非常耗时。一般采取的就是将数
+据集分成多个 <b>batch</b> ，来进行损失值的计算和梯度的更新。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Vanilla Minibatch Gradient Descent</span>
+
+<span style="color: #00bfff; font-weight: bold;">while</span> <span style="font-weight: bold; text-decoration: underline;">True</span>:
+  <span style="font-weight: bold; font-style: italic;">data_batch</span> = sample_training_data(data, 256) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">sample 256 examples</span>
+  <span style="font-weight: bold; font-style: italic;">weights_grad</span> = evaluate_gradient(loss_fun, data_batch, weights)
+  <span style="font-weight: bold; font-style: italic;">weights</span> += - step_size * weights_grad <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform parameter update</span>
+</pre>
+</div>
+
+<p>
+增大 mini-batch 内的样本数量，会使得计算的梯度和全局梯度近似，这样就可以在一个较
+小的样本集中得到全局梯度，从而实现梯度的快速更新。
+</p>
+
+<p>
+极端一点，mini-batch 内的样本数量如果是一个，那么这个过程就叫做随机梯度下降
+(<b>Stochastic Gradient Descent(SGD)</b>)。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Summary</h2>
+<div class="outline-text-2" id="text-6">
+<hr  />
+
+<div class="figure">
+<p><img src="assets/dataflow.jpeg" alt="dataflow.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> 机器学习数据流</p>
+</div>
+<blockquote>
+<p>
+数据流图总结：输入数据集 <i>(x,y)</i> ，权值矩阵随机初始化，在向前传导过程中，得分函数计
+算类别得分，存储在向量 <i>f</i> 中。损失函数包含两部分：数据损失，用来度量计算的得分
+与真实类别标签的差别；正则化损失，用来度量模型的复杂度。在梯度下降中，计算权值的
+梯度，然后执行权值的更新。
+</p>
+</blockquote>
+<hr  />
+
+<ul class="org-ul">
+<li>本文引入了优化算法的中心思想，通过迭代更新权值来最小化损失函数
+</li>
+<li>损失函数的梯度方向指明了权值更新的方向，从而使得损失函数能够朝着最速方向下降
+</li>
+<li>可视化了步长&amp;学习率对损失函数的影响
+</li>
+<li>比较和讨论了数值梯度和解析梯度的不同
+</li>
+<li>介绍了梯度下降来执行权值更新
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>
