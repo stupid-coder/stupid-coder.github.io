@@ -1,0 +1,173 @@
+#+TITLE: Vector, Matrix, and Tensor Derivatives
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+INDEX: (矩阵运算，梯度)
+原文：[[http://cs231n.stanford.edu/vecDerivs.pdf][Vector, Matrix, And Tensor Derivatives]]
+
+#+BEGIN_QUOTE
+本文翻译于上文，用于学习向量，矩阵梯度运算相关知识。
+#+END_QUOTE
+
+本文目标是帮助大家学习向量、矩阵或者高阶张量(三维及以上的数组)求解梯度相关知识，
+并帮助大家求解以向量、矩阵和高阶张量为对象求解梯度。
+
+* Simplify, simplify, simplify
+  面向多维数组求解梯度的时候，同时处理多个计算很容易带来疑惑。这些计算包括同时处
+  理多个对象求解梯度，处理加和的求解梯度和应用链式法则。同时计算这么多事情，常常
+  会带来错误。
+
+** Expanding notation into explicit sums and equations for each component
+   面向一个计算，应该先写出一个标量版本的公式。然后可以根据该公式，再去实现一
+   个基于矩阵的计算。
+
+   *Example*. 维度为 [C,1] 的列向量 $\vec y$ 为维度为[C,D]矩阵 $W$ 和维度为[D,1]
+    的列向量 $\vec x$ 的乘积：
+    \begin{equation}
+    \vec y = W \vec x.    
+    \tag{1}
+    \end{equation}
+
+    假设我们希望求解 $\vec y$ 对 $\vec x$ 的梯度。结果应该是每一个 $\vec y$ 的元
+    素对每一个 $\vec x$ 的元素求的偏导数，结果为维度[C,D]的矩阵。
+
+    让我们从单个元素开始，例如 $\vec y$ 的第三个元素对 $\vec x$ 的第 7 个元素求导：
+    \begin{equation}
+    \frac{\partial \vec y_{3}}{\partial \vec x_{7}}
+    \tag{2}
+    \end{equation}
+
+    结果为一个标量对另外一个标量求解梯度。
+    
+    第一件事就是去求解 $\vec y_{3}$ ，根据矩阵乘积，标量 $\vec y_{3}$ 为矩阵 $W$
+    的第三行和列向量 $\vec x$ 的点积：
+    \begin{equation}
+    \vec y_{3} = \sum_{j=1}^{D} W_{3,j} \vec x_{j}.
+    \tag{3}
+    \end{equation}
+
+    上述公式为矩阵乘积(公式 1)分解为标量公式。可以简化梯度求解。
+
+** Removing summation notation
+   可以直接从公式 2 直接求解梯度，一般包含求和 $\sum$ 或者求乘 $\prod$ 容易出错。
+   如果是刚开始进行计算，把这些公式展开成不带对应符号的公式，比较正确计算：
+   \begin{equation}
+   \vec y_{3} = W_{3,1}\vec x_{1}+W_{3,2}\vec x_{2}+...+W_{3,7}\vec x_{7} +
+   ... + W_{3,D}\vec x_{D}.
+   \tag{4}
+   \end{equation}
+
+   由于面向 $\vec x_{7}$ 求导，那么上述公式就包含了该项。可以看对 $y_{3}$ 和
+   $\vec x_{7}$ 关联只有单独一项 $W_{3,7}\vec x_{7}$ 。其他项都不包含 $\vec x{7}$
+   ，求导为 0：
+
+   \begin{align*}
+   \frac{\partial \vec y_{3}}{\partial \vec x_{7}} &= \frac{\partial}{\partial
+   \vec x_{7}}[W_{3,1}\vec x_{1}+W_{3,2}\vec x_{2}+...+W_{3,7}\vec
+   x_{7}+...+W_{3,D}\vec x_{D}]\\
+   &= 0+0+...+\frac{\partial}{\partial \vec x_{7}}+...+0\\
+   &=\frac{\partial}{\partial \vec x_{7}}[W_{3,7}\vec x_{7}]\\
+   &=W_{3,7}
+   \tag{5}
+   \end{align*}
+
+   通过只关注向量 $\vec y$ 的一个元素对向量 $\vec x$ 的一个元素，我们可以将计算
+   简化到最简单形式。如果后面的计算出错，该方法可以帮助你将问题简化到基本形式，
+   然后去发现哪里出了错误。
+
+*** Completing the derivative: the Jacobian matrix
+    我们的目标是计算向量 $\vec y$ 中每一个元素对向量 $\vec x$ 的每一个元素的梯度，
+    并且结果为维度[C,D]的矩阵。可以被写成如下形式：
+
+    \begin{equation}
+    \left[
+    \begin{matrix}
+    \frac{\partial \vec y_{1}}{\partial \vec x_{1}} & \frac{\partial \vec y_{1}}{\partial \vec x_{2}} & \frac{\partial \vec y_{1}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{1}}{\partial \vec x_{D}} \\
+    \frac{\partial \vec y_{2}}{\partial \vec x_{1}} & \frac{\partial \vec y_{2}}{\partial \vec x_{2}} & \frac{\partial \vec y_{2}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{2}}{\partial \vec x_{D}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \frac{\partial \vec y_{C}}{\partial \vec x_{1}} & \frac{\partial \vec y_{C}}{\partial \vec x_{2}} & \frac{\partial \vec y_{C}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{C}}{\partial \vec x_{D}} \\
+    \end{matrix}
+    \right]
+    \tag{6}
+    \end{equation}
+    
+    上述矩阵形式叫做雅可比矩阵(/Jacobian matrix/)。
+
+    对于等式
+    \begin{equation}
+    \vec y=W\vec x
+    \tag{7}
+    \end{equation}
+
+    $\vec y_{3}$ 对于 $\vec x_{7}$ 的偏导数为 $W_{3,7}$ 。如果对其他元素作相同的计
+    算，对于所有 $i \in C,j \in D$ ：
+    \begin{equation}
+    \frac{\partial \vec y_{i}}{\partial \vec x_{j}} = W_{i,j}
+    \tag{8}
+    \end{equation}
+
+    那么偏导数矩阵为：
+    \begin{equation}
+    \left[
+    \begin{matrix}
+    \frac{\partial \vec y_{1}}{\partial \vec x_{1}} & \frac{\partial \vec y_{1}}{\partial \vec x_{2}} & \frac{\partial \vec y_{1}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{1}}{\partial \vec x_{D}} \\
+    \frac{\partial \vec y_{2}}{\partial \vec x_{1}} & \frac{\partial \vec y_{2}}{\partial \vec x_{2}} & \frac{\partial \vec y_{2}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{2}}{\partial \vec x_{D}} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    \frac{\partial \vec y_{C}}{\partial \vec x_{1}} & \frac{\partial \vec y_{C}}{\partial \vec x_{2}} & \frac{\partial \vec y_{C}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{C}}{\partial \vec x_{D}} \\
+    \end{matrix}
+    \right]
+    =
+    \left[
+    \begin{matrix}
+    W_{1,1} & W_{1,2} & W_{1,3} & \cdots & W_{1,D} \\
+    W_{2,1} & W_{2,2} & W_{2,3} & \cdots & W_{2,D} \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    W_{C,1} & W_{C,2} & W_{C,3} & \cdots & W_{C,D} \\
+    \end{matrix}
+    \right]
+    \tag{9}
+    \end{equation}
+
+    上述矩阵就是 $W$ 自己。
+
+    经过上述的推导，可以总结：
+    \begin{equation}
+    \vec y = W \vec x,
+    \end{equation}
+    可以推导：
+    \begin{equation}
+    \frac{d\vec y}{d\vec x} = W.
+    \end{equation}
+
+* Row vectors instead of column vectors
+  不同的神经网络开发库，矩阵的存储形式是需要额外关注的。例如，数据矩阵 $X$ 包含
+  不同的向量，每一个代表一个输入样本，那么是行向量代表一个样本，还是列向量代表一
+  个样本呢。
+
+  本文第一部分，就是将 $\vec x$ 当成列向量处理。同样的，如果是行向量，一样处理。
+
+** Example 2
+   $\vec y$ 是一个维度为[1,C]的行向量是维度为[1,D]行向量 $\vec x$ 和维度为[D,C]
+   的矩阵 $W$ 的乘积：
+   \begin{equation}
+   \vec y = \vec x W.
+   \end{equation}
+
+   $\vec y$ 和 $\vec x$ 都具有相同的数据，只是变成了行向量。矩阵 $W$ 的维度为第
+   一部分使用矩阵维度的转置。本部分为左乘向量 $\vec x$ ，第一部分为右乘：
+   \begin{equation}
+   \vec y_{3} = \sum_{j=1}{D}\vec x_{j}W_{j,3}
+   \end{equation}
+   则
+   \begin{equation}
+   \frac{\partial \vec y_{3}}{\partial \vec x_{7}} = W_{7,3}
+   \end{equation}
+
+   $W$ 的索引和第一部分的 $W$ 的索引相反，同样的对于向量的雅可比矩阵为：
+   \begin{equation}
+   \frac{d\vec y}{d\vec x} = W.
+   \tag{10}
+   \end{quation}
+   
+* Dealing with more than two dimensions
+  
+  

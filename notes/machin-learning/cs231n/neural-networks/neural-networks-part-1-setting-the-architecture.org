@@ -1,0 +1,304 @@
+#+TITLE: setting the architecture
+#+ALT_TITLE: neural networks part 1
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: num:nil H:2
+
+[[http://cs231n.github.io/neural-networks-1/][cs231n-neural-networks-part-1]]
+
+* Quick intro without brain analogies
+  神经网络不需要类比人脑的结构。线性分类器 /$s=Wx$/ ，根据输入的图像的像素组成的
+  列向量 /$x$/ ，乘以权值矩阵 /$W$/ 最后得到类别得分。在 *CIFAR-10* 中， /$x$/
+  为[3072,1]的列向量， /$W$/ 为[10,3072]的权值矩阵，最后输出的得分 /$s$/ 为 10 个
+  分类得分的列向量。
+
+  在神经网络中，得分函数为 /$s=W_{2}max(0,W_{1}x)$/ 。其中 /$W_1$/ 可以为
+  [100,3072]的权值矩阵将原始图像像素向量变换为 100 维的中间向量。函数
+  /$max(0,-)$/ 是一个元素级别的非线性函数。非线性函数可以有很多个选择，后续会学
+  习。矩阵 /$W_{2}$/ 为[10,100]，将中间向量变换为 10 维的最终得分。其中，非线性
+  变换函数是关键，如果没有非线性函数，那么两个矩阵的乘积可以合并成一个，那么两层
+  的计算就变成了线性分类器了。 /$W_{1},W_{2}$/ 都是通过随机梯度下降来学习出的。
+
+  三层的神经网络基本结构类似于 /$s=W_{3}max(0,W_{2}max(0,W_{1}x))$/ 。中间藏向量
+  的大小为神经网络的超参。后续会学习如何设置。
+
+* Modeling one neuron
+  神经网络的发展来源于生物学神经系统的工作原理，并且已经发展成了工程学中的一个重
+  要的分支。本节先从高抽象界别上对整个生物神经网络进行一个简单的描述.
+
+** Biological motivation and connections
+   人脑最基础的计算单元为神经元(/neuron/)。人类大概拥有 86G 的神经元，并且由
+   10^14-10^15 个突触(/synapses/)链接在一起。下图显示了一个神经元(左图)和模拟的
+   计算模型(右图)。神经元从树突(/dendrites/)接收输入信号，计算完对应的信号后，由
+   一个轴突(/axon/)输出。轴突可以有输出分叉，最终通过突触和其他神经元的树突链接。
+   在计算模型中，输入信号通过轴突输入(/$x_{0}$/)，和突触的权值进行相乘
+   (/$w_{0}x_{0}$/)。思想是突出的权值(/$w$/)是可学习的，并且用来控制对其他神经元
+   的影响力。在基础模型中，树突将轴突输入的信号输入到神经元(/cell/)中，神经元会
+   对所有的输入信号进行加和，如果最终的值大于阈值，那么神经元就被打开(/fire/)，
+   输出一个正信号给随后链接的神经元。计算模型中用激活函数(/activation function/)
+   处理信号，通常选用 *sigmoid function* $\sigma$ 。
+   -----
+   #+CAPTION: 神经元和计算模型
+   [[file:assets/nn1/neuron_model.jpeg]]
+   #+BEGIN_QUOTE
+   左图为生物神经元的图示，右图为相应的计算模型。
+   #+END_QUOTE
+   -----
+
+   一个神经元的向前传播代码如下：
+   #+BEGIN_SRC python
+     class Neuron(object):
+       # ... 
+       def forward(self, inputs):
+         """ assume inputs and weights are 1-D numpy arrays and bias is a number """
+         cell_body_sum = np.sum(inputs * self.weights) + self.bias
+         firing_rate = 1.0 / (1.0 + math.exp(-cell_body_sum)) # sigmoid activation function
+         return firing_rate
+   #+END_SRC
+
+   神经元将输入的向量和权值矩阵做一个点积，加上一个偏置，然后输入一个非线性函数
+   (/激活函数/)。
+
+   *Coarse model* 生物神经网络远比上述的计算模型复杂，该计算模型较为粗糙。
+
+** Single neuron as a linear classifier
+   神经元计算模型的向前传播和线性分类器较为相似，神经元具有对输入数据进行二分类
+   的能力(激活函数输出值在[0,1]之间)。采取合适的损失函数，神经元会变成线性分类器。
+
+
+   *Binary Softmax classifier* 可以将 /$\sigma(\sum_{i}w_{i}w_{i}+b)$/ 看作为类
+    别为 1 /$P(y_{i}=1|x_{i};w$/ 的概率。类别为 0 的概率为
+    /$P(y_{i}=0|x_{i};w)=1-P(y_{i}=1|x_{i};w$/ ，因为两个概率的和为 1。采用交叉
+    熵作为损失函数，和 二值的 *Softmax claasifier* 具有一样的形式。
+
+   *Binary Svm classifier* 如果使用 *hinge loss* ，则变成了 *Support Vector
+    Machine* 。
+
+   *Regularization interpretation* 正则化和其他分类器一样，可以看作是每次更新，
+    都对权值具有一定的衰减。
+
+    #+BEGIN_QUOTE
+    单个神经元可以看作是一个二分类(二值 softmax 分类器或者二值的 svm 分类器)
+    #+END_QUOTE
+
+** Commonly used activation functions
+#+INDEX: activation function
+   激活函数(/non-linearity/)会对输入的信号执行一个固定的非线性计算，在实践中，有
+   很多激活函数可以采用：
+   -----
+   #+BEGIN_CENTER
+   #+CAPTION: 激活函数
+   [[file:assets/nn1/sigmoid.jpeg]] [[file:assets/nn1/tanh.jpeg]]
+   #+END_CENTER
+   #+BEGIN_QUOTE
+   左图为 sigmoid 非线性变换，会将输入变换到[0,1]。右图为 tanh 非线性变换，会将输入变换到[-1,+1]。
+   #+END_QUOTE
+   -----
+   *Sigmoid* 计算公式为 /$\sigma(x)=\frac{1}{1+e^{-x}}$/ 。接收任意实数作为输入，
+    输出会压缩到[0,1]之间。较大的负数会接近 0，较大的正数会接近 1。 /sigmoid/ 应
+    用非常广泛，因为具有较好的概率解释性。现在使用较少，主要是因为：
+    + =Sigmoids saturate and kill gradients= :: sigmoid 具有一个非常不好的特性，
+         当神经元的输出接近饱和状态(/saturates/)，接近 0 或者 1 的时候，梯度会接
+         近 0。在进行反向传播的时候，局部梯度会和损失函数的梯度乘在一起，那么如
+         果局部梯度非常小，那么最终会将损失梯度变成接近 0，那么神经网络的权值将会
+         非常难以训练。此外，需要额外注意权值的初始化，如果权值过大或者过小，
+         sigmoid 会很容易进入饱和状态。
+    + =Sigmoid outputs are not zero-centered= :: 由于 sigmoid 的输出都是正数，使得
+         后续的神经网络的输入都是正数，即局部梯度都是正数。在一次样本的权值更新
+         过程中，梯度的更新就会出现都是正数或者负数(跟损失梯度有关)。会出现梯度
+         更新的 z 字扰动。虽然可以采取 mini-batch 更新，来使得梯度更新更具多样性，
+         但是仍然不够灵活。
+         
+
+    *Tanh* 计算公式为 /$tanh(x)=2\sigma(2x)-1$/ 。会将接受的实数压缩到[-1,+1]之
+     间。和 /sigmoid/ 激活函数一样也具有饱和的问题。但是输出为 zero-centered 的。
+
+     -----
+     #+CAPTION: relu 激活函数
+     #+BEGIN_CENTER
+     [[file:assets/nn1/relu.jpeg]] [[file:assets/nn1/alexplot.jpeg]]
+     #+END_CENTER
+     #+BEGIN_QUOTE
+     左图为 ReLU 激活函数，在小于 0 的时候激活值为 0，在大于 0 的时候具有梯度为 1 的性
+     质。右图为[[http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf][AlexNet]]论文中给出的 ReLU 激活函数在训练中收敛速度快 tanh 6 倍。
+     #+END_QUOTE
+     -----
+    *ReLU* (/Rectified Linear Unit/)激活函数在最近几年使用的较为常见。计算公式为
+    /$f(x)=max(0,x)$/ 。如上图左图所示，在小于 0 的时候激活值为 0，大于 0 的时候激活
+    值为梯度为 1 的直线。ReLU 也具有相应的优点和缺点：
+    + =(+)= :: 得益于在大于 0 的时候，局部梯度为 1，使得整体收敛速度更快。
+    + =(+)= :: ReLU 计算更为简单，无需指数操作。
+    + =(-)= :: ReLU 由于在输入为负数时，会进入假死状态。在训练阶段，如果遇到一个
+               较大的梯度值，然后将对应的神经元权值更新到一个较大的负数时候，会
+               使得该神经元此后不会再大于 0，那么就无法参与后续的训练了。通常会
+               发现采用 ReLU 的神经网络会有 40% 的神经元最后处于假死状态。所以，
+               不能设置较大的学习率，从而防止过多的神经元进入假死状态。
+
+               
+    *Leaky ReLU* 用来克服 ReLU 假死的问题。小于 0 的时候， /Leaky Relu/ 使用一个非
+    常小的负梯度作为替代(0.01)。计算公式为 /$f(x) = \mathbb{1}(x < 0) (\alpha
+    x) + \mathbb{1}(x>=0) (x)$/ ，其中 \alpha 为一个非常小的常数。该激活函数所带
+    来的好处根据不同的报告具有不同的结果。具体可以参考[[http://arxiv.org/abs/1502.01852][Delving Deep into
+    Rectifiers]]
+
+    *Maxout* 并不具有激活函数的一般函数形式 /$f(w^{T}x+b)$/ ，而是 ReLU 激活函数的
+    泛化版本(设置 w_{1},b_{1}=0)。 /Maxout neuron/  计算 /$\max(w_1^Tx+b_1,
+    w_2^Tx + b_2)$/ ，使得具有 ReLU 的优点(计算简单、不会饱和)，同时不具有 ReLU
+    的缺点(假死)。但是需要双倍的权值参数，会带来更多的计算和参数存储。
+
+    上述总结常用的激活函数，在同一个神经网络中一般不会混用激活函数，虽然混用不会
+    带来什么更本问题。
+
+    *建议* 优先使用 ReLU 相关激活函数，但是需要仔细考虑学习率的设置，并且尽量观察
+    一下假死的节点数量。也可以尝试一下 Leaky ReLU 或者 Maxout，不要使用 sigmoid 作
+    激活函数。可以尝试使用 tanh，可以认为效果没有 ReLU/Maxout 好。
+
+* Neural network architectures
+  
+** Layer-wise organization
+   *Neural Networks as neurons in graphs* 神经网络将神经元链接在一个非环的有向图
+    中，按层组织神经元。例如在全链接网络中，层和层之间的神经元是全链接的，层中的
+    神经元互相之间没有链接。如下为两个全链接神经网络：
+    -----
+    #+CAPTION: 
+    #+BEGIN_CENTER
+    [[file:assets/nn1/neural_net.jpeg]] [[file:assets/nn1/neural_net2.jpeg]]
+    #+END_CENTER
+    #+BEGIN_QUOTE
+    左图为 2 层的神经网络(一个隐层具有 4 个神经元，一个输出层具有 2 个神经元)，三个输
+    入节点。右图为 3 层的神经网络(具有 4 个神经元的两个隐层，一个输出层)。层和层
+    之间都是全链接，层间没有链接。
+    #+END_QUOTE
+    -----
+
+    *Naming conventions* 当我们说 N-层的神经网络，其中不包括输入层。单层的神经网
+     络是没有隐藏层(输入层直接映射到输出层)。所以，有时候会有人说逻辑回归和 SVM 是
+     一个单层的神经网络。神经网络也经常叫做人工神经网络(/Artificial Neural
+     Networks(ANN)/) 或者 多层感知机(/Multi-Layer Perceptrons/)。也有人不喜欢将
+     神经网络类比为人脑，叫神经元(/neurons/)为节点(/units/)。
+
+    *Outpu layer* 不像隐含层，输出层的神经元一般不会采取激活函数，因为最后一层的
+    输出常常视作分类列别的得分。
+
+    *Sizing neural networks* 有两种度量神经网络大小的方式，神经网络中神经元的数
+    量，或者直接使用网络参数数量。以上图的两个神经网络为例：
+    + 第一个网络(左图)具有 4+2=6 个神经元(不包括输入层)；[3,4]+[4,2]=20 权值和
+      4+2=6 个偏置，总共具有 26 个可学习参数。
+    + 第二个网络(右图)具有 4+4+1=9 个神经元；[3,4]+[4,4]+[4,1]=12+16+4=32 权值和
+      4+4+1=9 个偏置，总共具有 41 个可学习参数。
+
+      
+    现在，卷积神经网络常常具有 100M 参数，具有 10-20 层（深度学习）。卷积神经网络使
+    用权值共享(weight share)来减少参数。后续会更加深入的学习。
+      
+** Example feed-forward computation
+   交替的进行矩阵乘法和激活函数操作。将神经网络组织成一层一层的，有助于运用矩阵
+   运算来实现神经网络的计算。例如上图的三层神经网络，输入维度为[3,1]向量，所有的
+   层间链接权值都能采用一个矩阵来存储。第一个隐层权值 /W1/ 具有维度[4,3]，偏置为
+   /b_{1}/ 具有维度[4,1] ，所以第一层计算公式为 /$np.dot(W_{1},x)+b_{1}$/ 。第二
+   层权值为 /W_{2}/ 具有维度[4,4]，第三层权值为 /W_{3}/  具有维度为[1,4]。所以三
+   层神经网络的向前传播只需要执行 3 次矩阵相乘，期间执行激活函数即可：
+   #+BEGIN_SRC python
+     # forward-pass of a 3-layer neural network:
+     f = lambda x: 1.0/(1.0 + np.exp(-x)) # activation function (use sigmoid)
+     x = np.random.randn(3, 1) # random input vector of three numbers (3x1)
+     h1 = f(np.dot(W1, x) + b1) # calculate first hidden layer activations (4x1)
+     h2 = f(np.dot(W2, h1) + b2) # calculate second hidden layer activations (4x1)
+     out = np.dot(W3, h2) + b3 # output neuron (1x1)
+   #+END_SRC
+
+   上述代码中，/$W_{1},W_{2},W_{3},b_{1},b_{2},b_{3}$/ 为神经网络中可学习的参数。
+   输入数据可以具有一个样本，或者为一批的训练数(每个输入的样本都是 /x/ 中的一个
+   列向量)，这时候样本可以有效的同时运行。
+
+   #+BEGIN_QUOTE
+   全链接层向前传播由一次矩阵相乘，紧接着一个偏置相加，最后跟着激活函数。
+   #+END_QUOTE
+
+** Representational power
+   另外，可以将全链接神经网络视作由神经网络参数定义成的函数簇。那么问题来了：
+   函数簇具有具有哪些表达能力？是不是有哪些函数是神经网络无法定义的？
+
+   [[http://www.dartmouth.edu/~gvc/Cybenko_MCSS.pdf][Approximation by Superpositions of Sigmoidal Function]] 和 [[http://neuralnetworksanddeeplearning.com/chap4.html][Neural Networks and
+   Machine Learning]] 证明了具有一层隐层的神经网络可以拟合任意的连续函数。任意的连
+   续函数 /$f(x)$/ 和 /$\epsilon > 0$/ ，则存在一个具有一层隐层神经网络 /$g(x)$/
+   (具有一个非线性激活函数，例如 sigmoid)， /$\forall x, \mid f(x) - g(x) \mid <
+   \epsilon$/ 。
+
+   既然具有一层隐层的神经网络可以拟合任何的连续函数，那么为什么还需要更深的网络？
+   答案是 2 层神经网络是具有数学上证明的一个普通拟合能力，实际中比较弱。1 维空间，
+   多个指示函数加和函数 /$g(x) = \sum_i c_i \mathbb{1}(a_i < x < b_i)$/ ，
+   /$a,b,c$/ 为参数向量也具有普通近似能力，但是却没人用这种函数。因为实际情况下，
+   神经网络可以拟合的更为紧凑和平滑，也可以更容易采取各种优化函数来学些。相同，
+   根据实际应用中，更深的网络可以拟合的更好，虽然他们的表达能力基本相同。
+
+   虽然，应用中 3 层网络表现的会比 2 层网络更好，但是更深的网络(4,5,6-层)却没有什么
+   更好的表现。这和卷积网络有很鲜明的差别，深度网络常常具有更好的变现。一个解释
+   是，在图像识别领域，图像包含的对象都具有层级结构(脸是由眼睛组成，眼睛由边组成)。
+
+   更为相似的介绍，资料如下：
+   + [[http://www.deeplearningbook.org/][Deep Learning]] 的第 6.4 章
+   + [[http://arxiv.org/abs/1312.6184][Do Deep Nets Really Need to be Deep?]]
+   + [[https://arxiv.org/abs/1412.6550][FitNets: Hints for Thin Deep Nets]]
+
+** Setting number of layers and their sizes
+   那么如何确定网络结构呢？不使用隐层？采取具有一层隐层？采取两层隐层？那么每一
+   层应该具有多少个神经元呢？首先，随着层数和层间神经元变多，网络的表达能力也在
+   增强。可表达的函数空间也在增加。例如：需要做一个二分类问题，随着不同神经元数
+   量，网络会具有不同的变现：
+   -----
+   #+CAPTION: 不同神经元的神经网络
+   [[file:assets/nn1/layer_sizes.jpeg]]
+   #+BEGIN_QUOTE
+   更多神经元的网络具有拟合更复杂函数的能力。自己可以使用[[http://cs.stanford.edu/people/karpathy/convnetjs/demo/classify2d.html][DEMO]]来试一下。
+   #+END_QUOTE
+   -----
+
+   在上图中显示，具有更多神经元的神经网络能够拟合更为复杂的函数。这种能力即具有
+   好的一面(可以拟合更为复杂的数据)，也有不好的一面(非常容易过拟合)。过拟合
+   (*overfitting*)是当模型拟合了数据中噪声，而非数据实际的分布。例如：具有 20 个神
+   经元的网络正确分类了所有的训练样本，并且将绿色样本的区域分成了多个小的决策区。
+   具有 3 个神经元的网络将样本空间分成了两大块，并将一些红色区域包括在了绿色区域中，
+   变成了错误样本(*outliers*)，实际中这种划分具有更好地泛化能力。
+
+   基于上面的讨论，更小的神经网络因为更为简单，不容易过拟合，所以在小数据集上更
+   为适用。然而，这种假设是错误的，还有其他很多的方法来抑制过拟合
+   (/L2 regularization,dropout,input noise/)。实际中，采取这些方法来抑制过拟合，
+   要好于降低网络的规模。
+
+   另外小规模网络不试用的原因是，小规模网络较难用局部方法，例如梯度下降来进行训
+   练。因为损失函数具有很多局部极小值，但是证明很容易收敛到极小值点，并且这些极
+   小值具有较大的损失函数。相反，较大规模的神经网络虽然包含更多局部极小值点，但
+   是这些极小值的损失值比小规模网络的损失要好。虽然神经网络是非凸，而且较难使用
+   数据进行描述这些属性，但是有很多工作用来分析和理解损失函数([[http://arxiv.org/abs/1412.0233][The Loss Surfaces
+   of Multilayer Networks]])。实际训练中，小规模网络的损失值一般具有较大的方差，而
+   规模较大的网络的损失值方差较小。即大规模网络的最后结果往往差别不大，并且对网
+   络的随机初始化依赖要小。
+
+   正则化依然是抑制过拟合的首选。三种不同正则化的结果如下：
+   -----
+   #+CAPTION: 正则化影响
+   [[file:assets/nn1/reg_strengths.jpeg]]
+   #+BEGIN_QUOTE
+   不同正则化系数的影响：每个神经网络都具有 20 个神经元，采取不同的正则化系数可以
+   很好的控制最终的结果。
+   #+END_QUOTE
+   -----
+
+   总结，应该采取较大的神经网络，然后采取其他的手段来抑制过拟合。
+
+* Summary
+  + 介绍了生物神经元的模型
+  + 介绍了讨论了多种激活函数，ReLU 为首选
+  + 介绍了全链接神经网络，层和层之间全链接，层间神经元无连接
+  + 层级组成的神经网络基于矩阵运算更为容易计算
+  + 神经网络可以较好的拟合普通的连续函数
+  + 讨论了规模较大的神经网络表现要好于规模较小的神经网络，但是更大的神经网络需要
+    更强的正则化处理来抑制过拟合。
+
+* Additional references
+  + [[http://www.deeplearning.net/tutorial/mlp.html][deeplearing.net tutorial]] with Theano
+  + [[http://cs.stanford.edu/people/karpathy/convnetjs/][ConvNetJS]] Demo for intuitions
+  + [[http://neuralnetworksanddeeplearning.com/chap1.html][Michael Nielsen's]] tutorials
+
