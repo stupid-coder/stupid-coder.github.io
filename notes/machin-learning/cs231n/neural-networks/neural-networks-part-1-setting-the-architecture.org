@@ -83,7 +83,7 @@
     #+END_QUOTE
 
 ** Commonly used activation functions
-#+INDEX: activation function
+#+INDEX: activation functions
    激活函数(/non-linearity/)会对输入的信号执行一个固定的非线性计算，在实践中，有
    很多激活函数可以采用：
    -----

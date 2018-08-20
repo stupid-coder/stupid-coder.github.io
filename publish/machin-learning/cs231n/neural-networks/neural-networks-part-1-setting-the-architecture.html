@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>setting the architecture</title>
+<!-- 2018-08-20 Mon 09:40 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">setting the architecture</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Quick intro without brain analogies</a></li>
+<li><a href="#sec-2">Modeling one neuron</a>
+<ul>
+<li><a href="#sec-2-1">Biological motivation and connections</a></li>
+<li><a href="#sec-2-2">Single neuron as a linear classifier</a></li>
+<li><a href="#sec-2-3">Commonly used activation functions</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Neural network architectures</a>
+<ul>
+<li><a href="#sec-3-1">Layer-wise organization</a></li>
+<li><a href="#sec-3-2">Example feed-forward computation</a></li>
+<li><a href="#sec-3-3">Representational power</a></li>
+<li><a href="#sec-3-4">Setting number of layers and their sizes</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">Summary</a></li>
+<li><a href="#sec-5">Additional references</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/neural-networks-1/">cs231n-neural-networks-part-1</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Quick intro without brain analogies</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+神经网络不需要类比人脑的结构。线性分类器 <i>\(s=Wx\)</i> ，根据输入的图像的像素组成的
+列向量 <i>\(x\)</i> ，乘以权值矩阵 <i>\(W\)</i> 最后得到类别得分。在 <b>CIFAR-10</b> 中， <i>\(x\)</i>
+为[3072,1]的列向量， <i>\(W\)</i> 为[10,3072]的权值矩阵，最后输出的得分 <i>\(s\)</i> 为 10 个
+分类得分的列向量。
+</p>
+
+<p>
+在神经网络中，得分函数为 <i>\(s=W_{2}max(0,W_{1}x)\)</i> 。其中 <i>\(W_1\)</i> 可以为
+[100,3072]的权值矩阵将原始图像像素向量变换为 100 维的中间向量。函数
+<i>\(max(0,-)\)</i> 是一个元素级别的非线性函数。非线性函数可以有很多个选择，后续会学
+习。矩阵 <i>\(W_{2}\)</i> 为[10,100]，将中间向量变换为 10 维的最终得分。其中，非线性
+变换函数是关键，如果没有非线性函数，那么两个矩阵的乘积可以合并成一个，那么两层
+的计算就变成了线性分类器了。 <i>\(W_{1},W_{2}\)</i> 都是通过随机梯度下降来学习出的。
+</p>
+
+<p>
+三层的神经网络基本结构类似于 <i>\(s=W_{3}max(0,W_{2}max(0,W_{1}x))\)</i> 。中间藏向量
+的大小为神经网络的超参。后续会学习如何设置。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Modeling one neuron</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+神经网络的发展来源于生物学神经系统的工作原理，并且已经发展成了工程学中的一个重
+要的分支。本节先从高抽象界别上对整个生物神经网络进行一个简单的描述.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Biological motivation and connections</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+人脑最基础的计算单元为神经元(<i>neuron</i>)。人类大概拥有 86G 的神经元，并且由
+10^14-10^15 个突触(<i>synapses</i>)链接在一起。下图显示了一个神经元(左图)和模拟的
+计算模型(右图)。神经元从树突(<i>dendrites</i>)接收输入信号，计算完对应的信号后，由
+一个轴突(<i>axon</i>)输出。轴突可以有输出分叉，最终通过突触和其他神经元的树突链接。
+在计算模型中，输入信号通过轴突输入(<i>\(x_{0}\)</i>)，和突触的权值进行相乘
+(<i>\(w_{0}x_{0}\)</i>)。思想是突出的权值(<i>\(w\)</i>)是可学习的，并且用来控制对其他神经元
+的影响力。在基础模型中，树突将轴突输入的信号输入到神经元(<i>cell</i>)中，神经元会
+对所有的输入信号进行加和，如果最终的值大于阈值，那么神经元就被打开(<i>fire</i>)，
+输出一个正信号给随后链接的神经元。计算模型中用激活函数(<i>activation function</i>)
+处理信号，通常选用 <b>sigmoid function</b> \(\sigma\) 。
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn1/neuron_model.jpeg" alt="neuron_model.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> 神经元和计算模型</p>
+</div>
+<blockquote>
+<p>
+左图为生物神经元的图示，右图为相应的计算模型。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+一个神经元的向前传播代码如下：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">class</span> <span style="font-weight: bold; text-decoration: underline;">Neuron</span>(<span style="font-weight: bold;">object</span>):
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">... </span>
+  <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">forward</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, inputs):
+    <span style="color: #daa520; font-style: italic;">""" assume inputs and weights are 1-D numpy arrays and bias is a number """</span>
+    <span style="font-weight: bold; font-style: italic;">cell_body_sum</span> = np.<span style="font-weight: bold;">sum</span>(inputs * <span style="color: #00bfff; font-weight: bold;">self</span>.weights) + <span style="color: #00bfff; font-weight: bold;">self</span>.bias
+    <span style="font-weight: bold; font-style: italic;">firing_rate</span> = 1.0 / (1.0 + math.exp(-cell_body_sum)) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">sigmoid activation function</span>
+    <span style="color: #00bfff; font-weight: bold;">return</span> firing_rate
+</pre>
+</div>
+
+<p>
+神经元将输入的向量和权值矩阵做一个点积，加上一个偏置，然后输入一个非线性函数
+(<i>激活函数</i>)。
+</p>
+
+<p>
+<b>Coarse model</b> 生物神经网络远比上述的计算模型复杂，该计算模型较为粗糙。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Single neuron as a linear classifier</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+神经元计算模型的向前传播和线性分类器较为相似，神经元具有对输入数据进行二分类
+的能力(激活函数输出值在[0,1]之间)。采取合适的损失函数，神经元会变成线性分类器。
+</p>
+
+
+<p>
+<b>Binary Softmax classifier</b> 可以将 <i>\(\sigma(\sum_{i}w_{i}w_{i}+b)\)</i> 看作为类
+ 别为 1 <i>\(P(y_{i}=1|x_{i};w\)</i> 的概率。类别为 0 的概率为
+ <i>\(P(y_{i}=0|x_{i};w)=1-P(y_{i}=1|x_{i};w\)</i> ，因为两个概率的和为 1。采用交叉
+ 熵作为损失函数，和 二值的 <b>Softmax claasifier</b> 具有一样的形式。
+</p>
+
+<p>
+<b>Binary Svm classifier</b> 如果使用 <b>hinge loss</b> ，则变成了 <b>Support Vector
+ Machine</b> 。
+</p>
+
+<p>
+<b>Regularization interpretation</b> 正则化和其他分类器一样，可以看作是每次更新，
+ 都对权值具有一定的衰减。
+</p>
+
+<blockquote>
+<p>
+单个神经元可以看作是一个二分类(二值 softmax 分类器或者二值的 svm 分类器)
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">Commonly used activation functions</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+激活函数(<i>non-linearity</i>)会对输入的信号执行一个固定的非线性计算，在实践中，有
+很多激活函数可以采用：
+</p>
+<hr  />
+<div class="center">
+<p>
+<img src="assets/nn1/sigmoid.jpeg" alt="sigmoid.jpeg" /> <img src="assets/nn1/tanh.jpeg" alt="tanh.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+左图为 sigmoid 非线性变换，会将输入变换到[0,1]。右图为 tanh 非线性变换，会将输入变换到[-1,+1]。
+</p>
+</blockquote>
+<hr  />
+<p>
+<b>Sigmoid</b> 计算公式为 <i>\(\sigma(x)=\frac{1}{1+e^{-x}}\)</i> 。接收任意实数作为输入，
+ 输出会压缩到[0,1]之间。较大的负数会接近 0，较大的正数会接近 1。 <i>sigmoid</i> 应
+ 用非常广泛，因为具有较好的概率解释性。现在使用较少，主要是因为：
+</p>
+<dl class="org-dl">
+<dt> <code>Sigmoids saturate and kill gradients</code> </dt><dd>sigmoid 具有一个非常不好的特性，
+当神经元的输出接近饱和状态(<i>saturates</i>)，接近 0 或者 1 的时候，梯度会接
+近 0。在进行反向传播的时候，局部梯度会和损失函数的梯度乘在一起，那么如
+果局部梯度非常小，那么最终会将损失梯度变成接近 0，那么神经网络的权值将会
+非常难以训练。此外，需要额外注意权值的初始化，如果权值过大或者过小，
+sigmoid 会很容易进入饱和状态。
+</dd>
+<dt> <code>Sigmoid outputs are not zero-centered</code> </dt><dd>由于 sigmoid 的输出都是正数，使得
+后续的神经网络的输入都是正数，即局部梯度都是正数。在一次样本的权值更新
+过程中，梯度的更新就会出现都是正数或者负数(跟损失梯度有关)。会出现梯度
+更新的 z 字扰动。虽然可以采取 mini-batch 更新，来使得梯度更新更具多样性，
+但是仍然不够灵活。
+</dd>
+</dl>
+
+
+<p>
+<b>Tanh</b> 计算公式为 <i>\(tanh(x)=2\sigma(2x)-1\)</i> 。会将接受的实数压缩到[-1,+1]之
+ 间。和 <i>sigmoid</i> 激活函数一样也具有饱和的问题。但是输出为 zero-centered 的。
+</p>
+
+<hr  />
+<div class="center">
+<p>
+<img src="assets/nn1/relu.jpeg" alt="relu.jpeg" /> <img src="assets/nn1/alexplot.jpeg" alt="alexplot.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+左图为 ReLU 激活函数，在小于 0 的时候激活值为 0，在大于 0 的时候具有梯度为 1 的性
+质。右图为<a href="http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf">AlexNet</a>论文中给出的 ReLU 激活函数在训练中收敛速度快 tanh 6 倍。
+</p>
+</blockquote>
+<hr  />
+<p>
+<b>ReLU</b> (<i>Rectified Linear Unit</i>)激活函数在最近几年使用的较为常见。计算公式为
+<i>\(f(x)=max(0,x)\)</i> 。如上图左图所示，在小于 0 的时候激活值为 0，大于 0 的时候激活
+值为梯度为 1 的直线。ReLU 也具有相应的优点和缺点：
+</p>
+<dl class="org-dl">
+<dt> <code>(+)</code> </dt><dd>得益于在大于 0 的时候，局部梯度为 1，使得整体收敛速度更快。
+</dd>
+<dt> <code>(+)</code> </dt><dd>ReLU 计算更为简单，无需指数操作。
+</dd>
+<dt> <code>(-)</code> </dt><dd>ReLU 由于在输入为负数时，会进入假死状态。在训练阶段，如果遇到一个
+较大的梯度值，然后将对应的神经元权值更新到一个较大的负数时候，会
+使得该神经元此后不会再大于 0，那么就无法参与后续的训练了。通常会
+发现采用 ReLU 的神经网络会有 40% 的神经元最后处于假死状态。所以，
+不能设置较大的学习率，从而防止过多的神经元进入假死状态。
+</dd>
+</dl>
+
+
+<p>
+<b>Leaky ReLU</b> 用来克服 ReLU 假死的问题。小于 0 的时候， <i>Leaky Relu</i> 使用一个非
+常小的负梯度作为替代(0.01)。计算公式为 <i>\(f(x) = \mathbb{1}(x < 0) (\alpha
+    x) + \mathbb{1}(x>=0) (x)\)</i> ，其中 &alpha; 为一个非常小的常数。该激活函数所带
+来的好处根据不同的报告具有不同的结果。具体可以参考<a href="http://arxiv.org/abs/1502.01852">Delving Deep into
+Rectifiers</a>
+</p>
+
+<p>
+<b>Maxout</b> 并不具有激活函数的一般函数形式 <i>\(f(w^{T}x+b)\)</i> ，而是 ReLU 激活函数的
+泛化版本(设置 w<sub>1</sub>,b<sub>1</sub>=0)。 <i>Maxout neuron</i>  计算 <i>\(\max(w_1^Tx+b_1,
+    w_2^Tx + b_2)\)</i> ，使得具有 ReLU 的优点(计算简单、不会饱和)，同时不具有 ReLU
+的缺点(假死)。但是需要双倍的权值参数，会带来更多的计算和参数存储。
+</p>
+
+<p>
+上述总结常用的激活函数，在同一个神经网络中一般不会混用激活函数，虽然混用不会
+带来什么更本问题。
+</p>
+
+<p>
+<b>建议</b> 优先使用 ReLU 相关激活函数，但是需要仔细考虑学习率的设置，并且尽量观察
+一下假死的节点数量。也可以尝试一下 Leaky ReLU 或者 Maxout，不要使用 sigmoid 作
+激活函数。可以尝试使用 tanh，可以认为效果没有 ReLU/Maxout 好。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Neural network architectures</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1">Layer-wise organization</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<b>Neural Networks as neurons in graphs</b> 神经网络将神经元链接在一个非环的有向图
+ 中，按层组织神经元。例如在全链接网络中，层和层之间的神经元是全链接的，层中的
+ 神经元互相之间没有链接。如下为两个全链接神经网络：
+</p>
+<hr  />
+<div class="center">
+<p>
+<img src="assets/nn1/neural_net.jpeg" alt="neural_net.jpeg" /> <img src="assets/nn1/neural_net2.jpeg" alt="neural_net2.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+左图为 2 层的神经网络(一个隐层具有 4 个神经元，一个输出层具有 2 个神经元)，三个输
+入节点。右图为 3 层的神经网络(具有 4 个神经元的两个隐层，一个输出层)。层和层
+之间都是全链接，层间没有链接。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+<b>Naming conventions</b> 当我们说 N-层的神经网络，其中不包括输入层。单层的神经网
+ 络是没有隐藏层(输入层直接映射到输出层)。所以，有时候会有人说逻辑回归和 SVM 是
+ 一个单层的神经网络。神经网络也经常叫做人工神经网络(<i>Artificial Neural
+ Networks(ANN)</i>) 或者 多层感知机(<i>Multi-Layer Perceptrons</i>)。也有人不喜欢将
+ 神经网络类比为人脑，叫神经元(<i>neurons</i>)为节点(<i>units</i>)。
+</p>
+
+<p>
+<b>Outpu layer</b> 不像隐含层，输出层的神经元一般不会采取激活函数，因为最后一层的
+输出常常视作分类列别的得分。
+</p>
+
+<p>
+<b>Sizing neural networks</b> 有两种度量神经网络大小的方式，神经网络中神经元的数
+量，或者直接使用网络参数数量。以上图的两个神经网络为例：
+</p>
+<ul class="org-ul">
+<li>第一个网络(左图)具有 4+2=6 个神经元(不包括输入层)；[3,4]+[4,2]=20 权值和
+4+2=6 个偏置，总共具有 26 个可学习参数。
+</li>
+<li>第二个网络(右图)具有 4+4+1=9 个神经元；[3,4]+[4,4]+[4,1]=12+16+4=32 权值和
+4+4+1=9 个偏置，总共具有 41 个可学习参数。
+</li>
+</ul>
+
+
+<p>
+现在，卷积神经网络常常具有 100M 参数，具有 10-20 层（深度学习）。卷积神经网络使
+用权值共享(weight share)来减少参数。后续会更加深入的学习。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2">Example feed-forward computation</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+交替的进行矩阵乘法和激活函数操作。将神经网络组织成一层一层的，有助于运用矩阵
+运算来实现神经网络的计算。例如上图的三层神经网络，输入维度为[3,1]向量，所有的
+层间链接权值都能采用一个矩阵来存储。第一个隐层权值 <i>W1</i> 具有维度[4,3]，偏置为
+<i>b<sub>1</sub></i> 具有维度[4,1] ，所以第一层计算公式为 <i>\(np.dot(W_{1},x)+b_{1}\)</i> 。第二
+层权值为 <i>W<sub>2</sub></i> 具有维度[4,4]，第三层权值为 <i>W<sub>3</sub></i>  具有维度为[1,4]。所以三
+层神经网络的向前传播只需要执行 3 次矩阵相乘，期间执行激活函数即可：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward-pass of a 3-layer neural network:</span>
+<span style="font-weight: bold; font-style: italic;">f</span> = <span style="color: #00bfff; font-weight: bold;">lambda</span> x: 1.0/(1.0 + np.exp(-x)) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">activation function (use sigmoid)</span>
+<span style="font-weight: bold; font-style: italic;">x</span> = np.random.randn(3, 1) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">random input vector of three numbers (3x1)</span>
+<span style="font-weight: bold; font-style: italic;">h1</span> = f(np.dot(W1, x) + b1) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">calculate first hidden layer activations (4x1)</span>
+<span style="font-weight: bold; font-style: italic;">h2</span> = f(np.dot(W2, h1) + b2) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">calculate second hidden layer activations (4x1)</span>
+<span style="font-weight: bold; font-style: italic;">out</span> = np.dot(W3, h2) + b3 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">output neuron (1x1)</span>
+</pre>
+</div>
+
+<p>
+上述代码中，/$W<sub>1</sub>,W<sub>2</sub>,W<sub>3</sub>,b<sub>1</sub>,b<sub>2</sub>,b<sub>3</sub>$/ 为神经网络中可学习的参数。
+输入数据可以具有一个样本，或者为一批的训练数(每个输入的样本都是 <i>x</i> 中的一个
+列向量)，这时候样本可以有效的同时运行。
+</p>
+
+<blockquote>
+<p>
+全链接层向前传播由一次矩阵相乘，紧接着一个偏置相加，最后跟着激活函数。
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3">Representational power</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+另外，可以将全链接神经网络视作由神经网络参数定义成的函数簇。那么问题来了：
+函数簇具有具有哪些表达能力？是不是有哪些函数是神经网络无法定义的？
+</p>
+
+<p>
+<a href="http://www.dartmouth.edu/~gvc/Cybenko_MCSS.pdf">Approximation by Superpositions of Sigmoidal Function</a> 和 <a href="http://neuralnetworksanddeeplearning.com/chap4.html">Neural Networks and
+Machine Learning</a> 证明了具有一层隐层的神经网络可以拟合任意的连续函数。任意的连
+续函数 <i>\(f(x)\)</i> 和 <i>\(\epsilon > 0\)</i> ，则存在一个具有一层隐层神经网络 <i>\(g(x)\)</i>
+(具有一个非线性激活函数，例如 sigmoid)， <i>\(\forall x, \mid f(x) - g(x) \mid <
+   \epsilon\)</i> 。
+</p>
+
+<p>
+既然具有一层隐层的神经网络可以拟合任何的连续函数，那么为什么还需要更深的网络？
+答案是 2 层神经网络是具有数学上证明的一个普通拟合能力，实际中比较弱。1 维空间，
+多个指示函数加和函数 <i>\(g(x) = \sum_i c_i \mathbb{1}(a_i < x < b_i)\)</i> ，
+<i>\(a,b,c\)</i> 为参数向量也具有普通近似能力，但是却没人用这种函数。因为实际情况下，
+神经网络可以拟合的更为紧凑和平滑，也可以更容易采取各种优化函数来学些。相同，
+根据实际应用中，更深的网络可以拟合的更好，虽然他们的表达能力基本相同。
+</p>
+
+<p>
+虽然，应用中 3 层网络表现的会比 2 层网络更好，但是更深的网络(4,5,6-层)却没有什么
+更好的表现。这和卷积网络有很鲜明的差别，深度网络常常具有更好的变现。一个解释
+是，在图像识别领域，图像包含的对象都具有层级结构(脸是由眼睛组成，眼睛由边组成)。
+</p>
+
+<p>
+更为相似的介绍，资料如下：
+</p>
+<ul class="org-ul">
+<li><a href="http://www.deeplearningbook.org/">Deep Learning</a> 的第 6.4 章
+</li>
+<li><a href="http://arxiv.org/abs/1312.6184">Do Deep Nets Really Need to be Deep?</a>
+</li>
+<li><a href="https://arxiv.org/abs/1412.6550">FitNets: Hints for Thin Deep Nets</a>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4">Setting number of layers and their sizes</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+那么如何确定网络结构呢？不使用隐层？采取具有一层隐层？采取两层隐层？那么每一
+层应该具有多少个神经元呢？首先，随着层数和层间神经元变多，网络的表达能力也在
+增强。可表达的函数空间也在增加。例如：需要做一个二分类问题，随着不同神经元数
+量，网络会具有不同的变现：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn1/layer_sizes.jpeg" alt="layer_sizes.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 不同神经元的神经网络</p>
+</div>
+<blockquote>
+<p>
+更多神经元的网络具有拟合更复杂函数的能力。自己可以使用<a href="http://cs.stanford.edu/people/karpathy/convnetjs/demo/classify2d.html">DEMO</a>来试一下。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+在上图中显示，具有更多神经元的神经网络能够拟合更为复杂的函数。这种能力即具有
+好的一面(可以拟合更为复杂的数据)，也有不好的一面(非常容易过拟合)。过拟合
+(<b>overfitting</b>)是当模型拟合了数据中噪声，而非数据实际的分布。例如：具有 20 个神
+经元的网络正确分类了所有的训练样本，并且将绿色样本的区域分成了多个小的决策区。
+具有 3 个神经元的网络将样本空间分成了两大块，并将一些红色区域包括在了绿色区域中，
+变成了错误样本(<b>outliers</b>)，实际中这种划分具有更好地泛化能力。
+</p>
+
+<p>
+基于上面的讨论，更小的神经网络因为更为简单，不容易过拟合，所以在小数据集上更
+为适用。然而，这种假设是错误的，还有其他很多的方法来抑制过拟合
+(<i>L2 regularization,dropout,input noise</i>)。实际中，采取这些方法来抑制过拟合，
+要好于降低网络的规模。
+</p>
+
+<p>
+另外小规模网络不试用的原因是，小规模网络较难用局部方法，例如梯度下降来进行训
+练。因为损失函数具有很多局部极小值，但是证明很容易收敛到极小值点，并且这些极
+小值具有较大的损失函数。相反，较大规模的神经网络虽然包含更多局部极小值点，但
+是这些极小值的损失值比小规模网络的损失要好。虽然神经网络是非凸，而且较难使用
+数据进行描述这些属性，但是有很多工作用来分析和理解损失函数(<a href="http://arxiv.org/abs/1412.0233">The Loss Surfaces
+of Multilayer Networks</a>)。实际训练中，小规模网络的损失值一般具有较大的方差，而
+规模较大的网络的损失值方差较小。即大规模网络的最后结果往往差别不大，并且对网
+络的随机初始化依赖要小。
+</p>
+
+<p>
+正则化依然是抑制过拟合的首选。三种不同正则化的结果如下：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn1/reg_strengths.jpeg" alt="reg_strengths.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> 正则化影响</p>
+</div>
+<blockquote>
+<p>
+不同正则化系数的影响：每个神经网络都具有 20 个神经元，采取不同的正则化系数可以
+很好的控制最终的结果。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+总结，应该采取较大的神经网络，然后采取其他的手段来抑制过拟合。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Summary</h2>
+<div class="outline-text-2" id="text-4">
+<ul class="org-ul">
+<li>介绍了生物神经元的模型
+</li>
+<li>介绍了讨论了多种激活函数，ReLU 为首选
+</li>
+<li>介绍了全链接神经网络，层和层之间全链接，层间神经元无连接
+</li>
+<li>层级组成的神经网络基于矩阵运算更为容易计算
+</li>
+<li>神经网络可以较好的拟合普通的连续函数
+</li>
+<li>讨论了规模较大的神经网络表现要好于规模较小的神经网络，但是更大的神经网络需要
+更强的正则化处理来抑制过拟合。
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Additional references</h2>
+<div class="outline-text-2" id="text-5">
+<ul class="org-ul">
+<li><a href="http://www.deeplearning.net/tutorial/mlp.html">deeplearing.net tutorial</a> with Theano
+</li>
+<li><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> Demo for intuitions
+</li>
+<li><a href="http://neuralnetworksanddeeplearning.com/chap1.html">Michael Nielsen's</a> tutorials
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

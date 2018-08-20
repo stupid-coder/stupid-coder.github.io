@@ -70,7 +70,6 @@
            :html-head "<link rel=\"stylesheet\" title=\"Standard\" href=\"/assets/worg.css\" type=\"text/css\" />
            <link rel=\"alternate stylesheet\" title=\"Zenburn\" href=\"/assets/worg-zenburn.css\" type=\"text/css\" />
            <link rel=\"alternate stylesheet\" title=\"Classic\" href=\"/assets/worg-classic.css\" type=\"text/css\" />"
-           :with-timestamps
            :recursive t
            :html-preamble ""
            :html-postamble "")
