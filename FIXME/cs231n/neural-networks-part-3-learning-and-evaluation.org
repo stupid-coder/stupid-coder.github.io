@@ -1,0 +1,71 @@
+#+TITLE: Learning and Evaluation
+#+ALT_TITLE: Neural Networks Part 3
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2 num:nil
+
+
+[[http://cs231n.github.io/neural-networks-3/][cs231n-learning-and-evaluation]]
+
+* Learning
+  前两部分讨论了神经网络的静态部分：怎么设置神经网络之间的链接，数据和损失函数。
+  本文主要讨论动态部分，即神经网络的参数学习过程和如何找寻超参。
+
+* Sanity checks
+  理论上讲，梯度检查只需要简单比较一下解析梯度和数值梯度即可。实际应用中，该过程
+  需要仔细设计，并且非常容易出错。如下为一些需要关注的建议、小技巧和问题：
+  
+  *Use the centered formula* 数值梯度计算近似公式如下：
+  $$\frac{df(x)}{dx} = \frac{f(x + h) - f(x)}{h} \hspace{0.1in} \text{(bad, do
+  not use)}$$
+
+  其中， $h$ 是一个非常小的数，常常设置为 1e-5。实际应用中，使用如下基于中心的数
+  值梯度计算公式：
+  $$\frac{df(x)}{dx} = \frac{f(x + h) - f(x - h)}{2h} \hspace{0.1in} \text{(use
+  instead)}$$
+
+  该公式需要计算两次损失函数(计算量会增加两倍)，但是实际情况中，该公式计算的数值
+  梯度更为精准。对上述公式 $f(x+h) f(x-h)$ 进行泰勒展开，可以发现第一个公式的差
+  值在 $O(h)$ ，第二个公式的差值在 $O(h^2)$ (二次近似)。
+
+  *Use relative error for the comparison* 那么如何比较数值梯度 $f’_n$ 和解析梯度
+  $f’_a$ ？如何定义两个梯度值不一致呢？简单的做法是直接比较差值的绝对值是否大于
+  一定的阈值。 *这是错误的* ！例如，考虑两个梯度的差值为 1e-4，看起来当梯度为 1.0
+  的时候是一个可以接受的差值。那么如果两个梯度本身就是差不多 1e-5 或者更低，那么
+  1e-4 就是一个非常大的差值。所以一般比较的是相对差值：
+  $$\frac{\mid f'_a - f'_n \mid}{\max(\mid f'_a \mid, \mid f'_n \mid)}$$
+
+  
+
+* Babysitting the learning process
+
+** Loss functions
+
+** Train/Val accuracy
+
+** Weights: Updates ratio
+
+** Activation/Gradient distributions per layer
+
+** Visualization
+
+* Parameter updates
+
+** First-order(SGD), momentum, Nesterov momentum
+
+** Annealing the learning rate
+
+** Second-order methods
+
+** Per-parameter adaptive learning rate(Adagrad, RMSProp)
+
+* Hyperparameter Optimization
+
+* Evaluation
+
+** Model Ensembles
+
+* Summary
+
+* Additional References
