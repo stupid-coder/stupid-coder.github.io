@@ -1,0 +1,887 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-08-25 Sat 16:38 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Learning and Evaluation</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Learning and Evaluation</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orge09a972">Learning</a></li>
+<li><a href="#org1804530">Sanity checks</a>
+<ul>
+<li><a href="#org375e27a">Before learning: sanity checks Tops/Tricks</a></li>
+</ul>
+</li>
+<li><a href="#orge2f480e">Babysitting the learning process</a>
+<ul>
+<li><a href="#org98846af">Loss functions</a></li>
+<li><a href="#orge7bb888">Train/Val accuracy</a></li>
+<li><a href="#org7ba38da">Weights: Updates ratio</a></li>
+<li><a href="#org057c9c4">Activation/Gradient distributions per layer</a></li>
+<li><a href="#orgc1a4ab5">Visualization</a></li>
+</ul>
+</li>
+<li><a href="#orgb1de220">Parameter updates</a>
+<ul>
+<li><a href="#org235a833">First-order(SGD), momentum, Nesterov momentum</a></li>
+<li><a href="#org4eb3937">Annealing the learning rate</a></li>
+<li><a href="#orgfc6fe6b">Second-order methods</a></li>
+<li><a href="#org472d69f">Per-parameter adaptive learning rate(Adagrad, RMSProp)</a></li>
+</ul>
+</li>
+<li><a href="#org0dde8e0">Hyperparameter Optimization</a></li>
+<li><a href="#orgc5eb8ad">Evaluation</a>
+<ul>
+<li><a href="#org4df8f2e">Model Ensembles</a></li>
+</ul>
+</li>
+<li><a href="#org0aefaf5">Summary</a></li>
+<li><a href="#orge6d8693">Additional References</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/neural-networks-3/">cs231n-learning-and-evaluation</a>
+</p>
+
+<div id="outline-container-orge09a972" class="outline-2">
+<h2 id="orge09a972">Learning</h2>
+<div class="outline-text-2" id="text-orge09a972">
+<p>
+前两部分讨论了神经网络的静态部分：怎么设置神经网络之间的链接，数据和损失函数。本文主要讨论动态部分，即神经网络的参数学习过程和如何找寻超参。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1804530" class="outline-2">
+<h2 id="org1804530">Sanity checks</h2>
+<div class="outline-text-2" id="text-org1804530">
+<p>
+理论上讲，梯度检查只需要简单比较一下解析梯度和数值梯度即可。实际应用中，该过程需要仔细设计，并且非常容易出错。如下为一些需要关注的建议、小技巧和问题：
+</p>
+
+<p>
+<b>Use the centered formula</b> 数值梯度计算近似公式如下：
+\[\frac{df(x)}{dx} = \frac{f(x + h) - f(x)}{h} \hspace{0.1in} \text{(bad, do
+  not use)}\]
+</p>
+
+<p>
+其中， \(h\) 是一个非常小的数，常常设置为 1e-5。实际应用中，使用如下基于中心的数值梯度计算公式：
+\[\frac{df(x)}{dx} = \frac{f(x + h) - f(x - h)}{2h} \hspace{0.1in} \text{(use
+  instead)}\]
+</p>
+
+<p>
+该公式需要计算两次损失函数(计算量会增加两倍)，但是实际情况中，该公式计算的数值梯度更为精准。对上述公式 \(f(x+h) f(x-h)\) 进行泰勒展开，可以发现第一个公式的差值在 \(O(h)\) ，第二个公式的差值在 \(O(h^2)\) (二次近似)。
+</p>
+
+<p>
+<b>Use relative error for the comparison</b> 那么如何比较数值梯度 \(f’_n\) 和解析梯度
+\(f’_a\) ？如何定义两个梯度值不一致呢？简单的做法是直接比较差值的绝对值是否大于一定的阈值。 <b>这是错误的</b> ！例如，考虑两个梯度的差值为 1e-4，看起来当梯度为 1.0
+的时候是一个可以接受的差值。那么如果两个梯度本身就是差不多 1e-5 或者更低，那么
+1e-4 就是一个非常大的差值。所以一般比较的是相对差值：
+\[\frac{\mid f'_a - f'_n \mid}{\max(\mid f'_a \mid, \mid f'_n \mid)}\]
+</p>
+
+<p>
+在 <b>Relu</b> 作为激活函数的时候，小额外小心另个梯度都是零的情况。此外：
+</p>
+<ul class="org-ul">
+<li>相对差值大于 1e-2 常常认为是错误的</li>
+<li>1e-1 &gt; 相对差值 &gt; 1e-4 也应该认真的检查是否计算错误</li>
+<li>1e-4 &gt; 相对差值在使用颈向类的目标函数时候可以认为是正确的，但是需要没有(tanh
+作为激活，softmax 作为损失函数)时候认为 1e-4 有点高</li>
+<li>1e-7 就可以认为是正确的</li>
+</ul>
+
+
+<p>
+额外随着网络变得越深，相对错误变得越大。如果有 10 层网络，那么相对差值在 1e-2 也可以认为是正确的。但是单层的梯度差值为 1e-2 则是错误的。
+</p>
+
+<p>
+<b>Use double precision</b> 另外一个常见的错误，是在做梯度检查的时候使用单精度。这样容易得到更高的梯度差值。使用双精度后，可以可以使差值从 1e-2 降到 1e-8.
+</p>
+
+<p>
+<b>Stick around active range of floating point</b> <a href="https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html">What Every Computer Scientise
+Should Know About Floating-Point Arithmetic</a> 包含了很多浮点运算的细节，能够让你了解浮点的工作原理，从而可以快速定位一些精度计算的问题。
+</p>
+
+<p>
+<b>Kinks in the objective</b> 另外一个梯度检测中差值较大的时候是采取了颈向(<b>kinks</b>)函数。颈向指目标函数中不可导部分，例如 <b>Relu(max(0,x))</b> ,或者是 SVMLoss，Maxout 神经元等。例如，在检查一个 ReLU 函数， \(x=-1e6\) 。其中 \(x<0\) ，解析梯度在该点为
+0。然而数值梯度有可能在计算时候， \(f(x+h)\) 有可能跨过 0 点这个颈向(当
+\(h>1e-6\))，从而使得数值梯度不为 0。而且这种情况比较常见。
+</p>
+
+<p>
+所以需要知道这些颈向跨越发生的时候，可以通过正向传播记录 \(max(x,y)\) 的胜利者，一旦在计算数值梯度 \(f(x+h)-f(x-h)\) 的时候，胜利者发生改变，那么就认为颈向跨越发生，数值梯度就不是很准确。
+</p>
+
+<p>
+<b>Use only few datapoints</b> 在使用包含颈向的激活函数或者损失函数的网络时候，可以通过降低一次训练的样本数量，从而降低一次训练时候包含的颈向函数数量，从而减低颈向跨越的概率。
+</p>
+
+<p>
+<b>Be careful with the step size h</b> 学习步长并不是越小越好。太小容易遇到数值精度问题。有时候，梯度检查不正确的时候，很有可能将学习步长提高到 1e-4 或者 1e-6 的时候，梯度检查会突然正常。<a href="https://en.wikipedia.org/wiki/Numerical_differentiation">wikipedia article</a>讲解了步长和数值梯度差值之间的关系。
+</p>
+
+<p>
+<b>Gradcheck during a "characteristic" mode operation</b> 需要认识到梯度检查只是在参数空间中的一个单独的点附近。即使梯度检查在该点是正确的，也不代表梯度在全局实现上是正确的。另外，一个随机初始化的权值矩阵在最开始做的梯度检查是非常没有代表性的，并且很可能带来病态问题，即梯度检查看起来是正确实现的，但是其实并不是。例如：在 SVMLoss 在权值很小的时候，会对所有的点输出得分等于 0，对于所有的数据点的梯度近乎相同。一个不正确的实现依然可能通过梯度检查，但是在更复杂或者得分分布不均的时候会出现错误。因此，正确的梯度检查做法是网络可以在整体损失开始下降的时候进行梯度检查，如果直接从最开始就执行几轮梯度检查，有可能无法发现梯度实现的错误。
+</p>
+
+<p>
+<b>Don't let the regularization overwhelm the data</b> 损失函数一般由数据损失和正则损失组成。一个容易出现的问题是正则损失可能变得比数据损失影响更大，这样梯度更新中正则损失带来的影响变成主要因素。一般做法是先不使用正则损失，单独使用数据损失，然后再调整正则损失。通过一点一点调整正则损失系数，并观察梯度检测，保证正则损失带来的梯度更新不会影响数据损失。
+</p>
+
+<p>
+<b>Remember to turn off dropout/augmentations</b> 在做梯度检测时候，先去掉网络中非决定性的部分，例如 dropout，random data augmentations。
+</p>
+
+<p>
+<b>Check only few dimensions</b> 实际应用中，网络具有很多参数，在作梯度检测，可以只针对一些参数。需要注意的是，应该对不同部分的参数都检测几个参数。例如：每一层的权值检查几个和 bias 需要检查。
+</p>
+</div>
+
+<div id="outline-container-org375e27a" class="outline-3">
+<h3 id="org375e27a">Before learning: sanity checks Tops/Tricks</h3>
+<div class="outline-text-3" id="text-org375e27a">
+<ul class="org-ul">
+<li><b>Look for correct loss at chance performance</b> 首先确定一下参数较少的时候，损失函数的值在最开始是对的，例如在 CIFAR-10 训练一个 Softmax 分类器，在最开始的损失值应该接近 2.302，因为每一类的大概概率为 0.1（10 分类），由于 Softmax 损失是正确分类概率对数的负值： \(-ln(0.1)=2.30.2\) 。面对 SVM 损失，由于没有分类正确，所以结果应该在 9 范围。如果不是，那么就可能是权值初始化有问题。</li>
+<li>增加正则损失，会使得损失值增加</li>
+<li><b>Overfit a tiny subset of data</b> 首先在一个小数据集(20 样本)上进行训练，并且能够达到 0 损失值。即使获得了损失为 0，也有可能实现的不正确。</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge2f480e" class="outline-2">
+<h2 id="orge2f480e">Babysitting the learning process</h2>
+<div class="outline-text-2" id="text-orge2f480e">
+<p>
+在训练神经网络的过程中，有很多指标值需要监控。并且可以通过对这些指标画图，从而可以直观的观察不同的设置对指标的影响，从而影响整体学习效率。
+</p>
+
+<p>
+如下图 x 轴是数据训练第几轮(<b>epochs</b> 一个 epoch 表示每个样本被学习一遍)，用来说明每个样本在训练过程中学习了几次。
+</p>
+</div>
+
+<div id="outline-container-org98846af" class="outline-3">
+<h3 id="org98846af">Loss functions</h3>
+<div class="outline-text-3" id="text-org98846af">
+<p>
+第一个指标是损失值，在每次迭代学习完成后计算。下图是损失值的图示：
+</p>
+<hr />
+<div class="org-center">
+<p>
+<img src="assets/nn3/learningrates.jpeg" alt="learningrates.jpeg" /><img src="assets/nn3/loss.jpeg" alt="loss.jpeg" />
+</p>
+<blockquote>
+<p>
+左图：显示不同学习率对损失值的影响。低学习率，损失值线性下降；高学习率会带来指数级下降。更高的学习率有可能带来损失值的升高。
+</p>
+
+<p>
+右图：为在 CIFAR-10 训练的小规模网络的损失值。可以看出来学习率有点小，并且
+batch-size 太小了，所以损失值上下波动。
+</p>
+</blockquote>
+</div>
+<hr />
+
+<p>
+损失函数的波动一般是批次大小(<b>batch size</b>)决定，当为 1 的时候，波动会特别高；当为整个样本集数量，波动会变的最小。
+</p>
+
+<p>
+也可以对损失值做一个对数处理，这样指数的损失值会变成直线，当过个损失函数绘制在一个图上，看起来更直观。
+</p>
+
+<p>
+更多的损失函数可以参考：<a href="http://lossfunctions.tumblr.com/">http://lossfunctions.tumblr.com/</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge7bb888" class="outline-3">
+<h3 id="orge7bb888">Train/Val accuracy</h3>
+<div class="outline-text-3" id="text-orge7bb888">
+<p>
+第二指标是准确性，包括训练集和验证集的准确性，这些指标可以用来监控学习是否过拟合了。
+</p>
+<hr />
+<div class="org-center">
+
+<div class="figure">
+<p><img src="assets/nn3/accuracies.jpeg" alt="accuracies.jpeg" />
+</p>
+<p><span class="figure-number">Figure 1: </span>训练集&amp;测试集准确性</p>
+</div>
+<blockquote>
+<p>
+训练集和验证集准确率之间的差值表示过拟合(<b>overfitting</b>)。左图显示了两个主要的情况。蓝色线在验证集上准确性较低，和训练集的准确性对比后，具有强过拟合，这样需要加强正则系数或者增大训练数据集。另外一种情况是验证集上准确性和训练集上准确性基本一致，显示该模型的表达能力不高，可以使用更大的模型。
+</p>
+</blockquote>
+</div>
+<hr />
+</div>
+</div>
+
+<div id="outline-container-org7ba38da" class="outline-3">
+<h3 id="org7ba38da">Weights: Updates ratio</h3>
+<div class="outline-text-3" id="text-org7ba38da">
+<p>
+最后一个指标是参数更新的大小和对应参数的大小的比例。更新的大小不是指梯度值，而是梯度乘以学习率。一个启发式的比率大概为 1e-3，具体实现如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">assume parameter vector W and its gradient vector dW</span>
+<span style="color: #BA36A5;">param_scale</span> = np.linalg.norm<span style="color: #707183;">(</span>W.ravel<span style="color: #7388D6;">()</span><span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">update</span> = -learning_rate*dW <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">simple SGD update</span>
+<span style="color: #BA36A5;">update_scale</span> = np.linalg.norm<span style="color: #707183;">(</span>update.ravel<span style="color: #7388D6;">()</span><span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">W</span> += update <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">the actual update</span>
+<span style="color: #0000FF;">print</span> update_scale / param_scale <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">want ~1e-3</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org057c9c4" class="outline-3">
+<h3 id="org057c9c4">Activation/Gradient distributions per layer</h3>
+<div class="outline-text-3" id="text-org057c9c4">
+<p>
+错误的权值初始化可以减慢收敛速度或者直接使得停止收敛。可以通过监控激活函数的激活值和梯度的直方图来监控。例如：采取 <b>tanh</b> 作为激活函数的网络，激活值分布在整个
+[-1,+1]区间内，而不是都在 0 值，或者都在-1 +1 两个值附近。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc1a4ab5" class="outline-3">
+<h3 id="orgc1a4ab5">Visualization</h3>
+<div class="outline-text-3" id="text-orgc1a4ab5">
+<p>
+在处理图像相关的任务，可以通过可视化第一层：
+</p>
+<hr />
+<div class="org-center">
+<p>
+<img src="assets/nn3/weights.jpeg" alt="weights.jpeg" /> <img src="assets/nn3/cnnweights.jpg" alt="cnnweights.jpg" />
+</p>
+<blockquote>
+<p>
+神经网络的第一层权值可视化结果。左图：噪声特征，表示未收敛的网络，学习率不对，而且正则系数太小。右图：图像较好，纹理清晰，表示学习已经收敛。
+</p>
+</blockquote>
+</div>
+<hr />
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb1de220" class="outline-2">
+<h2 id="orgb1de220">Parameter updates</h2>
+<div class="outline-text-2" id="text-orgb1de220">
+<p>
+一旦反向传播计算完成，梯度可以用来执行参数更新，有几种不同的方法执行参数更新。
+</p>
+
+<p>
+深度网络的优化现在是一个很活跃的研究领域。在本部分，将介绍几个常用的优化算法，并且会给出一些参考资料，可以深入学习。
+</p>
+</div>
+
+<div id="outline-container-org235a833" class="outline-3">
+<h3 id="org235a833">First-order(SGD), momentum, Nesterov momentum</h3>
+<div class="outline-text-3" id="text-org235a833">
+<p>
+<b>Vanilla update</b> 最为简单的更新策略是将各个参数沿着梯度方向的反方向更新。假设参数为 \(x\) ，梯度为 \(dx\) ，最简单的更新策略如下：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">Vanilla update</span>
+<span style="color: #BA36A5;">x</span> += - learning_rate * dx
+</pre>
+</div>
+
+<p>
+<b>learning<sub>rate</sub></b> 为学习率超参。在使用整个样本集作为梯度计算的时候，需要将学习率设置低一些，从而使得损失是向着降低方向移动。
+</p>
+
+<p>
+<b>Momentum update</b> 是另外一种在深度学习中几乎可以保证收敛的更新策略。损失函数优化可以看作是山峰上的石头，自己随着重力向下滚。速度会有一个累加的作用。
+</p>
+
+<p>
+更新策略：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">Momentum update</span>
+<span style="color: #BA36A5;">v</span> = mu * v - learning_rate * dx <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">integrate velocity</span>
+<span style="color: #BA36A5;">x</span> += v <span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">integrate position</span>
+</pre>
+</div>
+
+<p>
+\(v\) 变量最开始初始化为 0， \(mu\) 用来控制累加的比例，一般设置为 0.9。有点类似摩擦系数。该变量用来对速度进行衰减。在做交叉验证实验中，一般可以使用[0.5, 0.9, 0.95,
+0.99]来进行超参选择。还有一种设置方法是 \(mu\) 从开始设置为 0.5，然后经过几个 epoch
+后达到 0.99。
+</p>
+
+<blockquote>
+<p>
+用动能更新策略，参数向量的更新范式会在一致的更新方向上较大。
+</p>
+</blockquote>
+
+<p>
+<b>Nesterov Momentum</b> 是另外一个版本的动能更新策略。在理论上凸函数可以收敛，并且在实际应用中从结果来看确实要比原生的功能更新策略表现的更好。
+</p>
+
+<p>
+核心思想：参数向量在位置 \(x\) ，然后首先向动能方向移动 \(x+mu*v\) ，然后计算在动能更新的位置的梯度。该位置 \(x+mu*v\) 是我们更新后参数的近似，类似先向前看一眼，然后在该点计算的梯度能够加速收敛。
+</p>
+<hr />
+<div class="org-center">
+
+<div class="figure">
+<p><img src="assets/nn3/nesterov.jpeg" alt="nesterov.jpeg" />
+</p>
+<p><span class="figure-number">Figure 2: </span>Nesterov Momentum</p>
+</div>
+<blockquote>
+<p>
+原始动能梯度更新由两部分组成：x 点梯度方向和动能梯度方向。其中可以认为 x 点的梯度方向和动能梯度方向具有一定的差异，这样加和的梯度方向具有一定损失。而 <b>Nesterov</b> 动能更新由：动能梯度方向和更新后的梯度方向。可以认为两个梯度更新方向更为一致，收敛更快。
+</p>
+</blockquote>
+</div>
+<hr />
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #BA36A5;">x_ahead</span> = x + mu * v
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">evaluate dx_ahead (the gradient at x_ahead instead of at x)</span>
+<span style="color: #BA36A5;">v</span> = mu * v - learning_rate * dx_ahead
+<span style="color: #BA36A5;">x</span> += v
+</pre>
+</div>
+
+<p>
+以下是 <b>Nesterov's Accelerated Momentum(NAG)</b> 资料：
+</p>
+<ul class="org-ul">
+<li><a href="http://arxiv.org/pdf/1212.0901v2.pdf">Advances in optimizing Recurrent Networks</a> section 3.5</li>
+<li><a href="http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf">IIya Sustskever's thesis</a> section 7.2</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org4eb3937" class="outline-3">
+<h3 id="org4eb3937">Annealing the learning rate</h3>
+<div class="outline-text-3" id="text-org4eb3937">
+<p>
+深度网络训练，对学习率实现退火算法(<b>anneal</b>)具有较好的作用。直觉是，当学习率较高的时候，整个网络具有较大的能力，参数向量在不断的来回跳动，无法收敛到一个较窄的最优化损失值里。降低学习率需要一些技巧：如果降低的过慢，浪费了大量的计算，使得损失值来回跳动；如果减低的过快，整个系统很快就不再寻找最优值。如下是一些学习率降低的技巧：
+</p>
+<dl class="org-dl">
+<dt><code>Step decay</code></dt><dd>每个 epoch 完成后，对学习率降低一个比例。一个启发设置方法是首先固定学习率，然后观察训练集和测试集的准确性，一旦验证集的准确性不再提高，那么降低学习率 0.5。</dd>
+<dt><code>Exponential decay</code></dt><dd>采取公式 \(\alpha = \alpha_0 e^{-k t}\) ， \(\alpha_0,k\)
+为超参， \(t\) 为迭代次数。</dd>
+<dt><code>1/t decay</code></dt><dd>采取公式 \(\alpha = \alpha_0 / (1 + k t )\) ， \(\alpha_0,k\) 为超参， \(t\) 为迭代次数。</dd>
+</dl>
+
+<p>
+实际应用中， <b>step decay</b> 较为使用。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgfc6fe6b" class="outline-3">
+<h3 id="orgfc6fe6b">Second-order methods</h3>
+<div class="outline-text-3" id="text-orgfc6fe6b">
+<p>
+第二类优化算法是基于牛顿法<a href="http://en.wikipedia.org/wiki/Newton%27s_method_in_optimization">(Newton's method</a>)，使用如下公式进行更新：
+\[x \leftarrow x - [H f(x)]^{-1} \nabla f(x)\]
+</p>
+
+<p>
+\(Hf(x)\) 是<a href="http://en.wikipedia.org/wiki/Hessian_matrix">Hessian matrix</a>，是函数的二次方梯度矩阵。 \(\nabla f(x)\) 为梯度向量。
+Hessian matrix 描述了损失函数的曲率，可用来执行一个更有效的更新。
+</p>
+
+<p>
+虽然更新更为有效，但是由于在深度学习中，Hessian 矩阵的求解需要大量的计算量和存储空间，并不具有实用性。很多模拟牛顿法的方法提出来计算近似的 Hessian 逆矩阵。这些方法中最流行的是<a href="http://en.wikipedia.org/wiki/Limited-memory_BFGS">L-BFGS</a>，使用历史梯度信息来拟合近似矩阵。
+</p>
+
+<p>
+<b>In practice</b> 现在 L-BFGS 和类似的二次梯度方法在深度学习领域基本已不再适用。相反
+SGD 现在是用的比较多的，因为简单和可扩展。
+</p>
+
+<p>
+参考资料：
+</p>
+<ul class="org-ul">
+<li><a href="http://research.google.com/archive/large_deep_networks_nips2012.html">Large Scale Distributed Deep Networks</a> L-BFGS 和 SGD 在大规模分布式优化中对比</li>
+<li><a href="http://arxiv.org/abs/1311.2115">SFO</a> 算法结合 L-BGGS 和 SGD 两个方法的优点</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org472d69f" class="outline-3">
+<h3 id="org472d69f">Per-parameter adaptive learning rate(Adagrad, RMSProp)</h3>
+<div class="outline-text-3" id="text-org472d69f">
+<p>
+前面讨论的方法都是基于全局一个学习率。现在很多方法都是基于每个参数来独立调整学习率。这些方法也需要一些超参，但是超参的选择具有很大的可适范围，使得学习收敛较大；而学习率的设置则要小心很多。
+</p>
+
+<p>
+<b>Adagrad</b> <a href="http://jmlr.org/papers/v12/duchi11a.html">Adaptive Subgradient Methods for Online Learning and Stochastic
+Optimization</a> 
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">Assume the gradient dx and parameter vector x</span>
+<span style="color: #BA36A5;">cache</span> += dx**<span style="color: #D0372D;">2</span>
+<span style="color: #BA36A5;">x</span> += - learning_rate * dx / <span style="color: #707183;">(</span>np.sqrt<span style="color: #7388D6;">(</span>cache<span style="color: #7388D6;">)</span> + eps<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<i>cache</i> 记录了每个参数的梯度的开方加和。该值用来调整每个参数的学习步长。可以看出来，梯度较大的参数，会降低学习率；梯度较小的，会提升学习率。有趣的是，开方和求根非常重要，如果没有这两个操作，整个算法表现非常差。平滑项 <i>eps</i> 一般设置为 1e-4
+到 1e-8，用来避免除 0.该方法的一个缺点是深度学习中，学习率单调减低太激进，整个学习过程容易过早停止。
+</p>
+
+<p>
+<b>RMSprop</b> 是一个非常有效，但是没有正式发表过的学习率调整方法。现在使用该方法的论文都直接引用<a href="http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf">slide 29 of Lecture 6 of Geoff Hinton's Coursera class</a>。 <b>RMSprop</b>
+更新策略调整了 <b>Adagrad</b> 方法从而降低学习率的降低太过激进的问题。针对梯度范式加和进行衰减：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #BA36A5;">cache</span> = decay_rate * cache + <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span> - decay_rate<span style="color: #707183;">)</span> * dx**<span style="color: #D0372D;">2</span>
+<span style="color: #BA36A5;">x</span> += - learning_rate * dx / <span style="color: #707183;">(</span>np.sqrt<span style="color: #7388D6;">(</span>cache<span style="color: #7388D6;">)</span> + eps<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<i>decay<sub>rate</sub></i> 是一个超参，基本值为[0.9, 0.99, 0.999]。可以看到 <b>cache</b> 会随着 dx 的降低，而变小。从而避免学习率的单调递减。
+</p>
+
+<p>
+<b><a href="http://arxiv.org/abs/1412.6980">Adam</a></b> 是 <b>RMSprop</b> 和 动能的结合，更新策略：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #BA36A5;">m</span> = beta1*m + <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta1<span style="color: #707183;">)</span>*dx
+<span style="color: #BA36A5;">v</span> = beta2*v + <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta2<span style="color: #707183;">)</span>*<span style="color: #707183;">(</span>dx**<span style="color: #D0372D;">2</span><span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">x</span> += - learning_rate * m / <span style="color: #707183;">(</span>np.sqrt<span style="color: #7388D6;">(</span>v<span style="color: #7388D6;">)</span> + eps<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<i>m</i> 为梯度向量的动能表示。论文中推荐的超参为 <i>eps=1e-8,beta1=0.9,beta2=0.999</i> 。
+<b>Adam</b> 方法现在是默认算法，对比 <b>RMSprop</b> 表现稍好一些。 <b>Adam</b> 有一个 <i>bias
+correction</i> 机制来补偿在最开始时 <i>m,v</i> 都初始化为 0 时的动能：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">t is your iteration counter going from 1 to infinity</span>
+<span style="color: #BA36A5;">m</span> = beta1*m + <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta1<span style="color: #707183;">)</span>*dx
+<span style="color: #BA36A5;">mt</span> = m / <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta1**t<span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">v</span> = beta2*v + <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta2<span style="color: #707183;">)</span>*<span style="color: #707183;">(</span>dx**<span style="color: #D0372D;">2</span><span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">vt</span> = v / <span style="color: #707183;">(</span><span style="color: #D0372D;">1</span>-beta2**t<span style="color: #707183;">)</span>
+<span style="color: #BA36A5;">x</span> += - learning_rate * mt / <span style="color: #707183;">(</span>np.sqrt<span style="color: #7388D6;">(</span>vt<span style="color: #7388D6;">)</span> + eps<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<a href="http://arxiv.org/abs/1312.6055">Unit Tests for Stochastic Optimization</a> 研究了一系列随机优化方法。
+</p>
+<hr />
+<div class="org-center">
+<p>
+<img src="assets/nn3/opt2.gif" alt="opt2.gif" /> <img src="assets/nn3/opt1.gif" alt="opt1.gif" />
+</p>
+<blockquote>
+<p>
+上图用来帮助理解动态学习过程。左图：损失函数的等高线，评估各种优化方法的效率。可以看到动能优化方法有跑过的情况，和物理现象一致。右图：为马鞍图的学习过程。
+</p>
+</blockquote>
+</div>
+<hr />
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0dde8e0" class="outline-2">
+<h2 id="org0dde8e0">Hyperparameter Optimization</h2>
+<div class="outline-text-2" id="text-org0dde8e0">
+<p>
+可以看到在训练神经网络的时候，会有很多超参的设置，最常用的超参如下：
+</p>
+<ul class="org-ul">
+<li>初始学习率</li>
+<li>学习率衰减策略</li>
+<li>正则化系数</li>
+</ul>
+
+
+<p>
+这里还有很多其他的不是特别重要的超参，例如在每个参数的可调整学习率方法中，动能的衰减等。本文，将描述其他的一些超参选择：
+</p>
+
+<p>
+<b>Implementation</b> 大规模神经网络一般需要很长的时间去训练，所以再加上超参的选择需要更长的时间。这会直接影响代码的实现。一个方法是，采用一个 <i>worker</i> 从超参集中随机采样，然后执行优化。在训练过程中， <i>worker</i> 会在每次 epoch 完成之后监控验证集的表现，然后保存一个模型的 <i>checkpoint</i> (用来保存模型训练过程中的一些统计信息，例如损失)。常常文件名直接包含了验证集变现的，后续可以直接排序选择。一般还有另外一个程序 <i>master</i> ，用来加载和停止 <i>workers</i> ，检查生成的 checkpoints 或者画出一些训练的统计信息。
+</p>
+
+<p>
+<b>Prefer one validation fold to cross-validation</b> 在大多数情况下，如果验证集具有合适的数据样本，可以不采用交叉验证。
+</p>
+
+<p>
+<b>Hyperparameter ranges</b> 在指数上进行参数选择。例如，学习率的选择后续集为
+<i>learning<sub>rate</sub> = 10 ** uniform(-6,1)</i> 。可以看到随机生成一些数，然后以 10 的指数作为学习率。直觉上，学习率和正则系数在训练上具有乘的作用，如果加上一个固定的值 0.01，在学习率为 0.001 的时候具有很大的作用；而在学习率为 1.0 时候，作用就没有那么大。因此，很自然的可以认为学习率的范围应该是乘以或者除以一些数来获取。
+</p>
+
+<p>
+<b>Prefer random search to grid search</b> <a href="http://www.jmlr.org/papers/volume13/bergstra12a/bergstra12a.pdf">Random Search for Hyter-Parameter
+Optimization</a> 提出随机生成超参然后验证，要比根据网格(grid)来作验证要有效，并且更容易实现。
+</p>
+<hr />
+<div class="org-center">
+
+<div class="figure">
+<p><img src="assets/nn3/gridsearchbad.jpeg" alt="gridsearchbad.jpeg" />
+</p>
+<p><span class="figure-number">Figure 3: </span>超参网格选择</p>
+</div>
+<blockquote>
+<p>
+有一些超参重要于其他一些超参，随机选择可以更容易发现好的参数。
+</p>
+</blockquote>
+</div>
+<hr />
+
+<p>
+<b>Careful with best values on border</b> 有时候，超参的选择范围有可能不包括好的参数。例如，如果学习率选择范围为 <i>learning<sub>rate</sub> = 10 ** uniform(-6,1)</i> 。 最后，要额外检查以下最优学习率不要在这个范围的边界，如果在边界上，有可能错过最优的学习率设置，最好的方法是再重新选择学率范围。
+</p>
+
+<p>
+<b>Stage your search from coarse to fine</b> 刚开始可以先从粗力度的范围开始搜索，然后根据选择的最优参数，细化参数范围搜索。并且可以最开始可以只经过一个 epoch，或者更少来进行粗力度的参数选择。然后随着参数的范围减小，训练时间可以加长。
+</p>
+
+<p>
+<b>Bayesian Hyperparameter Optimization</b> 可以通过引入 <i>bayesian</i> 算法来指导更有效的超参选择。核心思想是平衡勘探-开发(<i>exploration-exploitation</i>)。有很多开发库
+(<a href="https://github.com/JasperSnoek/spearmint">spearmint</a>,<a href="http://www.cs.ubc.ca/labs/beta/Projects/SMAC/">SMAC</a>,<a href="http://jaberg.github.io/hyperopt/">hyperpot</a>)来实现参数选择。但是实际应用中，在卷积网络中，随机搜索还是较好的方法。其他还有一些<a href="http://nlpers.blogspot.com/2014/10/hyperparameter-search-bayesian.html">讨论</a>。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc5eb8ad" class="outline-2">
+<h2 id="orgc5eb8ad">Evaluation</h2>
+<div class="outline-text-2" id="text-orgc5eb8ad">
+</div>
+<div id="outline-container-org4df8f2e" class="outline-3">
+<h3 id="org4df8f2e">Model Ensembles</h3>
+<div class="outline-text-3" id="text-org4df8f2e">
+<p>
+在实际应用中，通过训练多个神经网络，然后在测试阶段对得分求平均可以提高一点模型的表现。当越多的模型一起使用，最终的模型表现会提升。并且多种不同的模型集成在一起使用，变现可以提升的更多。
+</p>
+<dl class="org-dl">
+<dt><code>Same model, different initializations</code></dt><dd>使用交叉验证来搜索最好的超参，然后使用超参训练多个使用不同初始值的模型。缺点是模型的不同只和初始化权重有关。</dd>
+<dt><code>Top models discovered during cross-validation</code></dt><dd>使用交叉验证来搜索超参过程中，选取最好的几个(例如 10)模型集成使用，该方法的好处是不需要额外的计算量。</dd>
+<dt><code>Different checkpoints of a single model</code></dt><dd>如果训练非常困难，可以通过集成多个 checkpoint 的模型来达到表现的提升。该方法的好处也是不需要额外的计算量。</dd>
+<dt><code>Running average of parameters during training</code></dt><dd>类似多个 checkpoint 组成的模型原理。可以在训练神经网络的时候，保存另外一个神经网络，该神经网络的权值是根据训练的神经网络的最后几轮权值的衰减加和得到的。这样获取的模型就是训练的最后几轮的模型的平均。该平滑版本的模型一般在验证集上都表现的更好。可以认为最后几轮的训练模型的损失值都在最优值的附近跳动，然后通过加和平均，能够增大跳进最优值的机会。</dd>
+</dl>
+
+<p>
+模型集成的缺点是需要在测试集上花费更长的时间验证。如果有兴趣可以阅读 <a href="https://www.youtube.com/watch?v=EK61htlw8hY">Dark
+Knowledge</a> ，将集成模型根据对数似然值蒸馏(<i>distill</i>)成一个单一模型。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0aefaf5" class="outline-2">
+<h2 id="org0aefaf5">Summary</h2>
+<div class="outline-text-2" id="text-org0aefaf5">
+<p>
+训练神经网络：
+</p>
+<ul class="org-ul">
+<li>在小的数据集上执行梯度检测，避免一些梯度检测的陷阱</li>
+<li>在模型训练开始时刻，先检查一下初始损失值，并且在一个小数据集上训练一个网络达到
+100% 训练精度。</li>
+<li>在训练阶段，监控损失函数，训练集/测试集的准确性，检查参数更新的比例(一般为
+1e-3)。</li>
+<li>优化策略优先使用：SGD+Nesterov Momentum 或者 Adam。</li>
+<li>根据训练迭代次数，进行学习率的衰减。</li>
+<li>使用随机参数搜索。从粗力度搜索开始，随着力度的细化，迭代次数增长。</li>
+<li>模型集成，获取更好的效果</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orge6d8693" class="outline-2">
+<h2 id="orge6d8693">Additional References</h2>
+<div class="outline-text-2" id="text-orge6d8693">
+<ul class="org-ul">
+<li><a href="http://research.microsoft.com/pubs/192769/tricks-2012.pdf">SGD tips and trikcs</a></li>
+<li><a href="http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf">Efficient BackProp</a></li>
+<li><a href="http://arxiv.org/pdf/1206.5533v2.pdf">Practical Recommendations for Gradient-Based Training of Deep Architectures</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-08-25 Sat 16:38</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

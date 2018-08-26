@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-08-22 Wed 23:52 -->
+<!-- 2018-08-25 Sat 11:39 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Setting up the Data and the Loss</title>
@@ -256,16 +256,16 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org85b41a0">1. Setting up the data and the Model</a>
+<li><a href="#orgde21beb">1. Setting up the data and the Model</a>
 <ul>
-<li><a href="#orga230242">1.1. Data Preprocessing</a></li>
-<li><a href="#org2f97425">1.2. Weight Initialization</a></li>
-<li><a href="#orge74dfdd">1.3. Batch Normalization</a></li>
-<li><a href="#orge740f7c">1.4. Regularization(L2/L1/Maxnorm/Dropout)</a></li>
+<li><a href="#orge118d57">1.1. Data Preprocessing</a></li>
+<li><a href="#orgf8cb714">1.2. Weight Initialization</a></li>
+<li><a href="#org5c120d4">1.3. Batch Normalization</a></li>
+<li><a href="#org1938c23">1.4. Regularization(L2/L1/Maxnorm/Dropout)</a></li>
 </ul>
 </li>
-<li><a href="#org3ed7518">2. Loss functions</a></li>
-<li><a href="#orgb043f7f">3. Summary</a></li>
+<li><a href="#org4568caa">2. Loss functions</a></li>
+<li><a href="#org7bf2f0e">3. Summary</a></li>
 </ul>
 </div>
 </div>
@@ -273,16 +273,16 @@ for the JavaScript code in this tag.
 <a href="http://cs231n.github.io/neural-networks-2/">cs231n-setting-up-the-data-and-the-loss</a>
 </p>
 
-<div id="outline-container-org85b41a0" class="outline-2">
-<h2 id="org85b41a0"><span class="section-number-2">1</span> Setting up the data and the Model</h2>
+<div id="outline-container-orgde21beb" class="outline-2">
+<h2 id="orgde21beb"><span class="section-number-2">1</span> Setting up the data and the Model</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 <a href="neural-networks-part-1-setting-the-architecture.html">神经网络结构</a>介绍了层级结构组织神经元，矩阵乘法进行神经元运算，并且需要增加非线性变换来调高神经网络的表达能力。本文主要主要介绍数据的预处理、权值初始化和损失函数等相关知识。
 </p>
 </div>
 
-<div id="outline-container-orga230242" class="outline-3">
-<h3 id="orga230242"><span class="section-number-3">1.1</span> Data Preprocessing</h3>
+<div id="outline-container-orge118d57" class="outline-3">
+<h3 id="orge118d57"><span class="section-number-3">1.1</span> Data Preprocessing</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 输入的数据矩阵 \(X\) ，维度为[N,D]（N 表示数据个数，D 为数据的维度）。一般有如下三种预处理方法：
@@ -299,7 +299,7 @@ np.std(X, axis=0)</i>)。另外一种方法是将输入的数据最小值和最�
 <hr />
 
 <div class="figure">
-<p><img src="assets/prepro1.jpeg" alt="prepro1.jpeg" />
+<p><img src="assets/nn2/prepro1.jpeg" alt="prepro1.jpeg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>数据预处理，中心化处理，归一化</p>
 </div>
@@ -379,7 +379,7 @@ Analysis(PCA)</b> 降维：
 <hr />
 
 <div class="figure">
-<p><img src="assets/prepro2.jpeg" alt="prepro2.jpeg" />
+<p><img src="assets/nn2/prepro2.jpeg" alt="prepro2.jpeg" />
 </p>
 <p><span class="figure-number">Figure 2: </span>数据预处理，PCA 降维，数据白化</p>
 </div>
@@ -397,7 +397,7 @@ SVD 分解。最后可以看一下这些特征向量的可视化结果：
 <hr />
 
 <div class="figure">
-<p><img src="assets/cifar10pca.jpeg" alt="cifar10pca.jpeg" />
+<p><img src="assets/nn2/cifar10pca.jpeg" alt="cifar10pca.jpeg" />
 </p>
 <p><span class="figure-number">Figure 3: </span>PCA 可视化结果</p>
 </div>
@@ -419,8 +419,8 @@ SVD 分解。最后可以看一下这些特征向量的可视化结果：
 </div>
 </div>
 
-<div id="outline-container-org2f97425" class="outline-3">
-<h3 id="org2f97425"><span class="section-number-3">1.2</span> Weight Initialization</h3>
+<div id="outline-container-orgf8cb714" class="outline-3">
+<h3 id="orgf8cb714"><span class="section-number-3">1.2</span> Weight Initialization</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
 权重初始化会极大的影响整个神经网络的表现和训练速度。
@@ -487,8 +487,8 @@ on ImageNet Classification</a> 主要研究了 <b>ReLU</b> 激活函数的权重
 </div>
 
 
-<div id="outline-container-orge74dfdd" class="outline-3">
-<h3 id="orge74dfdd"><span class="section-number-3">1.3</span> Batch Normalization</h3>
+<div id="outline-container-org5c120d4" class="outline-3">
+<h3 id="org5c120d4"><span class="section-number-3">1.3</span> Batch Normalization</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
 <a href="http://arxiv.org/abs/1502.03167">Batch Normalization</a> 提供了另外一种技术，用来解决权重初始化的问题。因为归一化操作是一个可导操作，所以可以通过添加归一化层在全链接层之后，激活层之前。
@@ -496,8 +496,8 @@ on ImageNet Classification</a> 主要研究了 <b>ReLU</b> 激活函数的权重
 </div>
 </div>
 
-<div id="outline-container-orge740f7c" class="outline-3">
-<h3 id="orge740f7c"><span class="section-number-3">1.4</span> Regularization(L2/L1/Maxnorm/Dropout)</h3>
+<div id="outline-container-org1938c23" class="outline-3">
+<h3 id="org1938c23"><span class="section-number-3">1.4</span> Regularization(L2/L1/Maxnorm/Dropout)</h3>
 <div class="outline-text-3" id="text-1-4">
 <p>
 神经网络有多种正则化方法，来控制模型的复杂度，从而克服过拟合：
@@ -529,7 +529,7 @@ Neural Networks from Overfitting</a> 。在训练阶段，以一定的概率 \(P
 <hr />
 
 <div class="figure">
-<p><img src="assets/dropout.jpeg" alt="dropout.jpeg" />
+<p><img src="assets/nn2/dropout.jpeg" alt="dropout.jpeg" />
 </p>
 <p><span class="figure-number">Figure 4: </span>Dropout</p>
 </div>
@@ -637,8 +637,8 @@ Neural Networks from Overfitting</a> 。在训练阶段，以一定的概率 \(P
 </div>
 </div>
 
-<div id="outline-container-org3ed7518" class="outline-2">
-<h2 id="org3ed7518"><span class="section-number-2">2</span> Loss functions</h2>
+<div id="outline-container-org4568caa" class="outline-2">
+<h2 id="org4568caa"><span class="section-number-2">2</span> Loss functions</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 损失函数第二部分为数据损失(<i>data loss</i>)，用来度量预估的结果与真实结果的差距。损失函数一般为对单个样本损失值加和平均， \(L=\frac{1}{N}\sum_{i}L_{i}\) ，其中
@@ -647,14 +647,14 @@ Neural Networks from Overfitting</a> 。在训练阶段，以一定的概率 \(P
 
 <p>
 <b>Classification</b> 为样本集的每个样本都只有一个正确标签，最为常用的两个损失函数为 SVM :
-\(L_i = \sum_{j\neq y_i} \max(0, f_j - f_{y_i} + 1)\)
+\[L_i = \sum_{j\neq y_i} \max(0, f_j - f_{y_i} + 1)\]
 </p>
 
 <p>
 有些研究表示， <b>squared hinge loss</b> 具有更好的表现(\(\max(0, f_j - f_{y_i} +
   1)^2\))。第二个常用的损失函数为 <b>Softmax classifier</b> 采取的交叉熵损失
 (<b>cross-entropy</b>)：
-\(L_i = -\log\left(\frac{e^{f_{y_i}}}{ \sum_j e^{f_j} }\right)\)
+\[L_i = -\log\left(\frac{e^{f_{y_i}}}{ \sum_j e^{f_j} }\right)\]
 </p>
 
 <p>
@@ -665,7 +665,7 @@ Softmax 将标签组织成树状结构，任意一个标签被表示为树中一
 
 <p>
 <b>Attribute classification</b> 为目标为一个二值向量，每个值互相之间没有影响。例如一个图像具有多个主题分类。一个简单的方法是在每一个二分类目标上都训练一个独立的分类器，那么损失函数为：
-\(L_i = \sum_j \max(0, 1 - y_{ij} f_j)\)
+\[L_i = \sum_j \max(0, 1 - y_{ij} f_j)\]
 </p>
 
 <p>
@@ -681,17 +681,55 @@ Softmax 将标签组织成树状结构，任意一个标签被表示为树中一
 标签 0 的概率为 \(P(y = 0 \mid x; w, b) = 1 - P(y = 1 \mid x; w,b)\) 。如果样本得分 \(\sigma (w^Tx + b) > 0.5\) ，则为正样本(y=1)。损失函数为最大似然：
 \[L_i = \sum_j y_{ij} \log(\sigma(f_j)) + (1 - y_{ij}) \log(1 - \sigma(f_j))\]
 </p>
+
+<p>
+虽然整个损失函数看起来很复杂，但是梯度非常简单和直观： \(\partial{L_i} /
+  \partial{f_j} = y_{ij} - \sigma(f_j)\) 。
+</p>
+
+<p>
+<b>Regression</b> 是一个预测值的问题，例如：房价预测，图像中某个物体的长度等。这一类问题，常常采取预测值和真实值的 L1/L2 范式作为损失。L2 范式对于一个样本的计算公式：
+ \[L_i = \Vert f - y_i \Vert_2^2\]
+</p>
+
+<p>
+<b>L2 norm</b> 的平方，可以使得梯度计算非常简单。 <b>L1 norm</b> 对得分向量的每一维上加和绝对值：
+ \[L_i = \Vert f - y_i \Vert_1 = \sum_j \mid f_j - (y_i)_j \mid\]
+</p>
+
+<p>
+定义 i 样本在 j 维度输出得分和真实得分的差距为 \(\delta_{ij}\) ， 可以很容易的进行梯度计算(\(\partial{L_i} / \partial{f_j}\))，L2 为 \(2\delta_{ij}\) ，L1 为
+\(sign(\delta_{ij})\) 。就是说 L2 的梯度和错误的大小成比例；L1 的梯度为定值，且与错误的符号一致。
+</p>
+
+<p>
+<b>总结</b> <b>L2 Loss</b> 相对比较难以优化，因为该损失需要考虑最终的输出值的正确性。而
+<b>Softmax</b> 只需要考虑相对的大小即可，并且 L2 Loss 对异常点非常敏感，梯度会非常大，使得整个网络容易波动。
+</p>
+
+<blockquote>
+<p>
+在面对回归模型的时候，首先思考一下是否真的必要。相反最好将输出值分成几个区间，然后变成分类问题。这样不光最后能够预测一个值的范围，而且可以知道对应的概率和置信度。
+</p>
+</blockquote>
 </div>
 </div>
 
-
-<div id="outline-container-orgb043f7f" class="outline-2">
-<h2 id="orgb043f7f"><span class="section-number-2">3</span> Summary</h2>
+<div id="outline-container-org7bf2f0e" class="outline-2">
+<h2 id="org7bf2f0e"><span class="section-number-2">3</span> Summary</h2>
+<div class="outline-text-2" id="text-3">
+<ul class="org-ul">
+<li>推荐的数据预处理将数据零点中心化，然后归一化到[-1,+1]之间。</li>
+<li>权值初始化推荐从方差为 \(\sqrt{2/n}\) 的高斯分布采样，n 为输入神经元的个数</li>
+<li>使用 L2 正则和 dropout</li>
+<li>使用 Batch Normalization</li>
+</ul>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: stupid-coder</p>
-<p class="date">Created: 2018-08-22 Wed 23:52</p>
+<p class="date">Created: 2018-08-25 Sat 11:39</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

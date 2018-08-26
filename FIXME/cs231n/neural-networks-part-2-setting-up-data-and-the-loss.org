@@ -27,7 +27,7 @@
    值时使用。
    -----
    #+CAPTION: 数据预处理，中心化处理，归一化
-   [[file:assets/prepro1.jpeg]]
+   [[file:assets/nn2/prepro1.jpeg]]
    #+BEGIN_QUOTE
    *左图* ，输入的二维数据样本。 *中间* ，数据减去均值后，以原点为中心分布。 *右
     图* ，每个数据维度除以标准差，使得数据在不同维度上的部分近似。
@@ -93,7 +93,7 @@
    #+END_QUOTE
    -----
    #+CAPTION: 数据预处理，PCA 降维，数据白化
-   [[file:assets/prepro2.jpeg]]
+   [[file:assets/nn2/prepro2.jpeg]]
    #+BEGIN_QUOTE
    PCA 降维/数据白化。左图为输入的原始数据。中间为 PCA 结果，使得协方差矩阵为对
    角阵。右图为数据白化，使得协方差矩阵变成单位阵。
@@ -104,7 +104,7 @@
    SVD 分解。最后可以看一下这些特征向量的可视化结果：
    -----
    #+CAPTION: PCA 可视化结果
-   [[file:assets/cifar10pca.jpeg]]
+   [[file:assets/nn2/cifar10pca.jpeg]]
    #+BEGIN_QUOTE
    左图为 CIFAR1-10 中的 49 张样本图像。二图为前 144 的特征向量。为方差最大的
    144 个向量。可以看到对应的图形在样本集中较少出现。三图为 49 张样本图像经过 PCA 降
@@ -210,7 +210,7 @@
    元进行工作，其他的神经元不参与此次训练。
    -----
    #+CAPTION: Dropout
-   [[file:assets/dropout.jpeg]]
+   [[file:assets/nn2/dropout.jpeg]]
    #+BEGIN_QUOTE
    训练阶段，Dropout 可以视作对整个神经网络进行采样，只有采样的神经元才参与计算和
    更新。测试阶段，Dropout 不参与，并对结果得分进行一定的平均。(可以看作不同的神
