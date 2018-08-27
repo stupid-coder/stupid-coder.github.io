@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Vector, Matrix, and Tensor Derivatives</title>
+<!-- 2018-08-27 Mon 09:39 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Vector, Matrix, and Tensor Derivatives</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Simplify, simplify, simplify</a>
+<ul>
+<li><a href="#sec-1-1">Expanding notation into explicit sums and equations for each component</a></li>
+<li><a href="#sec-1-2">Removing summation notation</a>
+<ul>
+<li><a href="#sec-1-2-1">Completing the derivative: the Jacobian matrix</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-2">Row vectors instead of column vectors</a>
+<ul>
+<li><a href="#sec-2-1">Example 2</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Dealing with more than two dimensions</a></li>
+<li><a href="#sec-4">Multiple data points</a></li>
+<li><a href="#sec-5">The chain rule in combination with vectors and matrices</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文：<a href="http://cs231n.stanford.edu/vecDerivs.pdf">Vector, Matrix, And Tensor Derivatives</a>
+</p>
+
+<blockquote>
+<p>
+本文翻译于上文，用于学习向量，矩阵梯度运算相关知识。
+</p>
+</blockquote>
+
+<p>
+本文目标是帮助大家学习向量、矩阵或者高阶张量(三维及以上的数组)求解梯度相关知识，
+并帮助大家求解以向量、矩阵和高阶张量为对象求解梯度。
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Simplify, simplify, simplify</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+面向多维数组求解梯度的时候，同时处理多个计算很容易带来疑惑。这些计算包括同时处
+理多个对象求解梯度，处理加和的求解梯度和应用链式法则。同时计算这么多事情，常常
+会带来错误。
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Expanding notation into explicit sums and equations for each component</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+面向一个计算，应该先写出一个标量版本的公式。然后可以根据该公式，再去实现一
+个基于矩阵的计算。
+</p>
+
+<p>
+<b>Example</b>. 维度为 [C,1] 的列向量 \(\vec y\) 为维度为[C,D]矩阵 \(W\) 和维度为[D,1]
+ 的列向量 \(\vec x\) 的乘积：
+</p>
+\begin{equation}
+\vec y = W \vec x.    
+\tag{1}
+\end{equation}
+
+<p>
+假设我们希望求解 \(\vec y\) 对 \(\vec x\) 的梯度。结果应该是每一个 \(\vec y\) 的元
+素对每一个 \(\vec x\) 的元素求的偏导数，结果为维度[C,D]的矩阵。
+</p>
+
+<p>
+让我们从单个元素开始，例如 \(\vec y\) 的第三个元素对 \(\vec x\) 的第 7 个元素求导：
+</p>
+\begin{equation}
+\frac{\partial \vec y_{3}}{\partial \vec x_{7}}
+\tag{2}
+\end{equation}
+
+<p>
+结果为一个标量对另外一个标量求解梯度。
+</p>
+
+<p>
+第一件事就是去求解 \(\vec y_{3}\) ，根据矩阵乘积，标量 \(\vec y_{3}\) 为矩阵 \(W\)
+的第三行和列向量 \(\vec x\) 的点积：
+</p>
+\begin{equation}
+\vec y_{3} = \sum_{j=1}^{D} W_{3,j} \vec x_{j}.
+\tag{3}
+\end{equation}
+
+<p>
+上述公式为矩阵乘积(公式 1)分解为标量公式。可以简化梯度求解。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Removing summation notation</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+可以直接从公式 2 直接求解梯度，一般包含求和 \(\sum\) 或者求乘 \(\prod\) 容易出错。
+如果是刚开始进行计算，把这些公式展开成不带对应符号的公式，比较正确计算：
+</p>
+\begin{equation}
+\vec y_{3} = W_{3,1}\vec x_{1}+W_{3,2}\vec x_{2}+...+W_{3,7}\vec x_{7} +
+... + W_{3,D}\vec x_{D}.
+\tag{4}
+\end{equation}
+
+<p>
+由于面向 \(\vec x_{7}\) 求导，那么上述公式就包含了该项。可以看对 \(y_{3}\) 和
+\(\vec x_{7}\) 关联只有单独一项 \(W_{3,7}\vec x_{7}\) 。其他项都不包含 \(\vec x{7}\)
+，求导为 0：
+</p>
+
+\begin{align*}
+\frac{\partial \vec y_{3}}{\partial \vec x_{7}} &= \frac{\partial}{\partial
+\vec x_{7}}[W_{3,1}\vec x_{1}+W_{3,2}\vec x_{2}+...+W_{3,7}\vec
+x_{7}+...+W_{3,D}\vec x_{D}]\\
+&= 0+0+...+\frac{\partial}{\partial \vec x_{7}}+...+0\\
+&=\frac{\partial}{\partial \vec x_{7}}[W_{3,7}\vec x_{7}]\\
+&=W_{3,7}
+\tag{5}
+\end{align*}
+
+<p>
+通过只关注向量 \(\vec y\) 的一个元素对向量 \(\vec x\) 的一个元素，我们可以将计算
+简化到最简单形式。如果后面的计算出错，该方法可以帮助你将问题简化到基本形式，
+然后去发现哪里出了错误。
+</p>
+</div>
+
+<div id="outline-container-sec-1-2-1" class="outline-4">
+<h4 id="sec-1-2-1">Completing the derivative: the Jacobian matrix</h4>
+<div class="outline-text-4" id="text-1-2-1">
+<p>
+我们的目标是计算向量 \(\vec y\) 中每一个元素对向量 \(\vec x\) 的每一个元素的梯度，
+并且结果为维度[C,D]的矩阵。可以被写成如下形式：
+</p>
+
+\begin{equation}
+\left[
+\begin{matrix}
+\frac{\partial \vec y_{1}}{\partial \vec x_{1}} & \frac{\partial \vec y_{1}}{\partial \vec x_{2}} & \frac{\partial \vec y_{1}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{1}}{\partial \vec x_{D}} \\
+\frac{\partial \vec y_{2}}{\partial \vec x_{1}} & \frac{\partial \vec y_{2}}{\partial \vec x_{2}} & \frac{\partial \vec y_{2}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{2}}{\partial \vec x_{D}} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\frac{\partial \vec y_{C}}{\partial \vec x_{1}} & \frac{\partial \vec y_{C}}{\partial \vec x_{2}} & \frac{\partial \vec y_{C}}{\partial \vec x_{3}} & \vdots & \frac{\partial \vec y_{C}}{\partial \vec x_{D}} \\
+\end{matrix}
+\right]
+\tag{6}
+\end{equation}
+
+<p>
+上述矩阵形式叫做雅可比矩阵(<i>Jacobian matrix</i>)。
+</p>
+
+<p>
+对于等式
+</p>
+\begin{equation}
+\vec y=W\vec x
+\tag{7}
+\end{equation}
+
+<p>
+\(\vec y_{3}\) 对于 \(\vec x_{7}\) 的偏导数为 \(W_{3,7}\) 。如果对其他元素作相同的计
+算，对于所有 \(i \in C,j \in D\) ：
+</p>
+\begin{equation}
+\frac{\partial \vec y_{i}}{\partial \vec x_{j}} = W_{i,j}
+\tag{8}
+\end{equation}
+
+<p>
+那么偏导数矩阵为：
+</p>
+\begin{equation}
+\left[
+\begin{matrix}
+\frac{\partial \vec y_{1}}{\partial \vec x_{1}} & \frac{\partial \vec y_{1}}{\partial \vec x_{2}} & \frac{\partial \vec y_{1}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{1}}{\partial \vec x_{D}} \\
+\frac{\partial \vec y_{2}}{\partial \vec x_{1}} & \frac{\partial \vec y_{2}}{\partial \vec x_{2}} & \frac{\partial \vec y_{2}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{2}}{\partial \vec x_{D}} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\frac{\partial \vec y_{C}}{\partial \vec x_{1}} & \frac{\partial \vec y_{C}}{\partial \vec x_{2}} & \frac{\partial \vec y_{C}}{\partial \vec x_{3}} & \cdots & \frac{\partial \vec y_{C}}{\partial \vec x_{D}} \\
+\end{matrix}
+\right]
+=
+\left[
+\begin{matrix}
+W_{1,1} & W_{1,2} & W_{1,3} & \cdots & W_{1,D} \\
+W_{2,1} & W_{2,2} & W_{2,3} & \cdots & W_{2,D} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+W_{C,1} & W_{C,2} & W_{C,3} & \cdots & W_{C,D} \\
+\end{matrix}
+\right]
+\tag{9}
+\end{equation}
+
+<p>
+上述矩阵就是 \(W\) 自己。
+</p>
+
+<p>
+经过上述的推导，可以总结：
+</p>
+\begin{equation}
+\vec y = W \vec x,
+\frac{d\vec y}{d\vec x} = W.
+\tag{10}
+\end{equation}
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Row vectors instead of column vectors</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+不同的神经网络开发库，矩阵的存储形式是需要额外关注的。例如，数据矩阵 \(X\) 包含
+不同的向量，每一个代表一个输入样本，那么是行向量代表一个样本，还是列向量代表一
+个样本呢。
+</p>
+
+<p>
+本文第一部分，就是将 \(\vec x\) 当成列向量处理。同样的，如果是行向量，一样处理。
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Example 2</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+\(\vec y\) 是一个维度为[1,C]的行向量是维度为[1,D]行向量 \(\vec x\) 和维度为[D,C]
+的矩阵 \(W\) 的乘积：
+</p>
+\begin{equation}
+\vec y = \vec x W.
+\tag{11}
+\end{equation}
+
+<p>
+\(\vec y\) 和 \(\vec x\) 都具有相同的数据，只是变成了行向量。矩阵 \(W\) 的维度为第
+一部分使用矩阵维度的转置。本部分为左乘向量 \(\vec x\) ，第一部分为右乘：
+</p>
+\begin{equation}
+\vec y_{3} = \sum_{j=1}{D}\vec x_{j}W_{j,3}
+\tag{12}
+\end{equation}
+<p>
+则
+</p>
+\begin{equation}
+\frac{\partial \vec y_{3}}{\partial \vec x_{7}} = W_{7,3}
+\tag{13}
+\end{equation}
+
+<p>
+\(W\) 的索引和第一部分的 \(W\) 的索引相反，同样的对于向量的雅可比矩阵为：
+</p>
+\begin{equation}
+\frac{d\vec y}{d\vec x} = W.
+\tag{14}
+\end{equation}
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Dealing with more than two dimensions</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+在机器学习领域，对目标函数的优化，涉及到权值的梯度计算：
+</p>
+\begin{equation}
+\frac{d \vec y}{dW}.
+\tag{15}
+\end{equation}
+
+<p>
+\(\vec y\) 为一维向量， \(W\) 为二维向量。因此，最终的梯度矩阵应该是一个三维矩阵。
+一般要避免使用三维矩阵，是因为该矩阵的运算不容易理解。应该将该矩阵转为更容易计
+算和理解的形式。
+</p>
+
+<p>
+从一个求解标量梯度开始，例如 \(\vec y_{3}\) 对 \(W_{7,8}\) 。和上一部分一样，先将
+\(\vec y_{3}\)  用标量的形式表示出来，然后看一下 \(W_{7,8}\) 在该形式中的作用。
+</p>
+
+<p>
+可以看到 \(W_{7,8}\) 在计算 \(\vec y_{3}\) 中没有任何作用：
+</p>
+\begin{equation}
+\vec y_{3} = \vec x_{1} W_{1,3} + \vec x_{2}W_{2,3} + ... + \vec x_{D}W_{D,3}.
+\tag{16}
+\end{equation}
+
+<p>
+即是说：
+</p>
+\begin{equation}
+\frac{d \vec y_{3}}{dW_{7,8}} = 0.
+\tag{17}
+\end{equation}
+
+<p>
+\(\vec y_{3}\) 对 \(W\) 的第三列的其他权重都不为 0，例如，求解 \(\vec y_{3}\) 对
+\(W_{2,3}\) 的梯度， 可以很容易的从公式 11 求解出：
+</p>
+\begin{equation}
+\frac{d \vec y_{3}}{dW_{2,3}} = \vec x_{2}.
+\tag{18}
+\end{equation}
+
+<p>
+所以，如果 \(\vec y\) 的元素的索引值等于 \(W\) 的元素的第二个索引值，则梯度不为 0；
+其他都为 0：
+</p>
+\begin{equation}
+\frac{d \vec y_{j}}{dW_{i,j}} = \vec x_{i}.
+\tag{19}
+\end{equation}
+
+<p>
+如果，对向量 \(\vec y\) 对 \(W\) 的三维梯度矩阵用 \(F\) 来表示：
+</p>
+\begin{equation}
+F_{i,j,k} = \frac{\partial \vec y_{i}}{\partial W_{j,k}}, \\
+then \\
+F_{i,j,i} = \vec x_{j},
+\tag{20}
+\end{equation}
+
+<p>
+其他坐标梯度结果都为 0.
+</p>
+
+<p>
+可以定义一个二维矩阵 \(G\) ：
+</p>
+\begin{equation}
+G_{i,j} = F_{i,j,i}
+\tag{21}
+\end{equation}
+
+<p>
+可以看到 \(F\) 的所有信息可以被保存到 \(G\) 中，结果可以表示为一个二维矩阵形式。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Multiple data points</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+机器学习中，常常会使用一批数据样本并行进行计算，多条样本向量 \(\vec x\) 组成样本
+矩阵 \(X\) 。假设样本为维度为[1,D]的行向量， \(X\) 是维度为[N,D]的二维矩阵。 \(W\)
+为维度为[D,C]的二维矩阵， \(Y\) 为维度为[N,C]的二维矩阵：
+</p>
+\begin{equation}
+Y=XW.
+\tag{22}
+\end{equation}
+
+<p>
+\(Y\) 行向量对应 \(X\) 的行向量，经过权值矩阵 \(W\) 变换后的结果。
+</p>
+
+<p>
+还是先将矩阵运算写成标量形式：
+</p>
+\begin{equation}
+Y_{i,j} = \sum_{k=1}^{D}X_{i,k}W_{k,j}
+\tag{23}
+\end{equation}
+
+<p>
+可以直接求解元素梯度：
+</p>
+\begin{equation}
+\frac{\partial Y_{a,b}}{\partial X_{c,d}},
+\tag{24}
+\end{equation}
+
+<p>
+在 \(a=c\) 情况下，有梯度不为 0，即对应行向量之间有梯度关系。
+</p>
+
+\begin{equation}
+\frac{\partial Y_{i,j}}{\partial X_{i,k}} = W_{k,j}
+\tag{25}
+\end{equation}
+
+<p>
+只需要记住公式 25 的梯度关系，就可以根据我们的需要获取对应的偏导数:
+</p>
+\begin{equation}
+\frac{\partial Y_{i,;}}{\partial X_{i,;}} = W,
+\tag{26}
+\end{equation}
+<p>
+和之前单个样本的公式 14 一样。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">The chain rule in combination with vectors and matrices</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+本部分将考虑链式法则， \(\vec y\) 和 \(\vec x\) 为列向量，以下公式为例子：
+</p>
+\begin{equation}
+\vec y = VW\vec {x},
+\tag{27}
+\end{equation}
+
+<p>
+\(\vec y\) 对 \(\vec x\) 求解梯度，观察到两个矩阵 \(V\) 和 \(W\) 相乘等于另外一个矩阵
+\(U\) ：
+</p>
+\begin{equation}
+\frac{d\vec y}{d\vec x}=VW=U.
+\tag{28}
+\end{equation}
+
+<p>
+我们可以考虑采取链式法则来进行梯度求解，定义中间结果：
+</p>
+\begin{equation}
+\vec m = W \vec x.
+\vec y = V \vec m.
+\tag{29}
+\end{equation}
+
+<p>
+可以采取链式法则来求解梯度：
+</p>
+\begin{equation}
+\frac{\vec y}{\vec x} = \frac{d\vec y}{d\vec m}\frac{d\vec m}{d\vec x}.
+\tag{30}
+\end{equation}
+
+<p>
+首先，计算标量梯度：
+</p>
+\begin{equation}
+\frac{d\vec y_{i}}{d\vec x_{j}} = \sum_{k=1}^{M}\frac{d\vec y_{i}}{d\vec
+m_{k}}\frac{d\vec m_{k}}{d\vec x_{j}}
+\tag{31}
+\end{equation}
+
+<p>
+从前几部分的向量对向量的梯度计算可以知道：
+</p>
+\begin{equation}
+\frac{d\vec y_{i}}{d\vec m_{k}} = V_{i,k}\\
+\frac{d\vec m_{k}}{d\vec x_{j}} = W_{k,j}.
+\tag{32}
+\end{equation}
+
+<p>
+所以可以得到：
+</p>
+\begin{equation}
+\frac{d \vec y_{i}}{d \vec x_{j}} = \sum_{k=1}^{M}V_{i,k}W_{k,j}.
+\tag{33}
+\end{equation}
+
+<p>
+上述公式的向量版本就是 \(VW\) 。
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

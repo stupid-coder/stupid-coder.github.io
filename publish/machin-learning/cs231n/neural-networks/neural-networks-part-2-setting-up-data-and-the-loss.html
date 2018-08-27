@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Setting up the Data and the Loss</title>
+<!-- 2018-08-27 Mon 09:39 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Setting up the Data and the Loss</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Setting up the data and the Model</a>
+<ul>
+<li><a href="#sec-1-1">Data Preprocessing</a></li>
+<li><a href="#sec-1-2">Weight Initialization</a></li>
+<li><a href="#sec-1-3">Batch Normalization</a></li>
+<li><a href="#sec-1-4">Regularization(L2/L1/Maxnorm/Dropout)</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">Loss functions</a></li>
+<li><a href="#sec-3">Summary</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/neural-networks-2/">cs231n-setting-up-the-data-and-the-loss</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Setting up the data and the Model</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+<a href="neural-networks-part-1-setting-the-architecture.html">神经网络结构</a>介绍了层级结构组织神经元，矩阵乘法进行神经元运算，并且需要增加非线
+性变换来调高神经网络的表达能力。本文主要主要介绍数据的预处理、权值初始化和损失
+函数等相关知识。
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Data Preprocessing</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+输入的数据矩阵 \(X\) ，维度为[N,D]（N 表示数据个数，D 为数据的维度）。一般有如下
+三种预处理方法：
+<b>Mean substraction</b> 是最为常见的预处理方法。输入的数据需要与各维度的数据均值
+相减，几何解释是将输入的数据都转换到原点分布(0)。 <b>numpy</b> 中，直接执行表达式:
+<i>X -= np.mean(X, axis=0)</i> 。图像作为输入样本，可以直接减去所有像素的均值(<i>X
+-= np.mean(X)</i>)，或者在每个通道单独进行处理。
+</p>
+
+<p>
+<b>Normalization</b> 在数据的维度上独立进行归一化，这样使得每个维度的数据值维持基
+本比例。主要有两种归一化的方法。其一，如果输入的数据已经做 <b>mean
+substraction</b> 了，那么在每个维度上直接除以对应维度的标准差即可(<i>X /=
+np.std(X, axis=0)</i>)。另外一种方法是将输入的数据最小值和最大值归一化到-1 和 1。
+第二种处理方法，只有在输入的数据在不同尺度上具有不同的意义，需要保留数据的差
+值时使用。
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn2/prepro1.jpeg" alt="prepro1.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> 数据预处理，中心化处理，归一化</p>
+</div>
+<blockquote>
+<p>
+<b>左图</b> ，输入的二维数据样本。 <b>中间</b> ，数据减去均值后，以原点为中心分布。 <b>右
+ 图</b> ，每个数据维度除以标准差，使得数据在不同维度上的部分近似。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+<b>PCA and Whitening</b> 是另外一种很重要的预处理。假设输入数据已经经过上述中心化
+处理后。计算输入数据的协方差矩阵：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Assume input data matrix X of size [N x D]</span>
+<span style="font-weight: bold; font-style: italic;">X</span> -= np.mean(X, axis = 0) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">zero-center the data (important)</span>
+<span style="font-weight: bold; font-style: italic;">cov</span> = np.dot(X.T, X) / X.shape[0] <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">get the data covariance matrix</span>
+</pre>
+</div>
+
+<p>
+协方差矩阵(<i>covariance matrix</i>)的 <i>(i,j)</i> 元素为输入数据的第 i 维数据和第 j 维
+数据的协方差。
+$$
+   COV(X,Y) = E[(X-E(X))(Y-E(Y))] \\
+   cov_{i,j} = \frac{1}{N}\sum_{k}^{D}X_{k,i}X_{k,j}
+   $$
+</p>
+
+<p>
+对角线元素为对应的维度的方差。可知协方差矩阵为对称半正定阵。 <b>SVD</b> 分解：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">U</span>,<span style="font-weight: bold; font-style: italic;">S</span>,<span style="font-weight: bold; font-style: italic;">V</span> = np.linalg.svd(cov)
+</pre>
+</div>
+
+<p>
+\(U\) 为矩阵的特征向量矩阵， \(S\) 为对应的奇异值。可以通过特征值，将输入数据映射
+到特征空间上去，这样数据之间的相关性降低：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">Xrot</span> = np.dot(X, U) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">decorrelate the data</span>
+</pre>
+</div>
+
+<p>
+特征向量具有正交属性，为单位范数，所以可以将特征向量看作一组空间坐标基。可以
+通过将输入数据映射到该特征向量空间中。并且可以看到该坐标空间下的数据维度协方
+差矩阵变成了对角阵，表示数据维度之间无关。
+</p>
+
+<p>
+并且 <i>np.linalg.svd</i> 返回的特征向量矩阵 <i>U</i> 按照特征值的大小进行了排序。所以
+可以通过舍弃降低特征值的特征向量来达到降维效果，叫做 <b>Principal Component
+Analysis(PCA)</b> 降维：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">Xrot_reduced</span> = np.dot(X, U[:, :100]) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Xrot_reduced becomes [N,100]</span>
+</pre>
+</div>
+
+<p>
+经过上述运算，可以将数据集[N,D]降维到[N,100]。并且保证 100 维的数据仍然能够保持
+最大的方差。该方法常常可以帮助线性分类器或者神经网络既能达到很好的性能，也能
+节省大量的时间和空间。
+</p>
+
+<p>
+<b>whitening</b> 将做过 PCA 处理的数据，根据特征值的量级，将各个维度的长度归一化。
+几何解释是如果输入数据是多元高斯分布，那么 <b>whitening</b> 后的数据就是均值为 0，
+协方差矩阵为单位矩阵的多元高斯分布。处理方法是：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">whiten the data:</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">divide by the eigenvalues (which are square roots of the singular values)</span>
+<span style="font-weight: bold; font-style: italic;">Xwhite</span> = Xrot / np.sqrt(S + 1e-5)
+</pre>
+</div>
+
+<blockquote>
+<p>
+警告：噪声。上述公式添加了 <i>1e-5</i> 很小的常量，避免除 0。该种方法的一个主要缺
+点是会将数据中的噪声放大。因为，该归一化会将所有维度的上的变量进行归一(包括特
+征值较小的维度，这些维度上的信息大多可以认为是噪声)，然后使得这些输入的数据和
+其他有用信息的输入变成相同强度。实际应用中，可以将该常量设成一个较大的值，用
+来平滑。
+</p>
+</blockquote>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn2/prepro2.jpeg" alt="prepro2.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 数据预处理，PCA 降维，数据白化</p>
+</div>
+<blockquote>
+<p>
+PCA 降维/数据白化。左图为输入的原始数据。中间为 PCA 结果，使得协方差矩阵为对
+角阵。右图为数据白化，使得协方差矩阵变成单位阵。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+CIFAR-10 训练数据集为 50K*3072，可以通过计算[3072,3902]的协方差矩阵，然后执行
+SVD 分解。最后可以看一下这些特征向量的可视化结果：
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn2/cifar10pca.jpeg" alt="cifar10pca.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> PCA 可视化结果</p>
+</div>
+<blockquote>
+<p>
+左图为 CIFAR1-10 中的 49 张样本图像。二图为前 144 的特征向量。为方差最大的
+144 个向量。可以看到对应的图形在样本集中较少出现。三图为 49 张样本图像经过 PCA 降
+维后的图像。经过 PCA 降维的图像维度将成 144 维度。最右图显示白化之后的结果。白化
+将 144 维的向量归一化到单位，然后加和还原成原始图像。可以看到低频信息基本丢弃
+了，留下的都是高频信息。
+</p>
+</blockquote>
+<hr  />
+
+<p>
+上述的 PCA 和白化操作不太适用于卷积神经网络，卷积神经网络中的数据预处理一般采
+取中心化和像素级归一化操作。
+</p>
+
+<p>
+<b>陷阱</b> 预处理阶段的一些统计操作(数据均值等)只能在训练集上做，然后应用到评估和
+ 校验数据集。如果在全部数据集上做均值统计，然后去中心化，最后将数据集分割成训
+ 练/评估/测试数据集是错误的。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Weight Initialization</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+权重初始化会极大的影响整个神经网络的表现和训练速度。
+</p>
+
+<p>
+<b>Pitfall: all zero Initialization</b> 所有权重初始化为 0，将会使得最后的得分函数
+对所有的类别的得分都是相同的，在执行反向传播过程中，全局梯度将都是相同的，这
+样会使得整个网络的表达降低。
+</p>
+
+<p>
+<b>Small random numbers</b> 由于观察我们最后可能希望网络中的权值大概一半大于 0，一
+半小于 0，所以希望权值初始值接近 0，单由于上述原因，又不能是 0。所以，常常将
+权值初始化成一个较小的数，带来权值更新的多样性。 <i>W = 0.01*
+np.random.randn(D,H)</i> ， <i>randn</i> 会做一个均值为 0，方差为 1 的高斯采样。
+</p>
+
+<blockquote>
+<p>
+<b>Warning</b> 但是较小的权值并不一定就会更好。例如，神经网络反向传播中层间的全局梯度
+传递，会将上一层的全局梯度乘以本层的局部梯度(权值)，实现误差传递。这样，如果
+权值初始化都是较小的值，那么会使得全局梯度随着传递越来越小，最后影响前几层的
+梯度更新。
+</p>
+</blockquote>
+
+<p>
+<b>Calibrating the variances with 1/sqrt(n)</b> 上述初始化方法有一个问题，一个神经
+元的输出方差会随着输入的数量增大。事实证明，可以通过对权值进行 <i>1/sqrt(n)</i> 缩
+放，能够使得期望输出为 1，  <i>n</i> 为输入维度。可以保证神经网络中的神经元的希望
+输出都能为 1，并且提高收敛速度。
+</p>
+
+<p>
+\(s = \sum_{i}^{n}w_{i}x_{i}\) 为神经元的计算公式，整个推导过程如下：
+</p>
+
+
+\begin{aligned}
+\text{Var}(s) &= \text{Var}(\sum_i^n w_ix_i) \\\\
+ &= \sum_i^n \text{Var}(w_ix_i) \\\\
+ &= \sum_i^n [E(w_i)]^2\text{Var}(x_i) + E[(x_i)]^2\text{Var}(w_i) + \text{Var}(x_i)\text{Var}(w_i) \\\\
+ &= \sum_i^n \text{Var}(x_i)\text{Var}(w_i) \\\\
+ &= \left( n \text{Var}(w) \right) \text{Var}(x)
+\end{aligned}
+
+
+<p>
+前两部参考<a href="https://en.wikipedia.org/wiki/Variance">方差属性</a>，第三步假设输入和权值的均值都为 0， \(E[x_i]=E[w_i]=0\) 。最
+后一部假设的是所有的权值 \(w_i\) 和输入 \(x_i\) 都是独立分布。从上述推导，可以看
+到如果需要 \(s\) 的方差和所有的输入一样，那么需要使得初始化的权值的方差为 \(1/n\)
+。而且 \(\text{Var}(aW) = a^2\text{Var}(W)\) ，只需要使得权值初始化从标准高斯采
+样，然后乘以 \(a=\sqrt{(1/n)}\) ，使得方差为 \(1/n\) 。
+</p>
+
+<p>
+相同的分析可以参考 <a href="http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf">Understanding the difficulty of training deep feedforward
+neural networks</a> ，论文综合考虑了最终提出初始化策略为 \(\text{Var}(w) = 2/(n_{in} +
+   n_{out})\) ，其中 \(n_{i},n_{out}\) 为前一层和后一层的神经元个数。
+</p>
+
+<p>
+更新的论文 <a href="http://arxiv-web3.library.cornell.edu/abs/1502.01852">Delving Deep into Rectifiers: Surpassing Human-Level Performance
+on ImageNet Classification</a> 主要研究了 <b>ReLU</b> 激活函数的权重初始化策略，应该使
+得神经元的方差为 <b>2.0/n</b> ，权值初始化为 \(w = np.random.randn(n) *
+   sqrt(2.0/n)\) ，是使用 <b>ReLU</b> 网络的初始化的主要策略。
+</p>
+
+<p>
+<b>Sparse Initialization</b> 设置所有的权值值为 0，但是通过随机打断一定的神经元链
+ 接，使得梯度更新不会每次都更新相同的权值。
+</p>
+
+<p>
+<b>Initializing the biases</b> 常规的做法，一般把偏置设为 0，因为权值已经随机初始化
+了。对于 <b>ReLU</b> 作为激活函数的网络，可以设置偏置为 0.01 一个很小的常数，这样使
+得最开始的神经元都是激活状态。
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Batch Normalization</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+<a href="http://arxiv.org/abs/1502.03167">Batch Normalization</a> 提供了另外一种技术，用来解决权重初始化的问题。因为归一化
+操作是一个可导操作，所以可以通过添加归一化层在全链接层之后，激活层之前。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">Regularization(L2/L1/Maxnorm/Dropout)</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+神经网络有多种正则化方法，来控制模型的复杂度，从而克服过拟合：
+</p>
+
+<p>
+<b>L2 regularization</b> 是最为常用的正则化操作，主要通过引入权值的开方作为正则损失
+\(\frac{1}{2}\lambda w_2\) 。 \(\lambda\) 为正则损失系数，\(\frac{1}{2}\) 用来简化
+求导。 <b>L2 regularization</b> 主要用来惩罚较大的权值向量，并且倾向将权重值分散到
+每一个维度上去。在随机梯度更新时， <b>L2 regularization</b> 最终的作用为： \(W +=
+   -\lambda * w\) ，从而使得梯度以 \(\lambda\) 的比例衰减，但是不会最终使得权值变成
+0。
+</p>
+
+<p>
+<b>L1 regularization</b> 主要是通过引入权值的绝对值作为正则损失 \(\lambda |W|\) 。并
+且可以将 L1/L2 正则组合一起使用 \(\lambda_{1}|W|+\lambda_{2}w_{2}\) ，该方法叫做
+<a href="http://web.stanford.edu/~hastie/Papers/B67.2%2520%25282005%2529%2520301-320%2520Zou%2520&%2520Hastie.pdf">Elastic net regularization</a> 。 <b>L1 regularization</b> 具有将权值矩阵设置为 0 的功
+能，从而使得权值权值稀疏化(<i>sparse</i>)。 <b>L1 regularization</b> 的最终作用为： \(W
+   += -\lambda * \{(\mathbb{+1}(w>0))\ or\ (\mathbb{-1}(w<0))\}\) ，使得梯度以
+\(lambda\) 的值相 0 递减。
+</p>
+
+<p>
+<b>Max norm constraints</b> 强制使得权值矩阵的范式不得超过一个上界 \(\Vert \vec{w}
+   \Vert_2 < c\) 。 \(c\) 值一般选取 3 或者 4 的比例。该方法具有保证即使学习率较大，
+也不会使得整个网络爆炸。
+</p>
+
+<p>
+<b>Dropout</b> 是一个非常有效和简单的方法，论文 <a href="http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf">Dropout: A Simple Wap to Prevent
+Neural Networks from Overfitting</a> 。在训练阶段，以一定的概率 \(P\) 选取一些神经
+元进行工作，其他的神经元不参与此次训练。
+</p>
+<hr  />
+
+<div class="figure">
+<p><img src="assets/nn2/dropout.jpeg" alt="dropout.jpeg" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> Dropout</p>
+</div>
+<blockquote>
+<p>
+训练阶段，Dropout 可以视作对整个神经网络进行采样，只有采样的神经元才参与计算和
+更新。测试阶段，Dropout 不参与，并对结果得分进行一定的平均。(可以看作不同的神
+经网络的组合)
+</p>
+</blockquote>
+<hr  />
+
+<p>
+如下是一个三层的神经网络的简单 Dropout 技术实现：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #daa520; font-style: italic;">""" Vanilla Dropout: Not recommended implementation (see notes below) """</span>
+
+<span style="font-weight: bold; font-style: italic;">p</span> = 0.5 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">probability of keeping a unit active. higher = less dropout</span>
+
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">train_step</span>(X):
+  <span style="color: #daa520; font-style: italic;">""" X contains the data """</span>
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward pass for example 3-layer neural network</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> = np.maximum(0, np.dot(W1, X) + b1)
+  <span style="font-weight: bold; font-style: italic;">U1</span> = np.random.rand(*H1.shape) &lt; p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">first dropout mask</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> *= U1 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">drop!</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> = np.maximum(0, np.dot(W2, H1) + b2)
+  <span style="font-weight: bold; font-style: italic;">U2</span> = np.random.rand(*H2.shape) &lt; p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">second dropout mask</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> *= U2 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">drop!</span>
+  <span style="font-weight: bold; font-style: italic;">out</span> = np.dot(W3, H2) + b3
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backward pass: compute gradients... (not shown)</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform parameter update... (not shown)</span>
+
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">predict</span>(X):
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">ensembled forward pass</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> = np.maximum(0, np.dot(W1, X) + b1) * p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">NOTE: scale the activations</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> = np.maximum(0, np.dot(W2, H1) + b2) * p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">NOTE: scale the activations</span>
+  <span style="font-weight: bold; font-style: italic;">out</span> = np.dot(W3, H2) + b3
+</pre>
+</div>
+
+<p>
+训练阶段，在各个隐含层的结果进行一定的 Dropout，进行反向传播的时候，需要使用
+对应的 mask 来进行梯度更新。
+</p>
+
+<p>
+测试阶段，没有 Dropout 操作，但是需要在隐层的输出值上做一个衰减。因为测试阶段，
+所有的神经元的结果都参与计算，所以为了保证神经元输出值的期望和训练时一致，需
+要对输出的值进行衰减。例如： \(P=0.5\) 的时候；训练时，一个具有 Dropout 的神经元
+输出期望值为 \(Px+(1-P)0\) 。测试阶段，为了使得期望值一直，需要做一下衰减 \(x
+   \rightarrow px\) ，可以视作对所有的可能的子网络进行了遍历，然后输出期望值。
+</p>
+
+<p>
+由于测试阶段对性能需求较高，也可以使用 <b>inverted dropout</b> ，在训练阶段就直接
+执行调整，从而使得测试阶段的结果不需要处理。
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #daa520; font-style: italic;">""" </span>
+<span style="color: #daa520; font-style: italic;">Inverted Dropout: Recommended implementation example.</span>
+<span style="color: #daa520; font-style: italic;">We drop and scale at train time and don't do anything at test time.</span>
+<span style="color: #daa520; font-style: italic;">"""</span>
+
+<span style="font-weight: bold; font-style: italic;">p</span> = 0.5 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">probability of keeping a unit active. higher = less dropout</span>
+
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">train_step</span>(X):
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">forward pass for example 3-layer neural network</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> = np.maximum(0, np.dot(W1, X) + b1)
+  <span style="font-weight: bold; font-style: italic;">U1</span> = (np.random.rand(*H1.shape) &lt; p) / p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">first dropout mask. Notice /p!</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> *= U1 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">drop!</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> = np.maximum(0, np.dot(W2, H1) + b2)
+  <span style="font-weight: bold; font-style: italic;">U2</span> = (np.random.rand(*H2.shape) &lt; p) / p <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">second dropout mask. Notice /p!</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> *= U2 <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">drop!</span>
+  <span style="font-weight: bold; font-style: italic;">out</span> = np.dot(W3, H2) + b3
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">backward pass: compute gradients... (not shown)</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">perform parameter update... (not shown)</span>
+
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">predict</span>(X):
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">ensembled forward pass</span>
+  <span style="font-weight: bold; font-style: italic;">H1</span> = np.maximum(0, np.dot(W1, X) + b1) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">no scaling necessary</span>
+  <span style="font-weight: bold; font-style: italic;">H2</span> = np.maximum(0, np.dot(W2, H1) + b2)
+  <span style="font-weight: bold; font-style: italic;">out</span> = np.dot(W3, H2) + b3
+</pre>
+</div>
+
+<p>
+如下是 Dropout 相关的论文可以参考：
+</p>
+<ul class="org-ul">
+<li><a href="http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf">Dropout paper</a>
+</li>
+<li><a href="http://papers.nips.cc/paper/4882-dropout-training-as-adaptive-regularization.pdf">Dropout Training as Adaptive Regularization</a>
+</li>
+</ul>
+
+
+<p>
+<b>Theme of noise in forward pass</b> Dropout 在向前传播中引入随机。在测试阶段，噪
+声因为乘以一个比例衰减和由于对不同的子网络结果进行的加和平均而变得不重要。另
+外一个研究方向为 <a href="http://cs.nyu.edu/~wanli/dropc/">DropConnect</a> ，在向前传播过程中，随机初始化一些权值为 0.卷积
+神经网络采取 <b>stochastic pooling</b> ， <b>fractional pooling</b> 等方法引入随机性，
+从而增强网络的表达能力。
+</p>
+
+<p>
+<b>Bias regularization</b> 由于偏置的大小一般和网络的表达能力无关，所以对偏置进行
+正则化往往效果较差。
+</p>
+
+<p>
+<b>Per-layer regularization</b> 一般不会对不同层的权值采取不同的正则化方法。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Loss functions</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+损失函数第二部分为数据损失(<i>data loss</i>)，用来度量预估的结果与真实结果的差距。
+损失函数一般为对单个样本损失值加和平均， \(L=\frac{1}{N}\sum_{i}L_{i}\) ，其中
+\(N\) 为训练样本数量。设置 \(f=f(x_{i};W)\) 为神经网络的最后输出层结果，实际中还需
+要去解决几个问题：
+</p>
+
+<p>
+<b>Classification</b> 为样本集的每个样本都只有一个正确标签，最为常用的两个损失函数
+为 SVM :
+$$L_i = \sum_{j\neq y_i} \max(0, f_j - f_{y_i} + 1)$$
+</p>
+
+<p>
+有些研究表示， <b>squared hinge loss</b> 具有更好的表现(\(\max(0, f_j - f_{y_i} +
+  1)^2\))。第二个常用的损失函数为 <b>Softmax classifier</b> 采取的交叉熵损失
+(<b>cross-entropy</b>)：
+$$L_i = -\log\left(\frac{e^{f_{y_i}}}{ \sum_j e^{f_j} }\right)$$
+</p>
+
+<p>
+<b>Problem: Large number of classes</b> 当标签类别特别大的时候(预估下一个单词，
+ImageNet 包括 22K 个分类标签)，常常使用 <b>Hierarchical Softmax</b> (<a href="http://arxiv.org/pdf/1310.4546.pdf">论文</a>)。层级
+Softmax 将标签组织成树状结构，任意一个标签被表示为树中一个路径，每个分叉的节点
+都会训练一个 <b>Softmax classifier</b> 来将样本分到左右子树。
+</p>
+
+<p>
+<b>Attribute classification</b> 为目标为一个二值向量，每个值互相之间没有影响。例如
+一个图像具有多个主题分类。一个简单的方法是在每一个二分类目标上都训练一个独立的
+分类器，那么损失函数为：
+$$L_i = \sum_j \max(0, 1 - y_{ij} f_j)$$
+</p>
+
+<p>
+\(y_{ij}\) 为+1 或者-1，用来表示样本 i 在属性 j 上是否打上标签。
+</p>
+
+<p>
+另外一种模型是逻辑回归分类器(<b>logistic regression classifier</b>)，一个二值逻辑回
+归分类器只有两类标签(0,1)，标签为 1 的概率为：
+$$P(y = 1 \mid x; w, b) = \frac{1}{1 + e^{-(w^Tx +b)}} = \sigma (w^Tx + b)$$
+</p>
+
+<p>
+标签 0 的概率为 \(P(y = 0 \mid x; w, b) = 1 - P(y = 1 \mid x; w,b)\) 。如果样本
+得分 \(\sigma (w^Tx + b) > 0.5\) ，则为正样本(y=1)。损失函数为最大似然：
+$$L_i = \sum_j y_{ij} \log(\sigma(f_j)) + (1 - y_{ij}) \log(1 - \sigma(f_j))$$
+</p>
+
+<p>
+虽然整个损失函数看起来很复杂，但是梯度非常简单和直观： \(\partial{L_i} /
+  \partial{f_j} = y_{ij} - \sigma(f_j)\) 。
+</p>
+
+<p>
+<b>Regression</b> 是一个预测值的问题，例如：房价预测，图像中某个物体的长度等。这一
+ 类问题，常常采取预测值和真实值的 L1/L2 范式作为损失。L2 范式对于一个样本的计算
+ 公式：
+ $$L_i = \Vert f - y_i \Vert_2^2$$
+</p>
+
+<p>
+<b>L2 norm</b> 的平方，可以使得梯度计算非常简单。 <b>L1 norm</b> 对得分向量的每一维上加
+ 和绝对值：
+ $$L_i = \Vert f - y_i \Vert_1 = \sum_j \mid f_j - (y_i)_j \mid$$
+</p>
+
+<p>
+定义 i 样本在 j 维度输出得分和真实得分的差距为 \(\delta_{ij}\) ， 可以很容易的进行
+梯度计算(\(\partial{L_i} / \partial{f_j}\))，L2 为 \(2\delta_{ij}\) ，L1 为
+\(sign(\delta_{ij})\) 。就是说 L2 的梯度和错误的大小成比例；L1 的梯度为定值，且与
+错误的符号一致。
+</p>
+
+<p>
+<b>总结</b> <b>L2 Loss</b> 相对比较难以优化，因为该损失需要考虑最终的输出值的正确性。而
+<b>Softmax</b> 只需要考虑相对的大小即可，并且 L2 Loss 对异常点非常敏感，梯度会非常大，
+使得整个网络容易波动。
+</p>
+
+<blockquote>
+<p>
+在面对回归模型的时候，首先思考一下是否真的必要。相反最好将输出值分成几个区间，
+然后变成分类问题。这样不光最后能够预测一个值的范围，而且可以知道对应的概率和
+置信度。
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Summary</h2>
+<div class="outline-text-2" id="text-3">
+<ul class="org-ul">
+<li>推荐的数据预处理将数据零点中心化，然后归一化到[-1,+1]之间。
+</li>
+<li>权值初始化推荐从方差为 \(\sqrt{2/n}\) 的高斯分布采样，n 为输入神经元的个数
+</li>
+<li>使用 L2 正则和 dropout
+</li>
+<li>使用 Batch Normalization
+</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

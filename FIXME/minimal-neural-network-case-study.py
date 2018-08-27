@@ -28,14 +28,6 @@ def generate_spiral_dataset(N, K):
     return X, y
 
 
-class LinearClassifier(object):
-    def __init__(self, D, K):
-        self.W = 0.01 * np.random.randn(D, K)
-        self.bias = np.zeros((1, K))
-
-    def score(self, X):
-        return np.dot(X, self.W) + self.bias
-
 if __name__ == '__main__':
     X, y = generate_spiral_dataset(100, 3)
     plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
