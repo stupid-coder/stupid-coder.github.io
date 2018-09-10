@@ -1,0 +1,38 @@
+#+TITLE: Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: num:nil H:2
+#+STARTUP: indent
+
+* Batch Normalization
+深度神经网络非常难以训练，主要原因是输入的数据随着网络的计算传递，比较容易出现
+梯度消失和梯度爆炸问题，使得反向传播的梯度无法传播整个网络，网络无法学习和收敛。
+现在很多论文研究显示，网络权值的初始化会直接影响着数据有效传播的深度。如果权重
+初始化较好，甚至可以训练超深网络。
+
+[[http://arxiv.org/abs/1502.03167][/Batch Normalization]]/ 通过引入一个归一化网络层，在数据传播的过程中对一个 batch
+的数据归一化，从而不需要特别的去设计权重初始化策略，并且由于归一化后，梯度能够
+很好的传播，所以可以使用更大的学习率实现更快速的学习。同时，归一化层作用有点类
+似正则化，可以在一定程度上替代 /dropout/ 。理解是对 batch 数据的归一化操作，去除
+了一些噪声数据，从而使得模型更关注主要数据。实现证明， /Batch Normalization/
+在应用到分类模型上，能够缩减 14 倍的迭代次数，来达到同样的准确性，并且能够带来一
+定的准确性的提升。
+
+** 简介
+深度学习中由于数据规模和模型规模较大，常常采用随机梯度下降(/SGD/)算法进行优化。
+SGD 主要根据梯度方向更新参数 $\Theta$ ，从而最小化损失函数：
+$$\Theta = argmin_{\Theta}\frac{1}{N}\sum_{i=1}^{N}\ell(x_{i},\Theta)$$
+   
+$x_{1...N}$ 为训练集，如果训练集数量较大，可以考虑采取 /mini-batch/ 计算损失
+梯度：
+$$\frac{1}{m}\frac{\partial\ell(x_i,\Theta)}{\partial \Theta}$$
+   
+采取 /mini-batch/ 方式进行训练，而非单个样本的随机梯度下降，有很多好处。第一，
+/mini-batch/ 计算的梯度是全部样本计算的梯度的近似，m 越大，越相似；第二，
+/mini-batch/ 由于可以充分利用现代计算平台的并行化操作，从而实现更有效的计算。
+
+模型的超参的选择，将很容易影响随机梯度优化的效果。特别是学习率和权值初始化。
+随着网络深度的增加，模型中梯度微小改变的影响都会放大。
+
+
+   
