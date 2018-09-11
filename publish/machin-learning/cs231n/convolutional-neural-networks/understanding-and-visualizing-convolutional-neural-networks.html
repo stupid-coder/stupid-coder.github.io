@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Understanding and visualizing Convolutional Neural Networks</title>
+<!-- 2018-09-11 Tue 23:25 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Understanding and visualizing Convolutional Neural Networks</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Visualizing what ConvNets learn</a></li>
+<li><a href="#sec-2">Visualizing the activations and first-layer weights</a>
+<ul>
+<li><a href="#sec-2-1">Layer Activations</a></li>
+<li><a href="#sec-2-2">Conv/FC Filters</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Retrieving images that maximally activate a neuron</a></li>
+<li><a href="#sec-4">Embedding the codes with t-SNE</a></li>
+<li><a href="#sec-5">Occluding parts of the image</a></li>
+<li><a href="#sec-6">Visualizing the data gradient and friends</a>
+<ul>
+<li><a href="#sec-6-1">Data Gradient</a></li>
+<li><a href="#sec-6-2">DeconvNet</a></li>
+<li><a href="#sec-6-3">Guided Backpropagation</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">Reconstructiong original images based on CNN Codes</a></li>
+<li><a href="#sec-8">How much spatial information is preserved?</a></li>
+<li><a href="#sec-9">Plotting performances as a function of image attributes</a></li>
+<li><a href="#sec-10">Fooling ConvNets</a></li>
+<li><a href="#sec-11">Comparing ConvNets to Human labelers</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/understanding-cnn/">cs231n-understanding-cnn</a>
+</p>
+
+<p>
+由于 cs321n 的对应部分没有完成，所以本部分只是对应的翻译。
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Visualizing what ConvNets learn</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+由于神经网络和卷积神经网络常常被诟病可解释性较差，本部门主要讨论理解和可视化卷
+积神经网络的几种方法。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Visualizing the activations and first-layer weights</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Layer Activations</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+最为常见和直接的方法是对神经网络的激活值进行可视化。对于 RELU 网络，激活值常常
+看起来是点滴状和稠密状，但是随着训练过程，激活值变得越来越稀疏和局部化。这种
+可视化方法有一个缺点，对于不同的输入，激活值可能都是 0，叫做卷积核假死，主要
+原因可能是因为学习率设置较高。
+</p>
+<hr  />
+<div class="center">
+<p>
+<img src="assets/cnnvis/act1.jpeg" alt="act1.jpeg" /> <img src="assets/cnnvis/act2.jpeg" alt="act2.jpeg" />
+</p>
+<blockquote>
+<p>
+左图：第一层卷积层激活值典型形状。右图为 AlexNet 输入为猫的时候第五层卷积层的
+激活值。可以看到激活值大部分稀疏，本且局部化。
+</p>
+</blockquote>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Conv/FC Filters</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+第二种常见的方式是对权重进行可视化。由于第一层卷积层直接对原始像素进行卷积，
+空间大小和输入的图像大小一直，所以第一层的权重值可解释性较高。但是较深的卷积
+核权重值也可以可视化。由于训练好的卷积神经网络的卷积核权重值看起来具有一定的
+模式，并且较为平滑，没有噪音。没有训练好的卷积神经网络，会出现很多的噪声卷积
+核，也有可能是因为正则系数较小，造成了过拟合。
+</p>
+<hr  />
+<div class="center">
+<p>
+<img src="assets/cnnvis/filt1.jpeg" alt="filt1.jpeg" /> <img src="assets/cnnvis/filt2.jpeg" alt="filt2.jpeg" />
+</p>
+<blockquote>
+<p>
+左图：第一层卷积核的权值典型形状。右图：AlexNet 的第二层卷积核典型形状。可以
+看到第一层的权值较为干净和平滑，表示网络已经训练较好。可以看到卷积核有灰色的
+和彩色的，主要是因为 AlexNet 将处理流分成了两部分，这种结构造成了一个流中主要学
+习的是高频的文本信息，另外一种彩色的是低频彩色信息。第二层卷积核权值并没有第
+一层卷积核这么具有可解释性，但是也可以看到卷积核也很平滑，形状较好。
+</p>
+</blockquote>
+</div>
+<hr  />
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Retrieving images that maximally activate a neuron</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+另外一种可视化方法是，将大量的图像喂到卷积神经网络中，然后记录哪种图像可以最大
+激活一些神经元。这样可以知道神经元具体是在自己的感受野中找寻什么样的图像。<a href="http://arxiv.org/abs/1311.2524">Rich
+feature hierarchies for accurate object detection and semantic segmentation</a>论
+文中使用了该种可视化方法。
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/cnnvis/pool5max.jpeg" alt="pool5max.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+AlexNet 的第五层采样层中的最大激活值对应的图像。图上显示了激活值和对应的感受野。
+可以看到有一些神经元是检测上半身，文字，或者斑点。
+</p>
+</blockquote>
+</div>
+<hr  />
+
+<p>
+该方法的一个问题是，RELU 神经元自身并没有什么语义含义。一种比较好的想法是将
+RELU 神经元看作是图像局部空间的偏置向量。具体可以参考论文<a href="http://arxiv.org/abs/1312.6199">Intriguing properties
+of neural networks</a>。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Embedding the codes with t-SNE</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+卷积神经网络可以看作是将输入图片渐渐映射到一个线性可分的空间。可以通过更为激进
+的方法，将图像映射到一个二维的隐特征空间中，并且在低维空间的表达不同图像的距离
+和在高维空间表达的距离近似。有很多嵌入方法(<i>embedding</i>)都是以在低维空间的向量
+距离和高维空间的距离相似为条件。<a href="http://lvdmaaten.github.io/tsne/">t-SNE</a>是这些方法中较为出名的。
+</p>
+
+<p>
+为了对图像进行嵌入表达，可以先将图像送入卷积神经网络获取卷积编码(<i>AlexNet 在输
+出层之前获得 4096 维向量</i>)。可以将卷积编码送入 <i>t-SNE</i> 得到二维向量。对应的图
+像以网格可视化如下：
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/cnnvis/tsne.jpeg" alt="tsne.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+t-SNE 对 CNN 编码进行的嵌入表达。更近的图像在卷积表达中也更近。可以看到相似的
+图像并不仅仅是像素级相似或者颜色相似，而是图像中的分类相似。更详细的信息可以参
+考：<a href="https://cs.stanford.edu/people/karpathy/cnnembed/">t-SNE visualization of CNN codes</a>
+</p>
+</blockquote>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Occluding parts of the image</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+假设一个图像分类为狗，那么如果断定分类器确实是依据图像中的狗的像素分类的，而不
+是背景或者其他杂乱像素分类的呢？一个判断的方法是对图片中的局部像素进行置 0 操作，
+然后将局部像素置 0 后的对应分类得分作为得分绘制二维热点图，就可以看到得分较低的
+部门对分类器影响最大。该方法在论文<a href="http://arxiv.org/abs/1311.2901">Visualizing and Understanding Convolutional
+Networkds</a>中使用。
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/cnnvis/occlude.jpeg" alt="occlude.jpeg" />
+</p>
+</div>
+<blockquote>
+<p>
+上半部的三图为原始图像。置 0 区域以灰色区域显示，然后将置 0 区域在图像上移动，并
+且记录正确分类的得分，然后可视化结果（下三图）。最下边左图，可以看到当置 0 区域
+封盖住狗的脸的时候，概率最低，这表示分类器确实是以狗的像素来作主要判断依据的。
+其他区域没有影响。
+</p>
+</blockquote>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Visualizing the data gradient and friends</h2>
+<div class="outline-text-2" id="text-6">
+</div><div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1">Data Gradient</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+参考：<a href="http://arxiv.org/abs/1312.6034">Deep Inside Convolutional Networks: Visualizing Image Classification
+Models and Saliency Maps</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2">DeconvNet</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+<a href="http://arxiv.org/abs/1311.2901">Visualizing and Understanding Convolutional Networks</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-3" class="outline-3">
+<h3 id="sec-6-3">Guided Backpropagation</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+<a href="https://arxiv.org/abs/1412.6806">Striving for Simplicity: The All Convolutional Net</a>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">Reconstructiong original images based on CNN Codes</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+<a href="http://arxiv.org/abs/1412.0035">Understanding Deep Image Representations by Inverting Them</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8">How much spatial information is preserved?</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+<a href="http://papers.nips.cc/paper/5420-do-convnets-learn-correspondence.pdf">Do ConvNets Learn Correspondence?</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-9" class="outline-2">
+<h2 id="sec-9">Plotting performances as a function of image attributes</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+<a href="http://arxiv.org/abs/1409.0575">ImageNet Large Scale Visual Recognition Challenge</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-10" class="outline-2">
+<h2 id="sec-10">Fooling ConvNets</h2>
+<div class="outline-text-2" id="text-10">
+<p>
+<a href="http://arxiv.org/abs/1412.6572">Explaining and Harnessing Adversarial Examples</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-11" class="outline-2">
+<h2 id="sec-11">Comparing ConvNets to Human labelers</h2>
+<div class="outline-text-2" id="text-11">
+<p>
+<a href="http://karpathy.github.io/2014/09/02/what-i-learned-from-competing-against-a-convnet-on-imagenet/">What I learned from competing against a ConvNet on ImageNet</a>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

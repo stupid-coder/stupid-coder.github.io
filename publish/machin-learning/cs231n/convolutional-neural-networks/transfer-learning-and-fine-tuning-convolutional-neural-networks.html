@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Transfer Learning and Fine tuning Convolutional Neural Networks</title>
+<!-- 2018-09-11 Tue 23:25 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Transfer Learning and Fine tuning Convolutional Neural Networks</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Transfer Learning</a>
+<ul>
+<li><a href="#sec-1-1">When and how to fine-tune?</a></li>
+<li><a href="#sec-1-2">Practical advice</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">Additional References</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="http://cs231n.github.io/transfer-learning/">cs231n-tansfer-learning</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Transfer Learning</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+实际应用中，很少有人从头训练一个卷积神经网络，主要原因是数据集难以获取。主要的做
+法是在一个较大的数据集上(例如：ImageNet，包含 120W+图像，1K 分类)预先训练一个卷
+积神经网络，然后使用该神经网络作为其他任务的初始化权重网络，或者直接拿该网络作为
+特征抽取器。三个主要的迁移学习场景如下：
+</p>
+<dl class="org-dl">
+<dt> <code>Convet as fixed feature extractor</code> </dt><dd>移除 ImageNet 上预训练的卷积神经网络的
+最后一层的全链接层(输出层输出 1K 分类得分)，然后将剩下的卷积神经网络作为其
+他数据集上特征抽取器。在 AlexNet 网络最后会得到 4096 维特征向量，叫做卷积编码
+(<i>CNN Code</i>)。很重要的一点是，如果预训练的神经网络卷积编码经过了 RELU 激活层，
+才送到输出层，那么 RELU 激活层一定不能移除，不然会非常影响性能。一旦拥有了
+4096 维图像的卷积编码，就可以在新的数据集上训练一个线性分类器。
+</dd>
+<dt> <code>Fine-tuning the ConvNet</code> </dt><dd>第二种策略是并不移除最上面的输出层，而是再训练
+(<i>fine-tune</i>)，并且使用反向传播算法训练整个卷积神经网络。可以再训练整个卷积
+网络，也可以将卷积网络的前几层固定，只训练最后几层的卷积层(数据集较小的情况
+下，防止过拟合)。主要是因为通过观察发现，前几层的卷积网络提取的特征较为通用
+(边缘提取或者颜色块提取)，对于其他很多任务也可使用；但是最后几层和数据集更
+为贴近。例如：ImageNet 上包含了很多种狗，整个 ImageNet 训练出的卷积神经网络有
+一部分特征是用来区分不同种类的狗，所以无法直接使用，需要进行调整。
+</dd>
+<dt> <code>Pretrained models</code> </dt><dd>现在卷积神经网络一般都需要在多个 GPU 机器上训练 2-3 周，并
+且大多的卷积神经网络训练后都会放出卷积网络最后训练的权重，这样其他人可以下
+载该网络模型自己进行调整。
+</dd>
+</dl>
+</div>
+
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">When and how to fine-tune?</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+那么面对新的数据集选用那种迁移学习策略呢？这个问题需要考虑很多种因素，但是有两个
+最为关键的因素可以用来参考。一是新的数据集的规模，二是新的数据集和原始数据集的差
+别有多大。需要记住的是卷积神经网络的前几层特征更为通用，后几层抽取的特征和数据集
+更为适配，如下是 4 种场景：
+</p>
+<dl class="org-dl">
+<dt> <code>New dataset is small and similar to original dataset</code> </dt><dd>由于新的数据集规模较
+小，那么在该数据集上对卷积神经网络作微调容易过拟合。既然数据集非常小，并且
+和原始数据集相似，那么最好的方法是使用卷积编码训练一个线性分类器。
+</dd>
+<dt> <code>New datset is large and similar to original dataset</code> </dt><dd>既然数据集较大，那么
+我们就可以对卷积神经网络作微调，也不需要过多的担心过拟合问题。
+</dd>
+<dt> <code>New dataset is small but very different from the origin dataset</code> </dt><dd>由于数据
+集较小，那么最好是直接训练一个分类器，而非对卷积神经网络进行微调。但是由于
+数据集不同，那么最后几层的卷积编码最好舍弃，用前几层更为通用的卷积层来训练
+分类器。
+<dl class="org-dl">
+<dt> <code>New dataset is large but very different from the origin dataset</code> </dt><dd>由于数
+据集较大，并且数据集不同，最好的方法是从头训练一个卷积神经网络。即使这样，
+使用预训练的卷积神经网络来初始化需要训练的卷积神经网络仍然是一个较好的方
+法。那么对整个卷积神经网络做微调是一个好方案
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Practical advice</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+如下是一些其他方法关于迁移学习需要注意的事情：
+</p>
+<dl class="org-dl">
+<dt> <code>Constraints from pretained models</code> </dt><dd>在使用预训练模型时，针对不同的数据集还
+是有一些限制。例如，不能将预训练模型的某一层拿掉。因为有些层对于输入空间维
+度没有限制，例如卷积层和采样层。但是全链接层对于输入有一定的限制。最好的方
+法是将全链接层转为卷积层，那么对于空间维度就没有那么多限制。
+</dd>
+<dt> <code>Learning rates</code> </dt><dd>面对微调卷积神经网络，常规做法是使用一个较小的学习率。因为
+预训练好的模型已经变现较好，不希望很快的因为某些最后线性分类器的未初始化问
+题直接改变卷积网络过多，过快。
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Additional References</h2>
+<div class="outline-text-2" id="text-2">
+<dl class="org-dl">
+<dt> <code>[[http://arxiv.org/abs/1403.6382][CNN Features off-the-shelf: an Astounding Baseline for Recognition]]</code> </dt><dd>在预训练的
+卷积网络上训练 SVM 分类器能够获取更好的结果
+</dd>
+<dt> <code>[[http://arxiv.org/abs/1310.1531][DeCAF]]</code> </dt><dd>发现了相同的情况
+</dd>
+<dt> <code>[[http://arxiv.org/abs/1411.1792][How transferable are features in deep neural networks?]]</code> </dt><dd>研究了迁移学习细节
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</body>
+</html>
