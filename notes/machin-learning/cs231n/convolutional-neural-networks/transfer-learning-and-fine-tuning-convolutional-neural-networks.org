@@ -43,10 +43,10 @@
      集较小，那么最好是直接训练一个分类器，而非对卷积神经网络进行微调。但是由于
      数据集不同，那么最后几层的卷积编码最好舍弃，用前几层更为通用的卷积层来训练
      分类器。
-  + =New dataset is large but very different from the origin dataset= :: 由于数
-       据集较大，并且数据集不同，最好的方法是从头训练一个卷积神经网络。即使这样，
-       使用预训练的卷积神经网络来初始化需要训练的卷积神经网络仍然是一个较好的方
-       法。那么对整个卷积神经网络做微调是一个好方案
++ =New dataset is large but very different from the origin dataset= :: 由于数据
+     集较大，并且数据集不同，最好的方法是从头训练一个卷积神经网络。即使这样，使
+     用预训练的卷积神经网络来初始化需要训练的卷积神经网络仍然是一个较好的方法。
+     那么对整个卷积神经网络做微调是一个好方案
       
 
 ** Practical advice
@@ -60,7 +60,7 @@
      题直接改变卷积网络过多，过快。
 
 * Additional References
-+ =[[http://arxiv.org/abs/1403.6382][CNN Features off-the-shelf: an Astounding Baseline for Recognition]]= :: 在预训练的
-  卷积网络上训练 SVM 分类器能够获取更好的结果
-+ =[[http://arxiv.org/abs/1310.1531][DeCAF]]= :: 发现了相同的情况
-+ =[[http://arxiv.org/abs/1411.1792][How transferable are features in deep neural networks?]]= :: 研究了迁移学习细节
++ [[http://arxiv.org/abs/1403.6382][CNN Features off-the-shelf: an Astounding Baseline for Recognition]] :: 在预训练
+     的卷积网络上训练 SVM 分类器能够获取更好的结果
++ [[http://arxiv.org/abs/1310.1531][DeCAF]] :: 发现了相同的情况
++ [[http://arxiv.org/abs/1411.1792][How transferable are features in deep neural networks?]] :: 研究了迁移学习细节

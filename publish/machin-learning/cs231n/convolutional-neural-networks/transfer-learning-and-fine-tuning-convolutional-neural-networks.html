@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
 <head>
 <title>Transfer Learning and Fine tuning Convolutional Neural Networks</title>
-<!-- 2018-09-11 Tue 23:25 -->
+<!-- 2018-09-11 Tue 23:30 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="stupid-coder" />
@@ -133,13 +133,11 @@ for the JavaScript code in this tag.
 集较小，那么最好是直接训练一个分类器，而非对卷积神经网络进行微调。但是由于
 数据集不同，那么最后几层的卷积编码最好舍弃，用前几层更为通用的卷积层来训练
 分类器。
-<dl class="org-dl">
-<dt> <code>New dataset is large but very different from the origin dataset</code> </dt><dd>由于数
-据集较大，并且数据集不同，最好的方法是从头训练一个卷积神经网络。即使这样，
-使用预训练的卷积神经网络来初始化需要训练的卷积神经网络仍然是一个较好的方
-法。那么对整个卷积神经网络做微调是一个好方案
 </dd>
-</dl>
+<dt> <code>New dataset is large but very different from the origin dataset</code> </dt><dd>由于数据
+集较大，并且数据集不同，最好的方法是从头训练一个卷积神经网络。即使这样，使
+用预训练的卷积神经网络来初始化需要训练的卷积神经网络仍然是一个较好的方法。
+那么对整个卷积神经网络做微调是一个好方案
 </dd>
 </dl>
 </div>
@@ -171,12 +169,12 @@ for the JavaScript code in this tag.
 <h2 id="sec-2">Additional References</h2>
 <div class="outline-text-2" id="text-2">
 <dl class="org-dl">
-<dt> <code>[[http://arxiv.org/abs/1403.6382][CNN Features off-the-shelf: an Astounding Baseline for Recognition]]</code> </dt><dd>在预训练的
-卷积网络上训练 SVM 分类器能够获取更好的结果
+<dt> <a href="http://arxiv.org/abs/1403.6382">CNN Features off-the-shelf: an Astounding Baseline for Recognition</a> </dt><dd>在预训练
+的卷积网络上训练 SVM 分类器能够获取更好的结果
 </dd>
-<dt> <code>[[http://arxiv.org/abs/1310.1531][DeCAF]]</code> </dt><dd>发现了相同的情况
+<dt> <a href="http://arxiv.org/abs/1310.1531">DeCAF</a> </dt><dd>发现了相同的情况
 </dd>
-<dt> <code>[[http://arxiv.org/abs/1411.1792][How transferable are features in deep neural networks?]]</code> </dt><dd>研究了迁移学习细节
+<dt> <a href="http://arxiv.org/abs/1411.1792">How transferable are features in deep neural networks?</a> </dt><dd>研究了迁移学习细节
 </dd>
 </dl>
 </div>
