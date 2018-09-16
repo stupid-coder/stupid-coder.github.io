@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>LeNet-5</title>
+<!-- 2018-09-16 Sun 23:20 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">LeNet-5</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">简介</a></li>
+<li><a href="#sec-2">LeNet-5</a>
+<ul>
+<li><a href="#sec-2-1">输入层</a></li>
+<li><a href="#sec-2-2">C1 卷积层</a></li>
+<li><a href="#sec-2-3">S2 均值采样层</a></li>
+<li><a href="#sec-2-4">C3 卷积层</a></li>
+<li><a href="#sec-2-5">S4 均值采样层</a></li>
+<li><a href="#sec-2-6">C5  卷积层</a></li>
+<li><a href="#sec-2-7">F6 全链接层</a></li>
+<li><a href="#sec-2-8">输出层</a></li>
+<li><a href="#sec-2-9">Loss 函数</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">简介</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+<code>Gradient-Based Learning Applied to Document Recoginition</code> 论文介绍了 <code>LeNet-5</code>
+，用于对于文档内容的识别。可以看作是后续 <code>AlexNet</code> 的前身。
+</p>
+
+<p>
+论文介绍了基于卷积神经网络 <code>LeNet-5</code> 为主要识别网络，然后构建 <code>Graph
+  Transofrmmer Networks</code> 用来将 <code>LetNet-5</code> 的识别结果结合在一起，最终获得整个文
+档的识别结果。
+</p>
+
+<p>
+文章探讨了训练集和测试集的损失函数的差值，可以用来度量过拟合程度：
+$$
+  E_{test} - E_{train} = k(h/P)^{\alpha}
+  $$
+其中，P 为训练样本集数量，h 为对应的机器学习模型的表达能力， \(\alpha\) 为
+[0.5,1.0] 之间的系数，k 为常量。可知，随着样本数量增大，差值变小；随着模型表达
+能力增大， \(E_{train}\) 会变小，差值变大。最小化结构化风险的方法是最小化
+\(E_{train}+\beta H(W)\) ， \(H(W)\) 为正则化函数。最小化正则化函数，主要是用来控
+制模型表达能力，从而实现最小化训练损失的同时，控制训练损失和测试损失之间的差值。
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">LeNet-5</h2>
+<div class="outline-text-2" id="text-2">
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/LeNet-5.jpg" alt="LeNet-5.jpg" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> LeNet-5 architecture</p>
+</div>
+</div>
+<hr  />
+
+<p>
+<code>LeNet-5</code> 的网络结构如上图所示，整个网络有 7 层，主要由 2 层卷积层 + 2 层采样
+层 + 3 层全链接层组成。
+</p>
+
+<p>
+网络中，卷积层标记为 Cx，采样层标记为 Sx，全链接层标记为 Fx，其中 x 为网络的网络
+层的索引。所以整个网络可以标记为： 
+<b>INPUT -&gt; C1 -&gt; S2 -&gt; C3 -&gt; S4 -&gt; C5 -&gt; F6 -&gt; OUTPUT</b>
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">输入层</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+训练集中最大字符大小为 [20,20]，然后在 [28,28] 的图像中间。针对输入，将图像以
+背景色填充到 [32,32]，保证字符的所有像素都在最后一层卷积层的感受野中间，即 C3
+卷积层的感受野中心点在原图中间 [20,20] 区域内。
+</p>
+
+<p>
+输入的像素归一化处理，背景色设置为 -0.1，前景设置为 1.175，从而保证整个训练集
+中的像素变成均值为 0，标准方法为 1，实现训练加速。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">C1 卷积层</h3>
+<div class="outline-text-3" id="text-2-2">
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[32,32]原始图像
+</dd>
+<dt> <code>卷积核</code> </dt><dd>6@[5,5] 6 个尺度为[5,5]的卷积核
+</dd>
+<dt> <code>步长</code> </dt><dd>1
+</dd>
+<dt> <code>填充</code> </dt><dd>0
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>输出</code> </dt><dd>[28,28,6]，输出计算公式：(input_size-kernel_size+2*pad)/stride+1
+</dd>
+<dt> <code>参数</code> </dt><dd>6 * ((5 * 5) + 1) = 156，每个卷积核参数为 5*5 的卷积核权重，加上一
+个偏置，然后将所得送到激活函数中，计算输出的激活值。
+</dd>
+<dt> <code>连接数</code> </dt><dd>6 * (28 * 28) * ((5 * 5) + 1) = 122304，输出层总共有 6*28*28 个神
+经元，每个神经元与输入的 5*5 个神经元，加上一个偏置，总共 26 个神经元
+链接。
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">S2 均值采样层</h3>
+<div class="outline-text-3" id="text-2-3">
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[28,28,6] 
+</dd>
+<dt> <code>采样尺度</code> </dt><dd>[2,2]
+</dd>
+<dt> <code>步长</code> </dt><dd>2，采样区域不重叠
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>输出</code> </dt><dd>[14,14,6]，只在单层特征图的采样区域范围内采样。
+</dd>
+<dt> <code>执行过程</code> </dt><dd>将[2,2]区域内的神经元输入加和，然后乘以一个可训练的系数，然后
+加上偏置，然后送到激活函数，计算最后的激活值。
+</dd>
+<dt> <code>参数</code> </dt><dd>6 * 2 = 12，每层特征图共用一个系数和一个偏置。
+</dd>
+<dt> <code>链接数</code> </dt><dd>6 * (14 * 14) * (2*2 + 1) = 5880
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4">C3 卷积层</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+卷积层常规的卷积操作是在输入的深度维度上为全部链接进行卷积操作，而 <code>LeNet-5</code>
+的第三层卷积层 C3 采取不同的卷积策略，如图所示：
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/c3.png" alt="c3.png" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> C3 卷积层中 16 个卷积核在深度维度的链接规则</p>
+</div>
+</div>
+<hr  />
+
+<p>
+采取该种卷积策略的原因：减少模型训练参数，从而保证训练损失值和测试损失值一致；
+打破模型的对称性，从而使得不同的特征图能够跟不不同的输入学习到不同的特征。设
+计的策略为前 6 个卷积核接受三个连续的特征图，6 个卷积核接受 4 个连续的特征图，3 个
+卷积核接受 4 个不连续的特征图，1 个接受 6 个特征图。
+</p>
+
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[14,14, 6]
+</dd>
+<dt> <code>卷积核</code> </dt><dd>16@[5,5]，16 个尺度为[5,5]的卷积核，特征图上的链接策略如上图所
+示。
+</dd>
+<dt> <code>步长</code> </dt><dd>1
+</dd>
+<dt> <code>填充</code> </dt><dd>0
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>输出</code> </dt><dd>[10,10,16]
+</dd>
+<dt> <code>参数</code> </dt><dd>6 * (3 * 5 * 5 + 1) + 6 * (4 * 5 * 5 + 1) + 3 * (4 * 5  *
+5 + 1) + 1 * (6 * 5 * 5 + 1) = 1516
+</dd>
+<dt> <code>连接数</code> </dt><dd>10 * 10 * (1516) = 151600
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-5" class="outline-3">
+<h3 id="sec-2-5">S4 均值采样层</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+类似 S2 的均值采样层。
+</p>
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[10,10,16]
+</dd>
+<dt> <code>采样尺寸</code> </dt><dd>[2,2]
+</dd>
+<dt> <code>步长</code> </dt><dd>2
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>输出</code> </dt><dd>[5,5,16]
+</dd>
+<dt> <code>参数</code> </dt><dd>16 * 2 = 32，每个特征层都有两个参数(1 个乘积系数+1 个偏置)
+</dd>
+<dt> <code>链接数</code> </dt><dd>5 * 5 * 16 * 5 = 2000
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-6" class="outline-3">
+<h3 id="sec-2-6">C5  卷积层</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+卷积层为常规的卷积层，在深度上为全通道链接。
+</p>
+
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[5,5,16]
+</dd>
+<dt> <code>卷积核</code> </dt><dd>120@[5,5]
+</dd>
+<dt> <code>步长</code> </dt><dd>1
+</dd>
+<dt> <code>填充</code> </dt><dd>0
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>输入</code> </dt><dd>[1,1,120]，该层可以看作是全链接层，但是由于使用的卷积层，使得该层
+对于图像的大小不敏感，即图像变大了之后，输出结果变大一些，类似于在
+原图上做了[32,32]输入的滑窗，然后进行计算。
+</dd>
+<dt> <code>参数</code> </dt><dd>(1 * 1) * (120 * (5 * 5 * 16 + 1)) = 48120
+</dd>
+<dt> <code>连接数</code> </dt><dd>48120
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-sec-2-7" class="outline-3">
+<h3 id="sec-2-7">F6 全链接层</h3>
+<div class="outline-text-3" id="text-2-7">
+<p>
+<code>F6</code> 全链接层具有 84 个神经元。
+</p>
+
+<dl class="org-dl">
+<dt> <code>输入</code> </dt><dd>[1,1,120]
+</dd>
+<dt> <code>神经元数量</code> </dt><dd>84
+</dd>
+<dt> <code>激活函数</code> </dt><dd>sigmoid 类似的激活函数
+</dd>
+<dt> <code>参数</code> </dt><dd>84 * (120 + 1)  = 10164
+</dd>
+<dt> <code>连接数</code> </dt><dd>10164
+</dd>
+<dt> <code>输入出</code> </dt><dd><sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>
+</dd>
+</dl>
+
+
+<p>
+和常规的神经网络一致，全链接层中的神经元计算输入的神经元和权值向量进行矩阵点
+乘，然后加上偏置，记作 \(a_{i}\) 对于神经元 i。然后经过 sigmoid 类似的函数计算，
+获得对应的激活值，记作 $x<sub>i</sub>$：
+$$
+   x_{i} =\mathit{f}(a_{i})
+   $$
+</p>
+
+<p>
+激活函数一般可以看作如下：
+$$
+   \mathit{f}(a) = Atanh(Sa)
+   $$
+</p>
+
+<p>
+\(A\) 控制着函数的振幅， \(S\) 控制着函数的 S 型斜率。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-8" class="outline-3">
+<h3 id="sec-2-8">输出层</h3>
+<div class="outline-text-3" id="text-2-8">
+<p>
+最后的输出层为欧几里德颈向函数(<i>Euclidean Radial Basis Function units</i>)，输出
+对应着分类类别。RBF 的计算公式如下：
+$$
+   \mathit{y}_{i} = \sum_{j}(\mathit{x}_{j}-\mathit{w}_{ij})^2
+   $$
+</p>
+
+<p>
+即为输入的向量 \(\mathit{x}_{j}\) 和参数向量 \(\mathit{w}_{ij}\) 的欧几里德距离。
+在概率角度，可以看作是全链接层 <i>F6</i> 未归一化的高斯分布概率的负对数似然
+(<i>log-likelihood</i>)。
+</p>
+
+<p>
+参数向量 \(\mathit{w}\) 是人工选择和设置的，值在[-1,+1]之间。对应的是 84 个不同字
+符在[7,12]的位图上的对应图像，如下图所示：
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/rbf.png" alt="rbf.png" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> RBF</p>
+</div>
+</div>
+<hr  />
+
+<p>
+采取这种输出的编码方式的原因在于：首先，在识别字符的时候，有很多字符的图像较为相似。
+例如，数字 1、小写字符 l、方括号等。输出的结果应该也接近。虽然对于单个字符的
+数别没有独热编码效果好(<i>one-hot</i>)，但是对于多字符识别，这种编码跟着一个语言模
+型进行后处理效果要好于独热编码方式；其次，独热编码在分类目标较多的时候效果较
+差，因为独热编码的时候大部分输出应该都为 0，但是在输出层的激活函数为 sigmoid 函
+数时候不容易使得大部分输出为 0。再次，RBF 函数较容易实现拒绝识别。
+</p>
+
+<p>
+RBF 的值在[-1,+1]之间，可以保证 sigmoid 类似的函数在振幅大于 1 的时候，使得不会出
+现饱和状态。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-9" class="outline-3">
+<h3 id="sec-2-9">Loss 函数</h3>
+<div class="outline-text-3" id="text-2-9">
+<p>
+$$
+   E(W) = \frac{1}{P}\sum_{p=1}^{P}{y_{D^p}(Z^{p},W)}
+   $$
+</p>
+
+<p>
+\(y_{D^p}\) 为第 D<sub>p</sub> 的 RBF 单元输出，为样本 \(Z^{p}\) 对应的分类。
+</p>
+
+<p>
+上述的损失函数具有 2 个方面不足：
+</p>
+<ul class="org-ul">
+<li>如果 RBF 层的参数向量变成可以学习的参数向量，那么只需要 RBF 的参数向量都想等，
+然后 FC6 的输出状态保持和 RBF 的参数向量相等，那么不管输入是什么，都可以保
+证上述的损失函数变成 0。所以需要保证 RBF 参数向量不变，从而规避上述问题。
+</li>
+<li>损失函数只考虑正确类别的，没有引入竞争。即使得正确的类别的 RBF 距离变小，其他
+类别的 RBF 距离变大。可以对错误类别也引入惩罚项，使得不正确的 RBF 距离增大。
+\begin{equation}
+E(W) =
+\frac{1}{P}\sum_{p=1}^{P}(y_{D^p}(Z^{p},W)+log(e^{-constant}+\sum_{i}e^{-y_{i}(Z^p,W)}))
+\end{equation}
+<p>
+第二项为错误分类的惩罚项。
+</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p>DEFINITION NOT FOUND.</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

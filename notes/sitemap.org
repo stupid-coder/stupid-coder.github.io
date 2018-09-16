@@ -5,6 +5,8 @@
    + math
      + [[file:math/vector-matrix-and-tensor-derivatives.org][Vector, Matrix, and Tensor Derivatives 2018-08-22]]
    + machin-learning
+     + deep-learning-network-architecture
+       + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-09-16]]
      + cs231n
        + neural-networks
          + [[file:machin-learning/cs231n/neural-networks/putting-it-together-minimal-neural-network-case-study.org][Putting it together: Minimal Neural Network Case Study 2018-08-27]]
