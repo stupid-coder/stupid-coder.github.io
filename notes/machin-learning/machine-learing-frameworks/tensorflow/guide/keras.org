@@ -1,0 +1,500 @@
+#+TITLE: keras in tensorflow
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: num:nil H:2
+#+STARTUP: indent
+
+
+原文来自：[[https://www.tensorflow.org/guide/keras][Keras in Tensorflow]]。
+
+=Keras= 是一个深度学习框架前端，实现了更为友好的高级接口。从而可以更容易理解和更
+容易开发。 =Keras= 具有如下三个优点：
+
++ =User friendly= :: 提供了更为简单和统一的接口，提供了更为干净和可追溯的错误信
+     息。
++ =Modular and composable= :: 整个 keras 的构建都是基于模块化，很容易通过将多个模
+     块组合在一起实现更为通用的模型。
++ =Easy to extend= :: 模块接口定义清除，只需要实现对应的模块就可以实现整个框架能
+     力的扩展。
+
+* 使用指南
+
+  *[[https://www.tensorflow.org/api_docs/python/tf/keras][tf.keras]]* 现在为 =TensorFlow= 内置的构建库，非常容易使用。基本使用的流程为：1.
+  引入 =keras= 库；2. 构建模型；3. 训练和评估模型。
+
+  其中模型构建， =keras= 提供两种模型构建方式：序列模型和函数模型。序列模型构建
+  较为简单，但是构建的模型结构较为单一。函数模型可以构建更为复杂的模型，但是需要
+  采取更为繁琐的构建过程。
+
+  本文先介绍如何在 =tensorflow= 中引入 =keras= ，然后介绍如何构建序列模型和模型
+  的训练评估；然后介绍如何构建函数模型；介绍其他功能，例如模型训练过程中可以采取
+  的一些回调操作，模型的保存和回复等等功能。
+
+** 引入 tf.keras
+   =tf.keras= 为 =TensorFlow= 兼容 [[https://keras.io/][=Keras API sepcification]]= 的实现，并且支持
+   =TensorFlow= 中包括 [[https://www.tensorflow.org/guide/keras#eager_execution][eager execution]], [[https://www.tensorflow.org/api_docs/python/tf/data][tf.data pipelines]] 和 [[https://www.tensorflow.org/guide/estimators][estimators]] 等功能。
+   
+   #+BEGIN_SRC python
+     import tensorflow as  tf
+     from tensorflow import keras
+   #+END_SRC
+
+   =tf.keras= 基本和原生的 =keras= 一致，但是需要记住：
+   + 由于 tf.keras 是随着 tensorflow 发布，所以和最新版的原生的 keras 可能有一些
+     不一致。
+   + 在保存模型权值，tf.keras 默认采取 [[https://www.tensorflow.org/guide/checkpoints][checkpoint format]]； 通过传入
+     save_format='h5'，使用和 keras 一致的 HDF5。
+     
+   
+** 序列模型
+   keras 采取通过组合网络层的形式来构建模型。最常见的神经网络模型是不同网络的堆
+   叠，可以采取 =tf.keras.Sequential= 学列模型来构建。
+
+   一个简单的全链接网络：
+   #+BEGIN_SRC python
+     model = keras.Sequential()
+     # 添加一个全链接网络层，具有 64 个神经元
+     model.add(keras.layers.Dense(64, activation='relu'))
+     model.add(keras.layers.Dense(64, activation='relu'))
+     # 添加一个 softmax 网络层，具有 10 个输出神经元
+     model.add(keras.layers.Dense(10, activation='softmax'))
+   #+END_SRC
+
+*** 配置网络层
+    keras 具有多种类型的网络层，具体可以参看 [[https://www.tensorflow.org/api_docs/python/tf/keras/layers][keras.layers]] ，网络层都具有如下构造
+    参数：
+    + =activation= :: 设置网络的激活函数，该参数可以是内置激活函数的字符串名称，或
+                      者为一个可调用函数。
+    + =kerel_initializer= 和 =bias_initializer= :: 权值和偏置的初始化策略，该参
+         数可以为对应策略的字符串名称，或者是一个可调用函数。默认为 /Glorot
+         uniform/ 初始化策略。
+    + =kernel_regularizer= 和 =bias_regularizer= :: 权值和偏置的正则化策略。
+         
+         
+    如下是采取了不同初始化参数的全链接层：
+    #+BEGIN_SRC python
+      # 构建 sigmoid 作为激活函数的全链接层
+      layers.Dense(64, activation='sigmoid')
+      # or:
+      layers.Dense(64, activation=tf.keras.activations.sigmoid)
+
+      # 权值采取 L1 正则的全链接层
+      layers.Dense(64, kernel_regularizer=tf.keras.regularizers.l1(0.01))
+      # 偏置采取 L2 正则的全链接层
+      layers.Dense(64, bias_regularizer=tf.keras.regularizers.l2(0.01))
+
+      # 权值采取随机正交初始化的全链接层
+      layers.Dense(64, kernel_initializer='orthogonal')
+      # 偏置设置为 2.0 的全链接层
+      layers.Dense(64, bias_intializer=keras.initializers.constant(2.0))
+    #+END_SRC
+        
+** 模型训练
+   模型构建完成之后，可以通过调用模型的 =compile= 方法来配置训练过程：
+   #+BEGIN_SRC python
+     model.compile(optimizer=tf.keras.optimizers.Adam(),
+                   loss=tf.keras.losses.categorical_crossentropy,
+                   metrics=['accuracy'])
+   #+END_SRC
+   
+   [[https://www.tensorflow.org/api_docs/python/tf/keras/Model#compile][tf.keras.Model.compile]] 接受三个最重要的参数：
+   + =optimizer= :: 执行训练中采用的优化策略。例如：AdamOptimizer,
+                    RMSPPropOptimizer，或者 GradientDescentOptimizer。可以是对应
+                    的优化策略名字的字符串或者是 tf.keras.optimizers 模块下的可调
+                    用对象
+   + =loss= :: 损失函数，损失函数可以是对应的函数名字符串或者是 tf.keras.losses 模
+               块下的可调用的对象。
+   + =metrics= :: 训练过程中需要监控的指标。可以是对于的字符串，或者是
+                  tf.keras.metrics 模块下的可调用对象。
+
+
+   如下是一些模型训练配置的例子：
+   #+BEGIN_SRC python
+     # 采取均值方差作为损失函数的回归模型
+     model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
+                   loss='mse', # mean squared error
+                   metrics=['mae']) # mean absolute error
+
+     # 采取分类交叉熵的分类模型
+     model.compile(optimizer=tf.keras.optimizers.RMSProp(0.01),
+                   loss=tf.keras.categorical_crossentropy,
+                   metrics=[keras.metrics.categorical_accuracy])
+   #+END_SRC
+
+
+   模型训练过程配置完成后，就可以开始训练了，通过调用模型的 =fit= 方法调用训练过
+   程。 =fit= 方法除了可以接受 =numpy= 作为输入，也可以采用 =tf.data= 作为输入。
+
+*** NumPy 作为输入
+    对于小规模数据集，可以采用 NumPy 数组作为输入格式来训练和评估模型。
+
+    #+BEGIN_SRC python
+      import numpy as np
+
+      data = np.random.random((1000, 32))
+      labels = np.random.random((1000, 10))
+
+      model.fit(data, labels, epochs=10, batch_size=32)
+    #+END_SRC
+
+    [[https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit][tf.keras.Model.fit]] 方法接受三个最重要的参数：
+    + =epochs= :: 迭代全数据集多少轮。
+    + =batch_size= :: 模型会将输入的数据切分成很多小的批次，然后以批次为单位进行
+                      训练和评估。该参数用来指定批次大小。
+    + =validation_data= :: 训练过程中，可以输入验证集来监控模型训练过程中的一些
+         指标。在每个 epoch 完成后，模型都会在验证集上计算对应的损失和指标。
+
+
+    如下是一个加入验证集的例子：
+    #+BEGIN_SRC python
+      import numpy as np
+
+      data =np.random.random((1000, 32))
+      labels = np.random.random((1000, 10))
+
+      val_data = np.random.random((100, 32))
+      val_labels = np.random.random((100, 10))
+
+      model.fit(data, labels, epochs=10, batch_size=32,
+                validation_data=(val_data, val_labels))
+    #+END_SRC
+
+*** tf.data 作为输入
+    在面对大规模的数据集，显然 NumPy 将全部数据存入内存的做法就不太适用。这时，
+    可以采用 [[https://www.tensorflow.org/guide/datasets][Datasets API]] 来作为输入。 =fit= 方法可以接受 [[https://www.tensorflow.org/api_docs/python/tf/data/Dataset][tf.data.Dataset]] 对象作
+    为参数：
+    #+BEGIN_SRC python
+      # 一个 Dataset 的简单例子
+      dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+      dataset = dataset.batch(32)
+      dataset = dataset.repeat()
+
+      # 在调用 fit 方法时候，需要指定 steps_per_epoch 来指示 fit 采取的是 dataset 作为输入。
+      model.fit(dataset, epochs=10, steps_per_epoch=30)
+    #+END_SRC
+
+    因为 /Dataset/ 自己已经指定了 /batch_size/， 所以 =fit= 方法使用
+    /steps_per_epoch/ 参数控制多少次训练为一个 /epoch/ 。
+
+    /Dataset/ 同样可以用作验证集：
+    #+BEGIN_SRC python
+      dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+      dataset = dataset.batch(32).repeat()
+
+      val_dataset = tf.data.Dataset.from_tensor_slices((val_data, val_labels))
+      val_dataset = val_dataset.batch(32).repeat()
+
+      model.fit(dataset, epochs=10, steps_per_epoch=30,
+                validation_data=val_dataset,
+                validation_stesp=3)
+    #+END_SRC
+    
+** 模型评估和预测
+[[https://www.tensorflow.org/api_docs/python/tf/keras/Model#evaluate][tf.keras.Model.evaluate]] 方法用来做模型评估。[[https://www.tensorflow.org/api_docs/python/tf/keras/Model#predict][tf.keras.Model.predict]] 方法用来做模
+型预测。
+
+上述两个方法都可以接受 NumPy 和 tf.data.Dataset 作为输入。
+
+#+BEGIN_SRC python
+  # NumPy 作为输入，指定批次大小
+  model.evaluate(x, y, batch_size=32)
+  # Dataset 作为输入，需要指定 steps 表示评估执行多少步
+  model.evaluate(dataset, steps=30)
+
+  # NumPy 作为输入，指定批次大小
+  model.predict(x, batch_size=32)
+  # Dataset 作为输入，指定步长
+  model.predicate(dataset, steps=30)
+#+END_SRC
+** 函数模型
+=tf.keras.Sequential= 通过简单的堆叠网络层构建模型，这种方法无法构建更为复杂的模
+型。可以采取 [[https://keras.io/getting-started/functional-api-guide/][Keras Functional API]]来构建更为复杂的网络拓扑结构：
++ 多路输入模型
++ 多路输出模型
++ 共享网络层
++ 模型具有残存链接
+
+
+函数模型中，网络层可以看作是接受一个 Tensor 输入，返回一个 Tensor 的函数，通过调用这
+些网络层函数构建网络拓扑结构。然后使用输入和输出张量定义模型。
+
+如下为采取函数接口构建一个全链接的网络：
+#+BEGIN_SRC python
+  inputs = keras.Input(shape=(32,)) # 返回一个占位张量(placeholder tensor)
+
+  # 网络层接受 Tensor 作为输入，返回一个 Tensor
+  x = tf.keras.layers.Dense(64, activation='relu')(inputs)
+  x = tf.keras.layers.Dense(64, activation='relu')(x)
+  predictions = tf.keras.layers.Dense(10, activation='softmax')(x)
+
+  # 使用输入和输出来构建模型对象
+  model = tf.keras.Model(inputs=inputs, outputs=predictions)
+
+  # 配置训练过程
+  model.compile(optimizer=tf.keras.optimizers.RMSProp(0.001),
+                loss=tf.keras.losses.categorical_crossentropy,
+                metrics=['accuracy'])
+
+  # 训练 5 轮
+  model.fit(data, labels, batch_size=32, epochs=5)
+#+END_SRC
+** 模型继承
+除了上述两种模型构建方法，也可以通过继承[[https://www.tensorflow.org/api_docs/python/tf/keras/Model][tf.keras.Model]]，实现前向传播方法来构建模
+型。在 =__init__= 方法中创建网络层，然后设置为模型属性。然后在 =call= 方法中定义
+前向传播。
+
+模型继承构建模型的方法在采用[[https://www.tensorflow.org/guide/eager][eager execution]]模式时非常有用。
+
+如下为采取继承的方法构建一个全链接网络：
+#+BEGIN_SRC pythond 
+  class MyModel(tf.keras.Model):
+      def __init__(self, num_classes=10):
+          super(MyModel, self).__init__(name='my_model')
+          self.num_classes = num_classes
+          # 定义网络层
+          self.dense_1 = tf.keras.layers.Dense(32, activation='relu')
+          self.dense_2 = tf.keras.layers.Dense(num_classes, activation='sigmoid')
+
+      def call(self, inputs):
+          # 采取__init__中定义的网络层来定义前向传播
+          x = self.dense_1(inputs)
+          return self.dense_2(x)
+
+      def compute_output_shape(self, input_shape):
+          # 如果该模型需要作为函数模型的一部分，那么需要定义该方法
+          shape = tf.TensorShape(input_shape).as_list()
+          shape[-1] = self.num_classes
+          return tf.TensorShape(shape)
+
+      # 实例化模型
+      model = MyModel(num_classes=10)
+
+      # 配置训练过程
+      model.compile(optimizer=tf.keras.optimizers.RMSProp(0.001),
+                    loss=tf.keras.categorical_crossentropy,
+                    metrics=['accuracy'])
+
+      # 训练 5 轮
+      model.fit(data, labels, batch_size=32, epochs=5)
+#+END_SRC
+** 网络层适配
+可以通过继承改写网络层 [[https://www.tensorflow.org/api_docs/python/tf/keras/layers/Layer][tf.keras.layers.Layer]] 来扩展模型构建能力，需要实现如下对
+应方法：
++ =build= :: 通过调用 add_weight 来加载网络层权值。
++ =call= :: 定义前向传播。
++ =compute_output_shape= :: 通过输入的维度计算输出的维度。
++ =get_config= 和 =from_config= :: 可选，网络层序列化和反序列化方法。
+
+
+如下为矩阵相乘的网络层适配：
+#+BEGIN_SRC python
+  class MyLayer(tf.keras.layers.Layer):
+      def __init__(self, output_dim, **kwargs):
+          self.output_dim = output_dim
+          super(MyLayer, self).__init__(**kwargs)
+
+      def build(self, input_shape):
+          shape = tf.TensorShape((input_shape[1], self.output_dim))
+          # 创建可训练的权值参数
+          self.kernel = self.add_weight(name='kernel',
+                                        shape=shape,
+                                        initializer='uniform',
+                                        trainable=True)
+          # 该方法在最后调用
+          super(MyLayer, self).build(input_shape)
+
+      def call(self, inputs):
+          return tf.matmul(inputs, self.kernel)
+
+      def compute_output_shape(self, input_shape):
+          shape = tf.TensorShape(input_shape).as_list()
+          shape[-1] = self.output_dim
+          return tf.TensorShape(shape)
+
+      def get_config(self):
+          base_config = super(MyLayer, self).get_config()
+          base_config['output_dim'] = self.output_dim
+          return base_config
+
+      @classmethod
+      def from_config(cls, config):
+          return cls(**config)
+
+  model = tf.keras.Sequential([MyLayer(10),
+                               tf.keras.layers.Activation('softmax')])
+#+END_SRC
+
+** 回调方法
+回调方法可以用来对训练过程增加额外的功能。可以自己实现回调对象，或者直接调用
+[[https://www.tensorflow.org/api_docs/python/tf/keras/callbacks][tf.keras.callbacks]]模块中预先定义的回调方法：
++ *[[https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/ModelCheckpoint][tf.keras.callbacks.ModelCheckpoint]]* :: 模型 checkpoint 配置和实现。
++ *[[https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/LearningRateScheduler][tf.keras.callbacks.LearningRateScheduler]]* :: 训练过程中动态修改学习率。
++ *[[https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping][tf.keras.callbacks.EarlyStopping]]* :: 验证集上性能不再提升后，快速停止训练过程。
++ *[[https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard][tf.keras.callbacks.TensorBoard]]* :: 采用[[https://www.tensorflow.org/guide/summaries_and_tensorboard][TensorBoard]]来监控训练中指标
+
+
+需要将对应的 callback 对象传入 fit 方法中：
+#+BEGIN_SRC python
+  callbacks = [
+      # 如何验证集 loss 经过 2 轮训练不再降低，那么就停止训练流程
+      tf.keras.callbacks.EarlyStopping(patience=2, monitor='val_loss'),
+      # 打开 TensorBoard 监控
+      tf.keras.callbacks.TensorBoard(log_dir='./logs')
+  ]
+
+  model.fit(data, labels, batch_size=32, epochs=5, callbacks=callbacks,
+            validation_data=(val_data, val_targets))
+#+END_SRC
+
+** 模型的保存和加载
+*** 权值保存
+调用[[https://www.tensorflow.org/api_docs/python/tf/keras/Model#save_weights][tf.keras.Model.save_weights]]保存模型的权值：
+#+BEGIN_SRC python
+  # 保存模型的权值
+  model.save_weights("./my_model")
+
+  # 加载模型权值，需要模型和保存时候具有相同的网络结构
+  model.load_weights("my_model")
+#+END_SRC
+
+默认，tf.keras 保存的模型权值格式为诶[[https://www.tensorflow.org/guide/checkpoints][TensorFlow checkpoint]]，也可以采取 =Keras
+HDF5= 格式，该格式为 Keras 默认的支持更多后端机器学习框架保存格式。
+#+BEGIN_SRC python
+  # 保存为 HDF5 格式
+  model.save_weights("my_model.h5", save_format='h5')
+
+  # 加载模型
+  model.load_weights("my_model.h5")
+#+END_SRC
+
+*** 配置保存
+模型的配置信息也可以保存，即模型的网络结构，但是不包括权重值。可以直接通过保存的
+模型配置信息构建和初始化一个网络模型。Keras 支持 JSON 和 YAML 作为序列化格式：
+#+BEGIN_SRC python
+  # 序列化模型到 json
+  json_string = model.to_json()
+
+  # 从 json 加载模型
+  fresh_model = tf.keras.models.from_json(json_string)
+
+  # 序列化模型到 yaml
+  yaml_string = model.to_yaml()
+
+  # 从 yaml 加载模型
+  fresh_model = tf.keras.models.from_yaml(yaml_string)
+#+END_SRC
+
+#+BEGIN_QUOTE
+继承的模型无法序列化，因为模型的结构是 python 定义的。
+#+END_QUOTE
+
+
+*** 保存整个模型
+整个模型包括模型的配置，即模型的网络结构；模型的权重值；甚至优化算法的配置信息组
+成。保存整个模型，可以使得训练中保存单个的 checkpoint，随后恢复训练流程。
+
+#+BEGIN_SRC python
+  # 创建模型
+  model = tf.keras.Sequential([
+      tf.keras.layers.Dense(10, activation='softmax', input_shape=(32,)),
+      tf.keras.layers.Dense(10, activation='sfotmax')
+  ])
+
+  model.compile(optimizer='rmsprop',
+                loss='categorical_crossentropy',
+                metrics=['accuracy'])
+
+  model.fit(data, targets, batch_size=32, epochs=5)
+
+  # 保存模型
+  model.save("my_model.h5")
+
+  # 加载模型，包括权值和网络结构，优化算法
+  model = tf.keras.models.load_model("my_model.h5")
+#+END_SRC
+
+** 立即执行模式
+[[https://www.tensorflow.org/guide/eager][Eager execution]] 提供了交互式命令编程环境，使得 tensorflow 可以立即执行对应的操作。
+
+=tf.keras= 的所有模型构建 API 都支持立即执行模式。
+
+具体可以参考[[https://www.tensorflow.org/guide/eager][eager execution]]。
+
+** 分布式
+
+*** Estimators
+[[https://www.tensorflow.org/guide/estimators][Estimator]] API 接口可以用来进行模型的分布式训练。
+
+=tf.keras.Model= 需要转换为 =tf.estimator.Estimator= 模型后，可以依托
+=tf.estimator= 训练接口实现分布式训练。转换方法为
+=tf.estimator.model_to_estimator= ，具体可以参考 [[https://www.tensorflow.org/guide/estimators#creating_estimators_from_keras_models][Creating Estimator from Keras
+Models]] 。
+
+#+BEGIN_SRC python
+  model = keras.Sequential([tf.layers.Dense(10, activation='softmax'),
+                            tf.layers.Dense(10, activation='softmax')])
+
+  model.compile(optimizer=tf.keras.optimizers.RMSProp(0.001),
+                loss=tf.keras.lossses.categorical_crossentropy,
+                metrics=['accuracy'])
+
+  estimator = keras.estimator.model_to_estimator(model)
+#+END_SRC
+
+*** Multiple GPU
+tf.keras 模型可以使用 [[https://www.tensorflow.org/api_docs/python/tf/contrib/distribute/DistributionStrategy][tf.contrib.distribute.DistributionStrategy]] 在多 GPU 上进行分
+布式训练，并且基本不需要更改任何代码。
+
+现阶段，分布式策略只支持[[https://www.tensorflow.org/api_docs/python/tf/contrib/distribute/MirroredStrategy][ tf.contrib.distribute.MirroredStrategy]] 。
+*MirroredStrategy* 会对整个网络结构进行复制，然后单机上执行 all-reduce 的同步训
+练。
+
+如下为 tf.keras.Model 在单机多 GPU 上训练的例子。
+
+首先定义模型：
+#+BEGIN_SRC python
+  model=tf.keras.Sequential()
+  model.add(tf.keras.layers.Dense(16, activationo='relu', input_shape=(10, )))
+  model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+  optimizer = tf.train.GradientDescentOptimizer(0.2)
+
+  model.compile(optimizer=optimizer, loss='binary_crossentropy')
+
+  model.summary()
+#+END_SRC
+
+定义输入流， =input_fn= 返回 =tf.data.Dataset= 对象，用来将训练数据分发到不同的
+GPU 上，每个 GPU 处理一部分输入数据：
+#+BEGIN_SRC python
+  def input_fn():
+      x = np.random.random((1024, 10))
+      y = np.random.randint(2, size=(1024, 1))
+      x = tf.cast(x, tf.float32)
+      dataset = tf.data.Dataset.from_tensor_slices((x, y))
+      dataset = dataset.repeat(10)
+      dataset = dataset.batch(32)
+      return dataset
+
+#+END_SRC
+
+然后创建 =tf.estimator.RunConfig= 配置，并且设置 /train_distribute/ 参数为
+=tf.contrib.distribute.MirroredStrategy= 。并且在创建 /MirroredStrategy/ 时，可
+以指定 GPU 列表或者设置 /num_gpus/ 参数。默认为采取所有的 GPU：
+#+BEGIN_SRC python
+  strategy = tf.contrib.distribute.MirroredStrategy()
+  config = tf.estimator.RunConfig(train_strategy=strategy)
+#+END_SRC
+
+将 Keras 模型转换为 Estimator:
+#+BEGIN_SRC python
+  keras_estimator = tf.keras.estimator.model_to_estimator(
+      keras_model=mdoel,
+      config=config,
+      model_dir='/tmp/model_dir')
+#+END_SRC
+
+最后调用 Estimator 对应的 /train/ 方法进行训练：
+#+BEGIN_SRC python
+  keras_estimator.train(input_fn=input_fn, steps=10)
+#+END_SRC

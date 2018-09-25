@@ -38,12 +38,12 @@
 (setq blog-base "~/Documents/stupid-coder.github.io/")
 (setq blog-html-root (concat blog-base "publish/"))
 (setq blog-base-directory (concat blog-base "notes/"))
-(setq blog-base-code-directory (concat blog-base "codes/"))
+(setq blog-base-code-directory (concat blog-base "notes/"))
 (setq blog-base-color-themes-directory (concat blog-base "color-themes/"))
 (setq blog-base-images-directory (concat blog-base "images/"))
 (setq blog-publish-directory blog-html-root)
-(setq blog-publish-code-directory (concat blog-html-root "codes/"))
-(setq blog-publish-sources-directory (concat blog-html-root "sources/"))
+(setq blog-publish-code-directory blog-html-root)
+;; (setq blog-publish-sources-directory (concat blog-html-root "sources/"))
 ;; (setq org-publish-use-timestamps-flag nil) ; close the timestamp
 (setf org-html-mathjax-options             ; set the mathjax to local
       '((path "/assets/MathJax/MathJax.js")
@@ -87,10 +87,10 @@
            :sitemap-title "stupid-coder's blogs"
            :sitemap-file-entry-format "%t %d")
           ("stupid-coder-code"
-           :base-directory ,blog-base-code-directory
-           :base-extension "html\\|css\\|png\\|js\\|bz2\\|el\\|sty\\|awk\\|pl\\|ss"
+           :base-directory ,blog-base-directory
+           :base-extension "html\\|css\\|png\\|js\\|bz2\\|el\\|sty\\|awk\\|pl\\|ss\\|py"
            :html-extension "html"
-           :publishing-directory ,blog-publish-code-directory
+           :publishing-directory ,blog-publish-directory
            :recursive t
            :publishing-function org-publish-attachment)
           ("stupid-coder-images"

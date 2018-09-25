@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-09-25 Tue 22:21 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>basic classification with tf.keras</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">basic classification with tf.keras</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org911d6b5">引用 tf.keras</a></li>
+<li><a href="#org976634c">数据集</a></li>
+<li><a href="#orgc848248">数据预处理</a></li>
+<li><a href="#orgc9fb730">构建模型</a>
+<ul>
+<li><a href="#orgab1d8f6">构建网络结构</a></li>
+<li><a href="#orgdf1903e">编译模型</a></li>
+</ul>
+</li>
+<li><a href="#org664f617">模型训练</a></li>
+<li><a href="#org306bdfb">评估模型</a></li>
+<li><a href="#org42afc7e">预测</a></li>
+<li><a href="#orgaf1a819">代码整合</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文：<a href="https://www.tensorflow.org/tutorials/keras/basic_classification">https://www.tensorflow.org/tutorials/keras/basic_classification</a>
+</p>
+
+<p>
+在此基础上,对代码进行封装和说明,然后增加其他 tf.keras 的特性,用于学习 tf.keras.
+</p>
+
+<div id="outline-container-org911d6b5" class="outline-2">
+<h2 id="org911d6b5">引用 tf.keras</h2>
+<div class="outline-text-2" id="text-org911d6b5">
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">import</span> tensorflow <span style="color: #0000FF;">as</span> tf
+<span style="color: #0000FF;">from</span> tensorflow <span style="color: #0000FF;">import</span> keras
+
+<span style="color: #0000FF;">import</span> numpy <span style="color: #0000FF;">as</span> np
+<span style="color: #0000FF;">import</span> matplotlib.pyplot <span style="color: #0000FF;">as</span> plt
+
+<span style="color: #0000FF;">print</span><span style="color: #707183;">(</span>tf.__version__<span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org976634c" class="outline-2">
+<h2 id="org976634c">数据集</h2>
+<div class="outline-text-2" id="text-org976634c">
+<p>
+<a href="https://github.com/zalandoresearch/fashion-mnist">Fashion MNIST</a>数据集,包含 70K 灰度图像,标记为 10 类.数据为个人衣物，28*28 的低分辨率图像,如下图所示:
+</p>
+<hr />
+<div class="org-center">
+
+<div class="figure">
+<p><img src="assets/fashion-mnist-sprite.png" alt="fashion-mnist-sprite.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>Fashion MNIST 样本</p>
+</div>
+<blockquote>
+<p>
+图片摘自: <a href="https://github.com/zalandoresearch/fashion-mnist">Fashion MNIST samples</a>(by Zalando, MIT License)
+</p>
+</blockquote>
+</div>
+<hr />
+
+<p>
+使用其中 60K 作为训练数据集,10K 作为测试集,tf.keras 内置支持 Fashion MNIST 数据集:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">load_fashion_mnist</span><span style="color: #707183;">()</span>:
+    <span style="color: #BA36A5;">fashion_mnist</span> = keras.datasets.fashion_mnist
+    <span style="color: #707183;">(</span>train_images, train_labels<span style="color: #707183;">)</span>, <span style="color: #707183;">(</span>test_images, test_labels<span style="color: #707183;">)</span> = fashion_mnist.load_data<span style="color: #707183;">()</span>
+    <span style="color: #0000FF;">return</span> <span style="color: #707183;">(</span>train_images, train_labels<span style="color: #707183;">)</span>, <span style="color: #707183;">(</span>test_images, test_labels<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<blockquote>
+<p>
+<b>tf.keras.datasets</b> 模块内置了很多简单的数据集,可以参考<a href="https://keras-cn.readthedocs.io/en/latest/other/datasets/">Keras Datasets 文档</a>.
+ 这些数据集可以用来验证模型的可行性和学习各种机器学习框架.
+</p>
+</blockquote>
+
+<p>
+返回的数据集都是 NumPy 数组,train\<sub>images</sub> 为(60000, 28, 28)维数据。每个像素点的值在[0, 255]之间,标签数据在[0,10]之间,对应着分类的类别:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Label</th>
+<th scope="col" class="org-left">Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">0</td>
+<td class="org-left">T-shirt/top</td>
+</tr>
+
+<tr>
+<td class="org-right">1</td>
+<td class="org-left">Trouser</td>
+</tr>
+
+<tr>
+<td class="org-right">2</td>
+<td class="org-left">Pullover</td>
+</tr>
+
+<tr>
+<td class="org-right">3</td>
+<td class="org-left">Dress</td>
+</tr>
+
+<tr>
+<td class="org-right">4</td>
+<td class="org-left">Coat</td>
+</tr>
+
+<tr>
+<td class="org-right">5</td>
+<td class="org-left">Sandal</td>
+</tr>
+
+<tr>
+<td class="org-right">6</td>
+<td class="org-left">Shirt</td>
+</tr>
+
+<tr>
+<td class="org-right">7</td>
+<td class="org-left">Sneaker</td>
+</tr>
+
+<tr>
+<td class="org-right">8</td>
+<td class="org-left">bag</td>
+</tr>
+
+<tr>
+<td class="org-right">9</td>
+<td class="org-left">Ankle boot</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+每个图像属于上述的一类中,类别名称没有包含在数据集中,所以可以先存储对应的名称,
+后面可以用来画图等操作:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #BA36A5;">class_names</span> = <span style="color: #707183;">[</span><span style="color: #008000;">'T-shirt/top'</span>, <span style="color: #008000;">'Trouser'</span>, <span style="color: #008000;">'Pullover'</span>, <span style="color: #008000;">'Dress'</span>, <span style="color: #008000;">'Coat'</span>, 
+               <span style="color: #008000;">'Sandal'</span>, <span style="color: #008000;">'Shirt'</span>, <span style="color: #008000;">'Sneaker'</span>, <span style="color: #008000;">'Bag'</span>, <span style="color: #008000;">'Ankle boot'</span><span style="color: #707183;">]</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc848248" class="outline-2">
+<h2 id="orgc848248">数据预处理</h2>
+<div class="outline-text-2" id="text-orgc848248">
+<p>
+加速训练过程,和防止激活函数饱和出现,一般会对输入的数据进行一些预处理.首先将训练集中的第一个图可视化,可以看到每个像素都在[0,255]之间:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">plot_image</span><span style="color: #707183;">(</span>image<span style="color: #707183;">)</span>:
+    plt.figure<span style="color: #707183;">()</span>
+    plt.imshow<span style="color: #707183;">(</span>image<span style="color: #707183;">)</span>
+    plt.colorbar<span style="color: #707183;">()</span>
+    plt.grid<span style="color: #707183;">(</span><span style="color: #D0372D;">False</span><span style="color: #707183;">)</span>
+    plt.show<span style="color: #707183;">()</span>
+</pre>
+</div>
+
+<p>
+针对图像数据,一般可以将输入的图像像素归一化到[0,1].首先,由于数据集的类型为整型,所以需要将输入的数据转为浮点，然后处理 255.
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">preprocess</span><span style="color: #707183;">(</span>train_images, test_images<span style="color: #707183;">)</span>:
+    <span style="color: #0000FF;">return</span> train_images / <span style="color: #D0372D;">255</span>.<span style="color: #D0372D;">0</span>, test_images / <span style="color: #D0372D;">255</span>.<span style="color: #D0372D;">0</span>
+</pre>
+</div>
+
+<p>
+可视化前 25 张图像,验证归一化后的数据是否正确:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">display_25_images</span><span style="color: #707183;">(</span>images, labels<span style="color: #707183;">)</span>:
+    plt.figure<span style="color: #707183;">(</span>figsize=<span style="color: #7388D6;">(</span><span style="color: #D0372D;">10</span>, <span style="color: #D0372D;">10</span><span style="color: #7388D6;">)</span><span style="color: #707183;">)</span>
+    <span style="color: #0000FF;">for</span> i <span style="color: #0000FF;">in</span> <span style="color: #006FE0;">range</span><span style="color: #707183;">(</span><span style="color: #D0372D;">25</span><span style="color: #707183;">)</span>:
+        plt.subplot<span style="color: #707183;">(</span><span style="color: #D0372D;">5</span>,<span style="color: #D0372D;">5</span>,i+<span style="color: #D0372D;">1</span><span style="color: #707183;">)</span>
+        plt.xticks<span style="color: #707183;">(</span><span style="color: #7388D6;">[]</span><span style="color: #707183;">)</span>
+        plt.yticks<span style="color: #707183;">(</span><span style="color: #7388D6;">[]</span><span style="color: #707183;">)</span>
+        plt.grid<span style="color: #707183;">(</span><span style="color: #D0372D;">False</span><span style="color: #707183;">)</span>
+        plt.imshow<span style="color: #707183;">(</span>images<span style="color: #7388D6;">[</span>i<span style="color: #7388D6;">]</span>, cmap=plt.cm.binary<span style="color: #707183;">)</span>
+        plt.xlabel<span style="color: #707183;">(</span>class_names<span style="color: #7388D6;">[</span>labels<span style="color: #909183;">[</span>i<span style="color: #909183;">]</span><span style="color: #7388D6;">]</span><span style="color: #707183;">)</span>
+    plt.show<span style="color: #707183;">()</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc9fb730" class="outline-2">
+<h2 id="orgc9fb730">构建模型</h2>
+<div class="outline-text-2" id="text-orgc9fb730">
+<p>
+构建模型需要先构建模型的网络结构;然后编译模型,即设置损失函数,优化算法,监控指标等.
+</p>
+</div>
+
+<div id="outline-container-orgab1d8f6" class="outline-3">
+<h3 id="orgab1d8f6">构建网络结构</h3>
+<div class="outline-text-3" id="text-orgab1d8f6">
+<p>
+<b>tf.keras</b> 主要采取堆叠网络层的方式构建模型网络结构.这里使用
+<b>tf.keras.Sequential</b> 的序列模型来构建神经网络,采取函数模型可以参考 keras 的文档.
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">build_model</span><span style="color: #707183;">()</span>:
+    <span style="color: #BA36A5;">model</span> = keras.Sequential<span style="color: #707183;">(</span><span style="color: #7388D6;">[</span>
+        keras.layers.Flatten<span style="color: #909183;">(</span>input_shape=<span style="color: #709870;">(</span><span style="color: #D0372D;">28</span>, <span style="color: #D0372D;">28</span><span style="color: #709870;">)</span><span style="color: #909183;">)</span>,
+        keras.layers.Dense<span style="color: #909183;">(</span><span style="color: #D0372D;">128</span>, activation=keras.activations.relu<span style="color: #909183;">)</span>,
+        keras.layers.Dense<span style="color: #909183;">(</span><span style="color: #D0372D;">10</span>, activation=keras.activations.softmax<span style="color: #909183;">)</span>
+    <span style="color: #7388D6;">]</span><span style="color: #707183;">)</span>
+    <span style="color: #0000FF;">return</span> model
+</pre>
+</div>
+
+<p>
+模型第一层为 <b>tf.keras.layers.Flatten</b> 会将输入的 [28,28] 2D 图像数组转为
+28*28=784 像素的 1D 数组.该层只是作数据转换,并不具有相关的可训练参数.
+</p>
+
+<p>
+随后为两层全链接层 <b>tf.keras.layers.Dense</b>,第一层全链接层有 128 个神经元.第二层全链接层有 10 个神经元,softmax 作为激活函数.每个节点输出的值为对应类别的概率.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdf1903e" class="outline-3">
+<h3 id="orgdf1903e">编译模型</h3>
+<div class="outline-text-3" id="text-orgdf1903e">
+<p>
+训练除了需要构建好模型的网络结构,还需要设置损失函数,优化算法,监控指标等参数:
+</p>
+<dl class="org-dl">
+<dt><b>Loss Function</b></dt><dd>损失函数度量模型的输出和真实输出之间不匹配的程度,该函数指示这模型的学习目标.</dd>
+<dt><b>Optimizer</b></dt><dd>优化算法用来控制模型更新策略.</dd>
+<dt><b>Metrics</b></dt><dd>训练过程中，需要监控的指标。</dd>
+</dl>
+
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">compile_model</span><span style="color: #707183;">(</span>model<span style="color: #707183;">)</span>:
+    model.<span style="color: #006FE0;">compile</span><span style="color: #707183;">(</span>optimizer=keras.optimizers.Adam<span style="color: #7388D6;">()</span>,
+                  loss=keras.losses.sparse_categorical_crossentropy,
+                  metrics=<span style="color: #7388D6;">[</span><span style="color: #008000;">'accuracy'</span><span style="color: #7388D6;">]</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+<b>tf.keras.optimizers</b> 模块里包含了 keras 支持的全部优化算法.
+<b>tf.keras.losses</b> 模块包含了 keras 支持的所有损失函数. <b>tf.keras.metrics</b> 模块包含了 keras 支持的监控。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org664f617" class="outline-2">
+<h2 id="org664f617">模型训练</h2>
+<div class="outline-text-2" id="text-org664f617">
+<p>
+模型训练只需要将训练集喂给模型即可。
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">train_model</span><span style="color: #707183;">(</span>model, train_images, train_labels<span style="color: #707183;">)</span>:
+    model.fit<span style="color: #707183;">(</span>train_images, train_labels, epochs=<span style="color: #D0372D;">5</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org306bdfb" class="outline-2">
+<h2 id="org306bdfb">评估模型</h2>
+<div class="outline-text-2" id="text-org306bdfb">
+<p>
+模型训练完成之后，需要进行模型评估：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">evaluate_model</span><span style="color: #707183;">(</span>model, test_images, test_labels<span style="color: #707183;">)</span>:
+    <span style="color: #BA36A5;">test_loss</span>, <span style="color: #BA36A5;">test_acc</span> = model.evaluate<span style="color: #707183;">(</span>test_images, test_labels<span style="color: #707183;">)</span>
+    <span style="color: #0000FF;">return</span> test_loss, test_acc
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org42afc7e" class="outline-2">
+<h2 id="org42afc7e">预测</h2>
+<div class="outline-text-2" id="text-org42afc7e">
+<p>
+一旦模型训练完成之后，就可以拿来针对新数据进行预测了：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #0000FF;">def</span> <span style="color: #006699;">make_predication</span><span style="color: #707183;">(</span>model, images<span style="color: #707183;">)</span>:
+    <span style="color: #0000FF;">return</span> model.predict<span style="color: #707183;">(</span>images<span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgaf1a819" class="outline-2">
+<h2 id="orgaf1a819">代码整合</h2>
+<div class="outline-text-2" id="text-orgaf1a819">
+<p>
+最后只需要将上述代码整合在一起即可：
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#21152;&#36733;&#35757;&#32451;&#21644;&#27979;&#35797;&#38598;</span>
+<span style="color: #707183;">(</span>train_images, train_labels<span style="color: #707183;">)</span>, <span style="color: #707183;">(</span>test_images, test_labels<span style="color: #707183;">)</span> = load_fashion_mnist<span style="color: #707183;">()</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#25968;&#25454;&#39044;&#22788;&#29702;</span>
+<span style="color: #BA36A5;">train_images</span>, <span style="color: #BA36A5;">test_images</span> = preprocess<span style="color: #707183;">(</span>train_images, test_images<span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#21487;&#35270;&#21270;&#25968;&#25454;&#38598;</span>
+display_25_images<span style="color: #707183;">(</span>train_images, train_labels<span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#26500;&#24314;&#27169;&#22411;</span>
+<span style="color: #BA36A5;">model</span> = build_model<span style="color: #707183;">()</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#32534;&#35793;&#27169;&#22411;</span>
+compile_model<span style="color: #707183;">(</span>model<span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#35757;&#32451;&#27169;&#22411;</span>
+train_model<span style="color: #707183;">(</span>model, train_images, train_labels<span style="color: #707183;">)</span>
+
+<span style="color: #8D8D84;"># </span><span style="color: #8D8D84; font-style: italic;">&#22312;&#27979;&#35797;&#38598;&#19978;&#35780;&#20272;&#27169;&#22411;</span>
+<span style="color: #BA36A5;">test_loss</span>, <span style="color: #BA36A5;">test_accuracy</span> = evaluate_model<span style="color: #707183;">(</span>model, test_images, test_labels<span style="color: #707183;">)</span>
+<span style="color: #0000FF;">print</span><span style="color: #707183;">(</span><span style="color: #008000;">"loss:{}\taccuracy:{}"</span>.<span style="color: #006FE0;">format</span><span style="color: #7388D6;">(</span>test_loss, test_accuray<span style="color: #7388D6;">)</span>
+</pre>
+</div>
+
+<p>
+代码文件: <a href="basic-classification-with-keras.py">basic-classification-with-keras</a>
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-09-25 Tue 22:21</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
