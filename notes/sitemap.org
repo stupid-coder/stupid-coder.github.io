@@ -8,8 +8,9 @@
      + machine-learing-frameworks
        + tensorflow
          + guide
-           + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/keras.org][keras in tensorflow 2018-09-25]]
-           + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
+           + high-level-apis
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/keras.org][keras in tensorflow 2018-09-25]]
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
      + deep-learning-network-architecture
        + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-09-25]]
      + cs231n
