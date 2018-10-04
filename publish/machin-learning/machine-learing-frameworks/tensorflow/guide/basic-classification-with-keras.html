@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>basic classification with tf.keras</title>
+<!-- 2018-10-04 Thu 22:00 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">basic classification with tf.keras</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">引用 tf.keras</a></li>
+<li><a href="#sec-2">数据集</a></li>
+<li><a href="#sec-3">数据预处理</a></li>
+<li><a href="#sec-4">构建模型</a>
+<ul>
+<li><a href="#sec-4-1">构建网络结构</a></li>
+<li><a href="#sec-4-2">编译模型</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">模型训练</a></li>
+<li><a href="#sec-6">评估模型</a></li>
+<li><a href="#sec-7">预测</a></li>
+<li><a href="#sec-8">代码整合</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文：<a href="https://www.tensorflow.org/tutorials/keras/basic_classification">https://www.tensorflow.org/tutorials/keras/basic_classification</a>
+</p>
+
+<p>
+在此基础上,对代码进行封装和说明,然后增加其他 tf.keras 的特性,用于学习 tf.keras.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">引用 tf.keras</h2>
+<div class="outline-text-2" id="text-1">
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">import</span> tensorflow <span style="color: #00bfff; font-weight: bold;">as</span> tf
+<span style="color: #00bfff; font-weight: bold;">from</span> tensorflow <span style="color: #00bfff; font-weight: bold;">import</span> keras
+
+<span style="color: #00bfff; font-weight: bold;">import</span> numpy <span style="color: #00bfff; font-weight: bold;">as</span> np
+<span style="color: #00bfff; font-weight: bold;">import</span> matplotlib.pyplot <span style="color: #00bfff; font-weight: bold;">as</span> plt
+
+<span style="color: #00bfff; font-weight: bold;">print</span>(tf.__version__)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">数据集</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<a href="https://github.com/zalandoresearch/fashion-mnist">Fashion MNIST</a>数据集,包含 70K 灰度图像,标记为 10 类.数据为个人衣物，28*28 的低
+分辨率图像,如下图所示:
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/fashion-mnist-sprite.png" alt="fashion-mnist-sprite.png" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> Fashion MNIST 样本</p>
+</div>
+<blockquote>
+<p>
+图片摘自: <a href="https://github.com/zalandoresearch/fashion-mnist">Fashion MNIST samples</a>(by Zalando, MIT License)
+</p>
+</blockquote>
+</div>
+<hr  />
+
+<p>
+使用其中 60K 作为训练数据集,10K 作为测试集,tf.keras 内置支持 Fashion MNIST 数据集:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">load_fashion_mnist</span>():
+    <span style="font-weight: bold; font-style: italic;">fashion_mnist</span> = keras.datasets.fashion_mnist
+    (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+    <span style="color: #00bfff; font-weight: bold;">return</span> (train_images, train_labels), (test_images, test_labels)
+</pre>
+</div>
+
+<blockquote>
+<p>
+<b>tf.keras.datasets</b> 模块内置了很多简单的数据集,可以参考<a href="https://keras-cn.readthedocs.io/en/latest/other/datasets/">Keras Datasets 文档</a>.
+ 这些数据集可以用来验证模型的可行性和学习各种机器学习框架.
+</p>
+</blockquote>
+
+<p>
+返回的数据集都是 NumPy 数组,train\_images 为(60000, 28, 28)维数据。每个像素点的值
+在[0, 255]之间,标签数据在[0,10]之间,对应着分类的类别:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="right" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="right">Label</th>
+<th scope="col" class="left">Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="right">0</td>
+<td class="left">T-shirt/top</td>
+</tr>
+
+<tr>
+<td class="right">1</td>
+<td class="left">Trouser</td>
+</tr>
+
+<tr>
+<td class="right">2</td>
+<td class="left">Pullover</td>
+</tr>
+
+<tr>
+<td class="right">3</td>
+<td class="left">Dress</td>
+</tr>
+
+<tr>
+<td class="right">4</td>
+<td class="left">Coat</td>
+</tr>
+
+<tr>
+<td class="right">5</td>
+<td class="left">Sandal</td>
+</tr>
+
+<tr>
+<td class="right">6</td>
+<td class="left">Shirt</td>
+</tr>
+
+<tr>
+<td class="right">7</td>
+<td class="left">Sneaker</td>
+</tr>
+
+<tr>
+<td class="right">8</td>
+<td class="left">bag</td>
+</tr>
+
+<tr>
+<td class="right">9</td>
+<td class="left">Ankle boot</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+每个图像属于上述的一类中,类别名称没有包含在数据集中,所以可以先存储对应的名称,
+后面可以用来画图等操作:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">class_names</span> = [<span style="color: #daa520; font-style: italic;">'T-shirt/top'</span>, <span style="color: #daa520; font-style: italic;">'Trouser'</span>, <span style="color: #daa520; font-style: italic;">'Pullover'</span>, <span style="color: #daa520; font-style: italic;">'Dress'</span>, <span style="color: #daa520; font-style: italic;">'Coat'</span>, 
+               <span style="color: #daa520; font-style: italic;">'Sandal'</span>, <span style="color: #daa520; font-style: italic;">'Shirt'</span>, <span style="color: #daa520; font-style: italic;">'Sneaker'</span>, <span style="color: #daa520; font-style: italic;">'Bag'</span>, <span style="color: #daa520; font-style: italic;">'Ankle boot'</span>]
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">数据预处理</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+加速训练过程,和防止激活函数饱和出现,一般会对输入的数据进行一些预处理.首先将训
+练集中的第一个图可视化,可以看到每个像素都在[0,255]之间:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">plot_image</span>(image):
+    plt.figure()
+    plt.imshow(image)
+    plt.colorbar()
+    plt.grid(<span style="font-weight: bold; text-decoration: underline;">False</span>)
+    plt.show()
+</pre>
+</div>
+
+<p>
+针对图像数据,一般可以将输入的图像像素归一化到[0,1].首先,由于数据集的类型为整型,所
+以需要将输入的数据转为浮点，然后处理 255.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">preprocess</span>(train_images, test_images):
+    <span style="color: #00bfff; font-weight: bold;">return</span> train_images / 255.0, test_images / 255.0
+</pre>
+</div>
+
+<p>
+可视化前 25 张图像,验证归一化后的数据是否正确:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">display_25_images</span>(images, labels):
+    plt.figure(figsize=(10, 10))
+    <span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(25):
+        plt.subplot(5,5,i+1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(<span style="font-weight: bold; text-decoration: underline;">False</span>)
+        plt.imshow(images[i], cmap=plt.cm.binary)
+        plt.xlabel(class_names[labels[i]])
+    plt.show()
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">构建模型</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+构建模型需要先构建模型的网络结构;然后编译模型,即设置损失函数,优化算法,监控指标
+等.
+</p>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">构建网络结构</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<b>tf.keras</b> 主要采取堆叠网络层的方式构建模型网络结构.这里使用
+<b>tf.keras.Sequential</b> 的序列模型来构建神经网络,采取函数模型可以参考 keras 的
+文档.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">build_model</span>():
+    <span style="font-weight: bold; font-style: italic;">model</span> = keras.Sequential([
+        keras.layers.Flatten(input_shape=(28, 28)),
+        keras.layers.Dense(128, activation=keras.activations.relu),
+        keras.layers.Dense(10, activation=keras.activations.softmax)
+    ])
+    <span style="color: #00bfff; font-weight: bold;">return</span> model
+</pre>
+</div>
+
+<p>
+模型第一层为 <b>tf.keras.layers.Flatten</b> 会将输入的 [28,28] 2D 图像数组转为
+28*28=784 像素的 1D 数组.该层只是作数据转换,并不具有相关的可训练参数.
+</p>
+
+<p>
+随后为两层全链接层 <b>tf.keras.layers.Dense</b>,第一层全链接层有 128 个神经元.第二层
+全链接层有 10 个神经元,softmax 作为激活函数.每个节点输出的值为对应类别的概率.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">编译模型</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+训练除了需要构建好模型的网络结构,还需要设置损失函数,优化算法,监控指标等参数:
+</p>
+<dl class="org-dl">
+<dt> <b>Loss Function</b> </dt><dd>损失函数度量模型的输出和真实输出之间不匹配的程度,该函数
+指示这模型的学习目标.
+</dd>
+<dt> <b>Optimizer</b> </dt><dd>优化算法用来控制模型更新策略.
+</dd>
+<dt> <b>Metrics</b> </dt><dd>训练过程中，需要监控的指标。
+</dd>
+</dl>
+
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">compile_model</span>(model):
+    model.<span style="font-weight: bold;">compile</span>(optimizer=keras.optimizers.Adam(),
+                  loss=keras.losses.sparse_categorical_crossentropy,
+                  metrics=[<span style="color: #daa520; font-style: italic;">'accuracy'</span>])
+</pre>
+</div>
+
+<p>
+<b>tf.keras.optimizers</b> 模块里包含了 keras 支持的全部优化算法.
+<b>tf.keras.losses</b> 模块包含了 keras 支持的所有损失函数. <b>tf.keras.metrics</b> 模块
+包含了 keras 支持的监控。
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">模型训练</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+模型训练只需要将训练集喂给模型即可。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">train_model</span>(model, train_images, train_labels, batch_size=32, epochs=5):
+    model.fit(train_images, train_labels, batch_size=batch_size, epochs=epochs)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">评估模型</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+模型训练完成之后，需要进行模型评估：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">evaluate_model</span>(model, test_images, test_labels):
+    <span style="font-weight: bold; font-style: italic;">test_loss</span>, <span style="font-weight: bold; font-style: italic;">test_acc</span> = model.evaluate(test_images, test_labels)
+    <span style="color: #00bfff; font-weight: bold;">return</span> test_loss, test_acc
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">预测</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+一旦模型训练完成之后，就可以拿来针对新数据进行预测了：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">make_predication</span>(model, images):
+    <span style="color: #00bfff; font-weight: bold;">return</span> model.predict(images)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8">代码整合</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+最后只需要将上述代码整合在一起即可：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#21152;&#36733;&#35757;&#32451;&#21644;&#27979;&#35797;&#38598;</span>
+(train_images, train_labels), (test_images, test_labels) = load_fashion_mnist()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#25968;&#25454;&#39044;&#22788;&#29702;</span>
+<span style="font-weight: bold; font-style: italic;">train_images</span>, <span style="font-weight: bold; font-style: italic;">test_images</span> = preprocess(train_images, test_images)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#21487;&#35270;&#21270;&#25968;&#25454;&#38598;</span>
+display_25_images(train_images, train_labels)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#26500;&#24314;&#27169;&#22411;</span>
+<span style="font-weight: bold; font-style: italic;">model</span> = build_model()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#32534;&#35793;&#27169;&#22411;</span>
+compile_model(model)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#35757;&#32451;&#27169;&#22411;</span>
+train_model(model, train_images, train_labels)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">&#22312;&#27979;&#35797;&#38598;&#19978;&#35780;&#20272;&#27169;&#22411;</span>
+<span style="font-weight: bold; font-style: italic;">test_loss</span>, <span style="font-weight: bold; font-style: italic;">test_accuracy</span> = evaluate_model(model, test_images, test_labels)
+<span style="color: #00bfff; font-weight: bold;">print</span>(<span style="color: #daa520; font-style: italic;">"loss:{}\taccuracy:{}"</span>.<span style="font-weight: bold;">format</span>(test_loss, test_accuray)
+</pre>
+</div>
+
+<p>
+代码文件: <a href="basic-classification-with-keras.py">basic-classification-with-keras</a>
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

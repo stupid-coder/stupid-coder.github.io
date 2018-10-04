@@ -11,8 +11,10 @@
            + high-level-apis
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/keras.org][keras in tensorflow 2018-09-25]]
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
+           + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
      + deep-learning-network-architecture
-       + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-09-25]]
+       + [[file:machin-learning/deep-learning-network-architecture/SqueezeNet.org][SqueezeNet 2018-10-04]]
+       + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-10-04]]
      + cs231n
        + neural-networks
          + [[file:machin-learning/cs231n/neural-networks/putting-it-together-minimal-neural-network-case-study.org][Putting it together: Minimal Neural Network Case Study 2018-08-27]]
@@ -30,6 +32,8 @@
      + computer-vision
        + image-retrival
          + [[file:machin-learning/computer-vision/image-retrival/deep-learning-of-binary-hash-codes-for-fast-image-retrieval.org][deep learning of binary hash codes for fast image retrieval 2018-08-08]]
+       + dataset
+         + [[file:machin-learning/computer-vision/dataset/cifar-10.org][CIFAR 数据集 2018-09-19]]
    + books
      + scheme
        + struct-and-interpretation-of-computer-programs

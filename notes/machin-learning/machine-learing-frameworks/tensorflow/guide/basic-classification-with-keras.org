@@ -1,0 +1,198 @@
+#+TITLE: basic classification with tf.keras
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: num:nil H:2
+#+STARTUP: indent
+
+
+原文：https://www.tensorflow.org/tutorials/keras/basic_classification
+
+在此基础上,对代码进行封装和说明,然后增加其他 tf.keras 的特性,用于学习 tf.keras.
+
+* 引用 tf.keras
+  #+BEGIN_SRC python :tangle yes
+    import tensorflow as tf
+    from tensorflow import keras
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    print(tf.__version__)
+  #+END_SRC
+
+  #+RESULTS:
+  : None
+
+* 数据集
+  [[https://github.com/zalandoresearch/fashion-mnist][Fashion MNIST]]数据集,包含 70K 灰度图像,标记为 10 类.数据为个人衣物，28*28 的低
+  分辨率图像,如下图所示:
+  -----
+  #+BEGIN_CENTER
+  #+CAPTION: Fashion MNIST 样本
+  [[file:assets/fashion-mnist-sprite.png]]
+  #+BEGIN_QUOTE
+  图片摘自: [[https://github.com/zalandoresearch/fashion-mnist][Fashion MNIST samples]](by Zalando, MIT License)
+  #+END_QUOTE
+  #+END_CENTER
+  -----
+
+  使用其中 60K 作为训练数据集,10K 作为测试集,tf.keras 内置支持 Fashion MNIST 数据集:
+  #+BEGIN_SRC python :tangle yes
+    def load_fashion_mnist():
+        fashion_mnist = keras.datasets.fashion_mnist
+        (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+        return (train_images, train_labels), (test_images, test_labels)
+  #+END_SRC
+
+  #+BEGIN_QUOTE
+  *tf.keras.datasets* 模块内置了很多简单的数据集,可以参考[[https://keras-cn.readthedocs.io/en/latest/other/datasets/][Keras Datasets 文档]].
+   这些数据集可以用来验证模型的可行性和学习各种机器学习框架.
+  #+END_QUOTE
+
+  返回的数据集都是 NumPy 数组,train\_images 为(60000, 28, 28)维数据。每个像素点的值
+  在[0, 255]之间,标签数据在[0,10]之间,对应着分类的类别:
+  | Label | Class       |
+  |-------+-------------|
+  |     0 | T-shirt/top |
+  |     1 | Trouser     |
+  |     2 | Pullover    |
+  |     3 | Dress       |
+  |     4 | Coat        |
+  |     5 | Sandal      |
+  |     6 | Shirt       |
+  |     7 | Sneaker     |
+  |     8 | bag         |
+  |     9 | Ankle boot  |
+
+  每个图像属于上述的一类中,类别名称没有包含在数据集中,所以可以先存储对应的名称,
+  后面可以用来画图等操作:
+  #+BEGIN_SRC python :tangle yes
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 
+                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+  #+END_SRC
+
+* 数据预处理
+  加速训练过程,和防止激活函数饱和出现,一般会对输入的数据进行一些预处理.首先将训
+  练集中的第一个图可视化,可以看到每个像素都在[0,255]之间:
+  #+BEGIN_SRC python :tangle yes
+    def plot_image(image):
+        plt.figure()
+        plt.imshow(image)
+        plt.colorbar()
+        plt.grid(False)
+        plt.show()
+  #+END_SRC
+
+  针对图像数据,一般可以将输入的图像像素归一化到[0,1].首先,由于数据集的类型为整型,所
+  以需要将输入的数据转为浮点，然后处理 255.
+  #+BEGIN_SRC python :tangle yes
+    def preprocess(train_images, test_images):
+        return train_images / 255.0, test_images / 255.0
+  #+END_SRC
+
+  可视化前 25 张图像,验证归一化后的数据是否正确:
+  #+BEGIN_SRC python :tangle yes
+    def display_25_images(images, labels):
+        plt.figure(figsize=(10, 10))
+        for i in range(25):
+            plt.subplot(5,5,i+1)
+            plt.xticks([])
+            plt.yticks([])
+            plt.grid(False)
+            plt.imshow(images[i], cmap=plt.cm.binary)
+            plt.xlabel(class_names[labels[i]])
+        plt.show()
+  #+END_SRC
+
+* 构建模型
+  构建模型需要先构建模型的网络结构;然后编译模型,即设置损失函数,优化算法,监控指标
+  等.
+
+** 构建网络结构
+   *tf.keras* 主要采取堆叠网络层的方式构建模型网络结构.这里使用
+   *tf.keras.Sequential* 的序列模型来构建神经网络,采取函数模型可以参考 keras 的
+   文档.
+   #+BEGIN_SRC python :tangle yes
+     def build_model():
+         model = keras.Sequential([
+             keras.layers.Flatten(input_shape=(28, 28)),
+             keras.layers.Dense(128, activation=keras.activations.relu),
+             keras.layers.Dense(10, activation=keras.activations.softmax)
+         ])
+         return model
+   #+END_SRC
+
+   模型第一层为 *tf.keras.layers.Flatten* 会将输入的 [28,28] 2D 图像数组转为
+   28*28=784 像素的 1D 数组.该层只是作数据转换,并不具有相关的可训练参数.
+
+   随后为两层全链接层 *tf.keras.layers.Dense*,第一层全链接层有 128 个神经元.第二层
+   全链接层有 10 个神经元,softmax 作为激活函数.每个节点输出的值为对应类别的概率.
+
+** 编译模型
+   训练除了需要构建好模型的网络结构,还需要设置损失函数,优化算法,监控指标等参数:
+   + *Loss Function* :: 损失函数度量模型的输出和真实输出之间不匹配的程度,该函数
+        指示这模型的学习目标.
+   + *Optimizer* :: 优化算法用来控制模型更新策略.
+   + *Metrics* :: 训练过程中，需要监控的指标。
+
+
+   #+BEGIN_SRC python :tangle yes
+     def compile_model(model):
+         model.compile(optimizer=keras.optimizers.Adam(),
+                       loss=keras.losses.sparse_categorical_crossentropy,
+                       metrics=['accuracy'])
+   #+END_SRC
+
+   *tf.keras.optimizers* 模块里包含了 keras 支持的全部优化算法.
+   *tf.keras.losses* 模块包含了 keras 支持的所有损失函数. *tf.keras.metrics* 模块
+   包含了 keras 支持的监控。
+
+* 模型训练
+  模型训练只需要将训练集喂给模型即可。
+  #+BEGIN_SRC python :tangle yes
+    def train_model(model, train_images, train_labels, batch_size=32, epochs=5):
+        model.fit(train_images, train_labels, batch_size=batch_size, epochs=epochs)
+  #+END_SRC
+
+* 评估模型
+  模型训练完成之后，需要进行模型评估：
+  #+BEGIN_SRC python :tangle yes
+    def evaluate_model(model, test_images, test_labels):
+        test_loss, test_acc = model.evaluate(test_images, test_labels)
+        return test_loss, test_acc
+  #+END_SRC
+
+* 预测
+  一旦模型训练完成之后，就可以拿来针对新数据进行预测了：
+  #+BEGIN_SRC python :tangle yes
+    def make_predication(model, images):
+        return model.predict(images)
+  #+END_SRC
+
+* 代码整合
+  最后只需要将上述代码整合在一起即可：
+  #+BEGIN_SRC python :tangle yes
+    # 加载训练和测试集
+    (train_images, train_labels), (test_images, test_labels) = load_fashion_mnist()
+
+    # 数据预处理
+    train_images, test_images = preprocess(train_images, test_images)
+
+    # 可视化数据集
+    display_25_images(train_images, train_labels)
+
+    # 构建模型
+    model = build_model()
+
+    # 编译模型
+    compile_model(model)
+
+    # 训练模型
+    train_model(model, train_images, train_labels)
+
+    # 在测试集上评估模型
+    test_loss, test_accuracy = evaluate_model(model, test_images, test_labels)
+    print("loss:{}\taccuracy:{}".format(test_loss, test_accuray)
+  #+END_SRC
+
+  代码文件: [[file:basic-classification-with-keras.py][basic-classification-with-keras]]

@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>SqueezeNet</title>
+<!-- 2018-10-04 Thu 22:00 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">SqueezeNet</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Abstract</a></li>
+<li><a href="#sec-2">Introduction And Motivation</a></li>
+<li><a href="#sec-3">Related Work</a>
+<ul>
+<li><a href="#sec-3-1">Model Compression</a></li>
+<li><a href="#sec-3-2">CNN Micro-architecture</a></li>
+<li><a href="#sec-3-3">CNN Macro-architecture</a></li>
+<li><a href="#sec-3-4">Neural Network Design Space Exploration</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">SqueezeNet: Preserving Accuracy With Few Parameters</a>
+<ul>
+<li><a href="#sec-4-1">Architecture Design Strategies</a></li>
+<li><a href="#sec-4-2">The Fire Module</a></li>
+<li><a href="#sec-4-3">The SqueezeNet Architecture</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">Evaluation Of SqueezeNet</a></li>
+<li><a href="#sec-6">CNN Micro-Architecture Design Space Exploration</a>
+<ul>
+<li><a href="#sec-6-1">CNN Micro-architecture Meta Parameters</a></li>
+<li><a href="#sec-6-2">Squeeze Ratio</a></li>
+<li><a href="#sec-6-3">Trading Off 1*1 and 3*3 Filters</a></li>
+</ul>
+</li>
+<li><a href="#sec-7">CNN Macro-Architecture Design Space Exploration</a></li>
+<li><a href="#sec-8">Conclusions</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文:<a href="https://arxiv.org/abs/1602.07360v4">SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and &lt; 0.5MB model size</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Abstract</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+本文提出了 <b>SqueezeNet</b> 网络结构,该结构主要目标是在保持相同识别精度的情况下,尽
+可能的降低模型规模.较小规模的网络具有:1.在分布式训练下,更小的网络需要更少的网
+络的交互,更快的进行训练;2. 更小的网络更利于预训练的模型发布;3. 更小的网络可以
+在内存更小的硬件环境上执行运算.
+</p>
+
+<p>
+<b>SqueezeNet</b> 只需要 <b>AlexNet</b> 50 分之一的参数就能够达到和 <b>AlexNet</b> 相同的精度.此
+外在额外的模型压缩技术帮助下,最终可以将 <b>SqueezeNet</b> 网络压缩到 0.5MB 以下, 小于
+<b>AlexNet</b> 510 分之一.
+</p>
+
+<p>
+<a href="https://github.com/DeepScale/SqueezeNet">SqueezeNet-Git</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Introduction And Motivation</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+当前的卷积神经网络研究大多集中于各种机器视觉数据集上的精度提升.存在多种卷积神
+经结构都可以达到相似的识别精度.对于相同的识别精度等级上,具有更少参数的网络具有
+如下几个优点:
+</p>
+<dl class="org-dl">
+<dt> <span class="underline">更有效的分布式训练</span> </dt><dd>对于分布式卷积神经网络训练,多个训练节点之间网络的通
+信成本是整个训练的瓶颈.而通信的成本与网络结构的参数小大成正比.也
+就是说更小的网络结构,分布式训练速度更快.
+</dd>
+<dt> <span class="underline">模型发布</span> </dt><dd>对于自动化驾驶,需要周期性的更新模型到客户的汽车.更小的模型需要
+更少的带宽来实现更新,从而能够实现更为快速和高效的模型更新.
+</dd>
+<dt> <span class="underline">FPGA 和嵌入式部署</span> </dt><dd>FPGA 和嵌入式硬件环境内存较少.更小的模型可以直接将模型
+存储在 FPGA 和嵌入式环境中.
+</dd>
+</dl>
+
+
+<p>
+如上,可以看到更小的网络结构具有很多种优势.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Related Work</h2>
+<div class="outline-text-2" id="text-3">
+</div><div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1">Model Compression</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+<b>本文的主要目标是采取更少参数的网络结构,并保持相同的精度</b>. 一个显而易见的方法
+是,对现有已经存在的卷积神经网络进行损压缩方式(<i>lossy fashion</i>). 实际上,模型压
+缩(<i>model compression</i>)是研究的一个热点,并且已经提出了很多方法.一个较为直观的
+方法是对预训练的模型执行<a href="https://arxiv.org/abs/1404.0736">奇异值分解</a>压缩模型.Han et al 针对预训练的模型执行网络
+剪枝(<i><a href="http://arxiv.org/abs/1506.02626">Network Pruning</a></i>),设定一个阈值将低于该阈值的参数设置为 0,从而构建稀疏矩
+阵,最后在该稀疏卷积神经网络上执行几轮训练.Han et al 将上述网络剪枝和量化
+(<i>quantization</i>)结合,并且最后采取霍夫曼编码(<i>huffman encoding</i>)进行模型编码,
+整个压缩过程叫做深度压缩(<i><a href="https://arxiv.org/abs/1510.00149">Deep Compression</a></i>).并且设计了一个硬件加速器叫做
+EIE.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2">CNN Micro-architecture</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+LeCun et al 在 1980 年运用卷积到数字识别,使得卷积神经网络流行起来.卷积核一般
+都是 3D,高度,宽度和通道.第一层卷积网络的卷积核一般具有 3 通道;在随后的网络层
+L<sub>i</sub> 卷积核的通道数和上一层的网络层 L<sub>i-1</sub>的卷积核数量相同.最开始 LeNet-5 采
+取的是 5*5*channels 卷积核,最近的 VGG 网络采取的都是 3*3 卷积核,Network-in-Network
+和 GoogLeNet 内的一些模块使用 1*1 卷积核实现一些特殊作用.
+</p>
+
+<p>
+随着网络结构越来越深,针对每一层的卷积核的尺度的选择成为了一个非常笨重的工作.为
+了克服上述问题,发展了将多层网络结构组合形成高级构建模块(<i>modules</i>).例如:
+<b>GoogLeNet</b> 就提出了 <b>Inception modules</b>, 该模块通过将一些列各种尺度(1*1,
+3*3, 5*5, 1*3, 3*1)的卷积核进行组合形成构建模块.然后将模块组合形成一个完整的
+网络结构.使用 <b>CNN micro0architecture</b> 来标示这些模块.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3">CNN Macro-architecture</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+<b>micro-architecture</b> 用来标示单个网络层和网络模块;同时,定义
+<b>macro-architecture</b> 标示多个网络模块组成的端到端的网络结构.
+</p>
+
+<p>
+当前卷积网络 <b>macro-architecture</b> 研究最多的课题在于网络深度(<i>网络层数量</i>)对
+网络精度的影响.VGG 网络结构由 12-19 层结构,并且发现越深的网络在 ImageNet-1k 的数据
+集上表现越好.ResNet 发现具有 30 网络层的网络结构能够获得更高的识别精度.
+</p>
+
+<p>
+层和层的链接方式也是 <b>macro-architecture</b> 的研究热点.ResNet 和 HighWap Network 提
+出了夸层链接方法(<i>bypass connections</i>),并且 ResNet 在 34 层卷积层发现具有夸层链接
+的网络在 ImageNet 上比没有夸层链接的网络有 2 个百分点的提升.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4">Neural Network Design Space Exploration</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+神经网络由于 <b>micro-architecture</b> , <b>macro-architecture</b> 和其他一些设置,使
+得神经网络具有很大的设计空间.有很多工作都在探讨如何自动化实现网络设计空间
+(<i>design space exploration(DSE)</i>)探索.这些自动化网络设计空间探索方法包括基于
+<a href="https://arxiv.org/abs/1206.2944v2">Bayesian</a>优化方法,模拟逆火(<i>simulated annealing</i>)<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>,随机搜索(<i>randomized
+search</i>)<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>.上述这些方法虽然都可以基于对应的 DSE 方法实现了网络结构优化,但是
+这些论文都没有定义神经网络结构对效果影响的度量.在本文,避开了自动化方法,而是基
+于 A/B 对比的方法来度量网络结构在模型大小和精度上有什么影响.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">SqueezeNet: Preserving Accuracy With Few Parameters</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+本部分,介绍如何使用更少的参数来设计卷积神经网络结构.然后介绍 <b>Fire Module</b> ,最后
+使用该模块构建卷积神经网络,叫做 SqueezeNet.
+</p>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Architecture Design Strategies</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+为了使用更少的参数,但是需要保持相同的精度,主要采取如下三个设计策略:
+</p>
+<dl class="org-dl">
+<dt> <code>Strategy 1</code> </dt><dd>Replace 3*3 filters with 1*1 filters, 采取 1*1 卷积核来代替
+3*3 卷积核,1*1 卷积核参数 9 倍少于 3*3 卷积核.
+</dd>
+<dt> <code>Strategy 2</code> </dt><dd>Decrease the number of input channels to 3*3 filters, 对于
+3*3 卷积网络,参数的数量为 <i>输入通道</i> * <i>卷积核数量</i> * (3*3). 所以为了减
+少参数,不光可以通过减少卷积核尺度 3*3,更为主要是通过减少输入的通道数量.
+</dd>
+<dt> <code>Strategy 3</code> </dt><dd>Downsample late in the network so that convolution layers have
+large activation maps, 卷积神经网络,每个卷积层都会生成一个激活矩阵.激
+活矩阵的高宽由:1.输入图像 2.下采样决定.在网络层前部采取采样,那么随后的激
+活矩阵的维度都会比较小;如果在网络层后部采取采样,那么网络中很多层都具有更大
+的激活矩阵.可以知道的是,更大的激活矩阵的网络具有更高的分类精度.K. He 和 H.
+Sun<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup>将采样应用到 4 个不同的卷积结构中,下采样越靠后,带来越高的精度.
+</dd>
+</dl>
+
+
+<p>
+Strategies 1 和 2 用来减少卷积神经网络的参数规模.Strategy 3 在相同参数规模下,可
+以达到最大化分类精度.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">The Fire Module</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+<b>Fire Module</b> 有如下组成:由 1*1 卷积核组成的压缩卷积层(<i>squeeze</i>),然后输入到由
+1*1 和 3*3 卷积核组成的扩展层(<i>expand</i>).如下图所示:
+</p>
+<hr  />
+<div class="center">
+
+<div id="figure-1" class="figure">
+<p><img src="assets/squeeze-net/figure-1.png" alt="figure-1.png" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> Fire Module</p>
+</div>
+<blockquote>
+<p>
+<b>Fire Module</b> 卷积模块.图中所示: s<sub>1x1</sub>=3, e<sub>1x1</sub>=4, e<sub>3x3</sub> = 4.
+</p>
+</blockquote>
+</div>
+<hr  />
+
+<p>
+上述 <b>Fire Module</b> 具有三个超参: \(s_{1x1}\), \(e_{1x1}\) 和 \(e_{3x3}\).其中:
+\(s_{1x1}\) 为 squeeze 层的 1*1 卷积核数量; \(e_{1x1}\) 为 expand 层中 1*1 卷积核数量,
+\(e_{3x3}\) 为 expand 层中 3*3 卷积核数量.根据策略 2,需要设置 \(S_{1x1}\) 小于
+\((e_{1x1}+e_{3x3})\) ,使得 squeeze 层帮助减少输入到 expand 层的通道.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3">The SqueezeNet Architecture</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+下图显示了 <b>SqueezeNet</b> 网络结构.首先为单独的一层卷积层(<i>conv1</i>),其后跟着 8
+个 <b>Fire Module</b> (<i>fire2-9</i>),最后为卷积层(<i>conv10</i>).并且卷积核的数量从 128 以
+128 为单位依此增加到 512. <b>SqueezeNet</b> 在 <i>conv1</i> , <i>fire4</i> , <i>fire8</i> 和
+<i>conv10</i> 后执行采样.这些采样都是根据策略 3 后置采样.
+</p>
+
+
+<hr  />
+<div class="center">
+
+<div id="figure-2" class="figure">
+<p><img src="assets/squeeze-net/figure-2.png" alt="figure-2.png" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> SqueezeNet Architecture</p>
+</div>
+<blockquote>
+<p>
+左图:原始 SqueezeNet.中间:简单夸层链接的 SqueezeNet.右图:复杂夸层链接的 SqueezeNet.
+</p>
+</blockquote>
+</div>
+<hr  />
+
+<p>
+具体细节可以参考下表:
+</p>
+<hr  />
+<div class="center">
+
+<div id="figure-3" class="figure">
+<p><img src="assets/squeeze-net/table-1.png" alt="table-1.png" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> SqueezeNet architectural dimensions</p>
+</div>
+</div>
+<hr  />
+</div>
+
+<ul class="org-ul"><li><a id="sec-4-3-1" name="sec-4-3-1"></a>Other SqueezeNet Details<br  /><div class="outline-text-4" id="text-4-3-1">
+<p>
+<a href="#figure-2">figure-2</a> 和<a href="#figure-3"> figure-3</a> 中忽略了一些细节和设计.如下为对应的一些细节和背后的对应论文:
+</p>
+<ul class="org-ul">
+<li>为了保证从 1*1 卷积和 3*3 卷积激活矩阵具有相同的高度和宽度,需要在 3*3 卷积采取 1 个像
+素的零值填充(<i>padding</i>).
+</li>
+<li>ReLU <sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup> 为 squeeze 和 expand 层采取的激活函数
+</li>
+<li>在 <b>fire9</b> 采取 50% Dropout <sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup>
+</li>
+<li>和 NiN<sup><a id="fnr.6" name="fnr.6" class="footref" href="#fn.6">6</a></sup> 采取相同的策略, <b>SqueezeNet</b> 没有采取全链接层
+</li>
+<li>SqueezeNet 训练过程,学习率从 0.04 开始衰减,具体和 Mishkin<sup><a id="fnr.7" name="fnr.7" class="footref" href="#fn.7">7</a></sup> 一样.其他的训
+练参数可以参考官方 caffe 实现的代码<sup><a id="fnr.8" name="fnr.8" class="footref" href="#fn.8">8</a></sup>
+</li>
+<li>上述的 FireModule 中 expand 层都是将两路的 1*1 卷积结果和 3*3 卷积结果在深度通道上拼接.
+</li>
+</ul>
+</div>
+</li></ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Evaluation Of SqueezeNet</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+SqueezeNet 以各种压缩后的 AlexNet 作为对比基准.<a href="#figure-4">figure-4</a>显示了 SqueezeNet 比
+AlexNet 小 50 倍,并且同时 top-1 和 top-5 的准确性达到了 AlexNet 水平.并且在小的
+模型上进行对应的模型压缩也不会影响模型效果.
+</p>
+
+<hr  />
+<div class="center">
+
+<div id="figure-4" class="figure">
+<p><img src="assets/squeeze-net/table-2.png" alt="table-2.png" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> SqueezeNet Comparing to compressed AlexNet</p>
+</div>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">CNN Micro-Architecture Design Space Exploration</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+基于上述提出的网络结构设计策略,构建了 SqueezeNet,并且可以看到与 AlexNet 的准确性相
+同,并且 50 倍小于 AlexNet 模型大小.
+</p>
+
+<p>
+本节和下一节将会讨论网络结构设计空间,本节主要讨论网络层和网络模块网络结构设计空
+间,下一节讨乱端到端的网络层和网络模块组织的设计空间.
+</p>
+
+<p>
+本节设计和讨论了基于<a href="#sec-4-1">Architecture Design Strategies</a>的 micro-architecture 设计空间
+对于模型的大小和准确性的影响.
+</p>
+</div>
+
+<div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1">CNN Micro-architecture Meta Parameters</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+在 SqueezeNet, Fire Module 具有三个维度超参: \(s_{1x1}\), \(e_{1x1}\) 和
+\(e_{3x3}\).SqueezeNet 具有 8 个 Fire Module,所以有 24 个维度超参.为了能够大范围探
+索 SqueezeNet 的网络结构,定义了更高阶的元参数(<i>meta-parameters</i>)控制所有的
+FireModule 的维度. \(base_{e}\) 为第一个 Fire Module 的 expand 卷积核数量.每 \(freq\)
+个 Fire Module, 增加 \(incr_{e}\) 个 expand 卷积核.换句话说,对于
+FireModule<sub>i</sub>,expand 卷积核的数量
+\(e_{i}=base_{e}+(incr_{e}*\left\lfloor\frac{i}{freq}\right\rfloor)\). 在 expand
+层卷积核为 1*1 和 3*3 组成;定义 \(e_{i}=e_{i,1x1}+e_{i,3x3}\) , 且定义
+$pct<sub>3x3</sub>$(范围[0,1],所有的 fireModule 共享) 为 3x3 的比例.即是说,
+\(e_{i,3x3}=e_{i}*pct_{3x3}\) , \(e_{i,1x1}=e_{i}*(1-pct_{3x3})\). 最后定义元参数
+SR(<i>squeeze ratio</i>, 范围为[0,1],为所有 fire module 共享): \(s_{i,1x1}=SR*e_{i}\)
+(\(s_{i,1x1}=SR*(e_{i,1x1}+e_{i,3x3})\)).SqueezeNet(如<a href="#figure-3">figure-3</a>所示)的网络结构由上述
+元参数定义:base<sub>e</sub>=128, incr<sub>e</sub>=128, pct<sub>3x3</sub>=0.5, freq=2, SR=0.125.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2">Squeeze Ratio</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+Squeeze 网络层用来减少输入到 expand 层的 3*3 卷积核的输入通道.所以定义了 SR(<i>squeeze
+ratio</i>)元参数,为 squeeze 层的卷积核数量和 expand 层的卷积核数量的比例.为了确定 SR 对模
+型大小和准确性的影响,如下设计了一些实验.
+</p>
+
+<p>
+以 SqueezeNet(<a href="#figure-2">figure-2</a>)作为默认模型,这些实验使用如下元参数:
+\(base_{e}={128},incr_{e}=128,pct_{3x3}=0.5,freq=2\) .使用[0.125,1.0]之间的多个
+squeeze ratio(<i>SR</i>)来训练不同模型.<a href="#figure-5">figure-5</a>(a)显示了对应的实验结果,每个点代表一个
+从头训练的模型.由于 SR 设置为 0.125,为比较低的压缩比例,所以模型叫做
+<b>SqueezeNet</b>. 从图中,可以看到随着 SR 的增长在 ImageNet top-5 的识别准确性从 80.3%增加
+到 86.0%,但是模型的大小也从 4.8MB 增加到 19MB.
+</p>
+
+<hr  />
+<div class="center">
+
+<div id="figure-5" class="figure">
+<p><img src="assets/squeeze-net/figure-3.png" alt="figure-3.png" />
+</p>
+<p><span class="figure-number">&#22270;5&nbsp;</span> micro-architectural design space exploration</p>
+</div>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-6-3" class="outline-3">
+<h3 id="sec-6-3">Trading Off 1*1 and 3*3 Filters</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+在<a href="#sec-4-1">Architecture Design Strategies</a>提出了将一些 3*3 卷积核转为 1*1 卷积核,从而减少参数.一
+个问题是,那么卷积神经网络中卷积空间尺度对识别精度有什么影响?
+</p>
+
+<p>
+VGG 网络仅仅使用了 3*3 空间尺度的卷积核.GoogLeNet 和 Network-in-Network(NiN)在一些
+层上使用了 1*1 卷积核.GoogLeNet 和 NiN 只是使用了 1*1 和 3*3 卷积核,但是没有进行过更多的
+分析.如下需要分析不同比例的 1*1 和 3*3 卷积核对模型和准确性的影响.
+</p>
+
+<p>
+使用如下的元参数: \(base_{e}=incr_{e}=128, freq=2, SR=0.500\) ,对参数 \(pct_{3x3}\)
+从 1%到 99%进行实验.实验结果如<a href="#figure-5">figure-5</a>(b)所示,可以看到 13MB 的模型在(a)和(b)是一样
+的网络结构:SR=0.500 和 pct<sub>3x3</sub>=50%.可以看到采用 50%的 3*3 卷积核可以达到 85.6%.而
+且可以看到随着继续增加 3*3 比例,会带来更大的模型大小,但是准确性并不会再提升.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">CNN Macro-Architecture Design Space Exploration</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+现在探讨整个网络结构的设计空间.参照 ResNet,主要探索三个不同结构:
+</p>
+<ul class="org-ul">
+<li>基础 SqueezeNet
+</li>
+<li>SqueezeNet 加上简单的夸层链接<sup><a id="fnr.9" name="fnr.9" class="footref" href="#fn.9">9</a></sup><sup>, </sup><sup><a id="fnr.10" name="fnr.10" class="footref" href="#fn.10">10</a></sup>
+</li>
+<li>SqueezeNet 加上复杂的夸层链接
+</li>
+</ul>
+
+
+<p>
+<a href="#figure-2">figure-2</a>显示了三种网络结构.
+</p>
+
+<p>
+简单的夸层链接结构,在 Fire-3,5,7,9 增加了夸层链接.和 ResNet 一样,在 Fire3 实现夸层链接,只
+需要将 Fire4 的输入等于 Fire2+Fire3 的输出即可.
+</p>
+
+<p>
+简单的夸层链接结构需要保证输入的通道和输出的通道数量必须保持一致.所以因为 freq=2,
+只有一半的 FireModule 可以添加简单的夸层链接.
+</p>
+
+<p>
+如果输入的通道和输出的通道不同,那么就需要使用复杂的夸层链接结构,和简单的夸层链接
+直接链接不同的是,复杂的夸层链接结构需要增加一个 1*1 卷积层来将输入的通道调整到输出
+的通道数.可以看到复杂的夸层链接增加了模型的额外的参数.
+</p>
+
+<p>
+夸层链接额外的减轻了 squeeze 层对整个网络表达能力的降低作用.由于 SR 设置为 0.125,即每
+一个 squeeze 层只有 8 分之 1 的输出通道与随后跟着的 expand 层对比.就是这样的通道
+维度的压缩,使得能够通过 squeeze 层的信息就变少了.通过增加夸层链接,使得信息可以直接
+跨过 FireModule 层.
+</p>
+
+<p>
+训练了如图<a href="#figure-2">figure-2</a>所示的 3 个网络结构,结果在<a href="#figure-6">figure-6</a>所示.可以看到增加了夸层链接
+的网络对准确性具有一定的提升.并且有趣的是简单夸层链接结构的网络准确性高于复杂结
+构.
+</p>
+<hr  />
+<div class="center">
+
+<div id="figure-6" class="figure">
+<p><img src="assets/squeeze-net/table-3.png" alt="table-3.png" />
+</p>
+<p><span class="figure-number">&#22270;6&nbsp;</span> SqueezeNet accuracy and model size using different macro-architecture configurations</p>
+</div>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8">Conclusions</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+本文尝试去探索了网络设计空间,并且提出了 <b>SqueezeNet</b> 一种卷积神经网络,50 倍少于
+AlexNet 网络参数规模,但是可以达到和 AlexNet 一样的准确性.并且可以将 SqueezeNet 压
+缩到 0.5MB 以下,510 倍少于 AlexNet.并且如果采取信的模型压缩方法
+Dense-Sparse-Dense<sup><a id="fnr.11" name="fnr.11" class="footref" href="#fn.11">11</a></sup>,该种方法在训练过程中作用和正则化一样可以提高模型的准确
+性.
+</p>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+An optimization methodology for neural network weights and architectures
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+An optimization methodology for neural network weights and architectures
+</p></div>
+
+<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
+Convolutional neural networks at constrained time cost
+</p></div>
+
+<div class="footdef"><sup><a id="fn.4" name="fn.4" class="footnum" href="#fnr.4">4</a></sup> <p class="footpara">
+Rectified linear units improve restricted boltzmann machines
+</p></div>
+
+<div class="footdef"><sup><a id="fn.5" name="fn.5" class="footnum" href="#fnr.5">5</a></sup> <p class="footpara">
+Dropout: a simple way to prevent neural networks from overfitting
+</p></div>
+
+<div class="footdef"><sup><a id="fn.6" name="fn.6" class="footnum" href="#fnr.6">6</a></sup> <p class="footpara">
+Network in network
+</p></div>
+
+<div class="footdef"><sup><a id="fn.7" name="fn.7" class="footnum" href="#fnr.7">7</a></sup> <p class="footpara">
+Systematic evaluation of cnn advances on the imagenet
+</p></div>
+
+<div class="footdef"><sup><a id="fn.8" name="fn.8" class="footnum" href="#fnr.8">8</a></sup> <p class="footpara">
+<a href="https://github.com/DeepScale/SqueezeNet">https://github.com/DeepScale/SqueezeNet</a>
+</p></div>
+
+<div class="footdef"><sup><a id="fn.9" name="fn.9" class="footnum" href="#fnr.9">9</a></sup> <p class="footpara">
+Highway networks
+</p></div>
+
+<div class="footdef"><sup><a id="fn.10" name="fn.10" class="footnum" href="#fnr.10">10</a></sup> <p class="footpara">
+Deep residual learning for image recognition
+</p></div>
+
+<div class="footdef"><sup><a id="fn.11" name="fn.11" class="footnum" href="#fnr.11">11</a></sup> <p class="footpara">
+Regularizing deep neural networks with dense-sparse-dense training flow
+</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

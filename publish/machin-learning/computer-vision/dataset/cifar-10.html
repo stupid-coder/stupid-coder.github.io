@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>CIFAR 数据集</title>
+<!-- 2018-10-04 Thu 22:03 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">CIFAR 数据集</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">CIFAR</a></li>
+<li><a href="#sec-2">CIFAR-10</a>
+<ul>
+<li><a href="#sec-2-1">下载</a></li>
+<li><a href="#sec-2-2">基准结果</a></li>
+<li><a href="#sec-2-3">数据使用</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">CIFAR-100</a>
+<ul>
+<li><a href="#sec-3-1">下载</a></li>
+<li><a href="#sec-3-2">数据使用</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">其他资料</a></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">CIFAR</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+=CIFAR=<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup> 是 Alex Krizhevsky 等人搜集构建的一个图像分类数据集。共有两个数
+据集 <b>CIFAR-10</b> 和 <b>CIFAR-100</b> 。命名中的数字表示的是数据集 label 的个数。
+</p>
+
+<p>
+<code>CIFAR</code> 是相对来说比较小的一个数据集，输入的图像分辨率为 32*32 彩色图片，并且数
+据有 60K 样本。50K 组成训练集，10K 为测试集。数据集比较适合进行教学和进行算法
+验证。
+</p>
+
+<p>
+那么详细分别介绍一些两个数据集。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">CIFAR-10</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<code>CIFAR-10</code> 总共有 10 类标签组成，每个标签下有 6K 的样本。整个数据集被分成了 5 个
+训练批次和一个测试批次。测试批次是从每一个标签中随机抽取的 1K 个样本。测试批次是剩
+下的图片随机组成的，所有批次中不是每个标签下样本的数量相等。
+</p>
+
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/cifar-10.png" alt="cifar-10.png" />
+</p>
+</div>
+</div>
+<hr  />
+
+<p>
+标签是互斥的，即一张图像如果属于 <i>truck</i> ，那么就不会再属于 <i>automobile</i> 。
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">下载</h3>
+<div class="outline-text-3" id="text-2-1">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left"><code>版本</code></td>
+<td class="left"><code>大小</code></td>
+<td class="left"><code>md5sum</code></td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz">CIFAR-10 python version</a></td>
+<td class="left">163MB</td>
+<td class="left">c58f30108f718f92721af3b95e74349a</td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-10-matlab.tar.gz">CIFAR-10 Matlab version</a></td>
+<td class="left">175MB</td>
+<td class="left">70270af85842c9e89bb428ec9976c926</td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz">CIFAR-10 binary version(for c)</a></td>
+<td class="left">162MB</td>
+<td class="left">c32a1d4ab5d03f1284b67883e8d87530</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">基准结果</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Rodrigo Benenson 非常赞的搜集很多数据集上的相应分类结果，其中包括 CIFAR。具体
+可以参考：<a href="http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html">image classification</a>。
+</p>
+
+<p>
+<a href="https://www.kaggle.com/c/cifar-10/leaderboard">CIFAT-10-kaggle-leaderboard</a> kaggle 上有关于 CIFAR-10 的竞赛模型排名。
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">数据使用</h3>
+<div class="outline-text-3" id="text-2-3">
+</div><ul class="org-ul"><li><a id="sec-2-3-1" name="sec-2-3-1"></a>Python / Matlab 版本<br  /><div class="outline-text-4" id="text-2-3-1">
+<p>
+Python 版本和 Matlab 版本的数据集的格式一样。这里主要描述 Python 版本。
+</p>
+
+<p>
+整个数据集包含 6 个文件：5 个训练批次 data\_batch\_[1-5]和 1 个测试集
+test\_batch。每个文件都是 使用 cPickle 打包的 pickled 文件。如下为 Python2 版本
+打开文件，并返回对应的字段结构：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">unpickle</span>(<span style="font-weight: bold;">file</span>):
+    <span style="color: #00bfff; font-weight: bold;">import</span> cPickle
+    <span style="color: #00bfff; font-weight: bold;">with</span> <span style="font-weight: bold;">open</span>(<span style="font-weight: bold;">file</span>, <span style="color: #daa520; font-style: italic;">'rb'</span>) <span style="color: #00bfff; font-weight: bold;">as</span> fo:
+        <span style="font-weight: bold;">dict</span> = cPickle.load(fo)
+    <span style="color: #00bfff; font-weight: bold;">return</span> <span style="font-weight: bold;">dict</span>
+</pre>
+</div>
+
+<p>
+Python3 版本：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">unpickle</span>(<span style="font-weight: bold;">file</span>):
+    <span style="color: #00bfff; font-weight: bold;">import</span> pickle
+    <span style="color: #00bfff; font-weight: bold;">with</span> <span style="font-weight: bold;">open</span>(<span style="font-weight: bold;">file</span>, <span style="color: #daa520; font-style: italic;">'rb'</span>) <span style="color: #00bfff; font-weight: bold;">as</span> fo:
+        <span style="font-weight: bold;">dict</span> = pickle.load(fo, encoding=<span style="color: #daa520; font-style: italic;">'bytes'</span>)
+    <span style="color: #00bfff; font-weight: bold;">return</span> <span style="font-weight: bold;">dict</span>
+</pre>
+</div>
+
+<p>
+加载文件后，返回的字典结构包含如下：
+</p>
+<dl class="org-dl">
+<dt> <code>data</code> </dt><dd>10000*3072 的 <code>numpy</code> 数组，数组数据类型为 uint8.每一行为一个对应
+的 32*32*3 彩色图像。前 1024 个数据为 Red 通道，中间 1024 个数据
+为 Green 通道，后 1024 个数据为 Blue 通道。图像是以行为前存储的，
+所以前 32 个数据为图像第一行的 Red 通道。所以整个格式是[C,H,W]。
+</dd>
+<dt> <code>labels</code> </dt><dd>10000 个在[0-9]之间的标签数据。
+</dd>
+</dl>
+
+
+<p>
+数据集包含其他文件： <code>batches.meta</code> 。该文件也是一个 dict 文件：
+</p>
+<dl class="org-dl">
+<dt> <code>label_names</code> </dt><dd>具有 10 个有意义名字的数组，和标签数据对应。
+</dd>
+</dl>
+</div>
+</li>
+
+<li><a id="sec-2-3-2" name="sec-2-3-2"></a>二进制版本<br  /><div class="outline-text-4" id="text-2-3-2">
+<p>
+二进制版本的数据集包含 5 个训练批次文件 data\_batch\_[1-5].bin 和测试批次
+test\_batch.bin。每个文件的格式为：
+</p>
+<pre class="example">
+&lt;1 * label&gt;&lt;3072 * pixel&gt;
+....
+&lt;1 * label&gt;&lt;3072 * pixel&gt;
+</pre>
+
+<p>
+也就是说第一个字节为当图像的标签。紧跟着的是 3072 字节，为对应图像的像素数据。
+前 1024 个字节为 Red 通道，中间 1024 个字节为 Green 通道，最后的 1024 个字节
+为 Blue 通道。并且以行优先存储，即前 32 个字节为图像第一行的红色通道数据。
+</p>
+
+<p>
+每个文件包含 10000 个这样 3073 字节长的数据样本，并且样本之间没有分隔符，那
+么也就是说文件长度为 30730000B。
+</p>
+
+<p>
+同样，包含 batches.meta.txt 文件，该文件每行对应为标签的 ASCII 字符串。
+</p>
+</div>
+</li></ul>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">CIFAR-100</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<code>CIFAT-100</code> 和 <code>CIFAR-10</code> 基本相似，但是包含 100 个标签和每个标签下只有 600 个
+样本。也就是说训练每个标签下采用 500 个训练，100 个测试。100 个标签分组成了 20 个
+父标签，每个样本都有一个精准的标签和一个父标签。
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1">下载</h3>
+<div class="outline-text-3" id="text-3-1">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left">Version</td>
+<td class="left">Size</td>
+<td class="left">md5sum</td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz">CIFAR-100 python version</a></td>
+<td class="left">161MB</td>
+<td class="left">eb9058c3a382ffc7106e4002c42a8d85</td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-100-matlab.tar.gz">CIFAR-100 Matlab version</a></td>
+<td class="left">175MB</td>
+<td class="left">6a4bfa1dcd5c9453dda6bb54194911f4</td>
+</tr>
+
+<tr>
+<td class="left"><a href="http://www.cs.toronto.edu/~kriz/cifar-100-binary.tar.gz">CIFAR-100 binary version(for c)</a></td>
+<td class="left">116MB</td>
+<td class="left">03b5dce01913d631647c71ecec9e9cb8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2">数据使用</h3>
+<div class="outline-text-3" id="text-3-2">
+</div><ul class="org-ul"><li><a id="sec-3-2-1" name="sec-3-2-1"></a>Python / Matlab 版本<br  /><div class="outline-text-4" id="text-3-2-1">
+<p>
+Python 和 Matlab 版本的数据和 CIFAR-10 一样，所以参考 CIFAR-10 格式即可。
+</p>
+</div>
+</li>
+
+<li><a id="sec-3-2-2" name="sec-3-2-2"></a>二进制版本<br  /><div class="outline-text-4" id="text-3-2-2">
+<p>
+二进制和 CIFAR-10 的二进制版本近似，只是每个样本有两个标签(一个精准的标签和一
+个父标签):
+</p>
+<pre class="example">
+&lt;1 * coarse label&gt;&lt;1 * fine label&gt;&lt;3072 * pixel&gt;
+...
+&lt;1 * coarse label&gt;&lt;1 * fine label&gt;&lt;3072 * pixel&gt;
+</pre>
+</div>
+</li></ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">其他资料</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+<a href="http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a> By Alex Krizhevsky, 2009
+</p>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+CIFAR: <a href="http://www.cs.toronto.edu/~kriz/cifar.html">http://www.cs.toronto.edu/~kriz/cifar.html</a>
+</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

@@ -28,7 +28,7 @@
   -----
   #+BEGIN_CENTER
   #+CAPTION: LeNet-5 architecture
-  [[file:assets/LeNet-5.jpg]]
+  [[file:assets/le-net/LeNet-5.jpg]]
   #+END_CENTER
   -----
 
@@ -77,7 +77,7 @@
    -----
    #+BEGIN_CENTER
    #+CAPTION: C3 卷积层中 16 个卷积核在深度维度的链接规则
-   [[file:assets/c3.png]]
+   [[file:assets/le-net/c3.png]]
    #+END_CENTER
    -----
 
@@ -162,7 +162,7 @@
    -----
    #+BEGIN_CENTER
    #+CAPTION: RBF
-   [[file:assets/rbf.png]]
+   [[file:assets/le-net/rbf.png]]
    #+END_CENTER
    -----
 
@@ -195,7 +195,6 @@
      \end{equation}
      第二项为错误分类的惩罚项。
 
-   
 * 网络结构
 
 所有的输入和输出维度为[N,H,W,C]，N 为样本数量，H 为高，W 为宽，C 为通道数。
