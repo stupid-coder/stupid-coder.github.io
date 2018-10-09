@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Introduction to Estimators</title>
+<!-- 2018-10-09 Tue 19:30 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Introduction to Estimators</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Advantages of Estimators</a></li>
+<li><a href="#sec-2">Pre-made Estimators</a>
+<ul>
+<li><a href="#sec-2-1">Structure of a pre-made Estimators program</a></li>
+<li><a href="#sec-2-2">Benefits of pre-made Estimators</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Custom Estimators</a></li>
+<li><a href="#sec-4">Recommended workflow</a></li>
+<li><a href="#sec-5">Creating Estimators from keras models</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文: <a href="https://www.tensorflow.org/guide/estimators">https://www.tensorflow.org/guide/estimators</a>
+</p>
+
+<p>
+本文介绍 <b>tf.estimator</b> ,简化训练流程的高级 TensorFlow 模型接口.Estimators 支持如下方法:
+</p>
+<dl class="org-dl">
+<dt> training </dt><dd>训练方法
+</dd>
+<dt> evaluation </dt><dd>评估方法
+</dd>
+<dt> prediction </dt><dd>预测方法
+</dd>
+<dt> export for serving </dt><dd>服务化方法
+</dd>
+</dl>
+
+
+<p>
+<b>Estimators</b> 内置了一些成熟的模型,提供给用户直接开箱即用.此外也支持通过传入向前传
+播函数来适配定义自己的 Estimator.不管内置的还是自己适配的 <b>Estimators</b> 都是通过继承
+<b>tf.estimator.Estimator</b>.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Advantages of Estimators</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+<b>Estimator</b> 框架提供如下优点:
+</p>
+<ul class="org-ul">
+<li>基于 Estimator 实现的模型可以不需要更改代码,就可以在不同的运行环境(单机 or 集群)
+上运行.并且支持在不同的硬件环境上无缝切换(CPU,GPU,TPU).
+</li>
+<li>Estimator 实现的模型代码清晰紧凑,更容易发布
+</li>
+<li>Estimator 内部负责构建计算图,初始化,加载数据等操作:
+<ul class="org-ul">
+<li>构建计算图
+</li>
+<li>初始化变量
+</li>
+<li>加载数据
+</li>
+<li>处理异常
+</li>
+<li>创建 CheckPoint 文件,从错误恢复训练
+</li>
+<li>保存可视化数据
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>
+当采取 Estimator 构建模型,需要将输入数据流和模型实现分开实现,这种方法简化了在不
+同训练集上作实验.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Pre-made Estimators</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+<b>Pre-made Estimators</b> 允许比 TensorFlow 接口更高阶抽象等级上构建模型,无需再考
+虑计算图的构建,会话的创建等一些繁琐的事情.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Structure of a pre-made Estimators program</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+基于 <b>Pre-made Estimator</b> 的程序,由如下 4 步组成:
+</p>
+<ol class="org-ol">
+<li><b>Write one or more dataset importing functions</b> 构建一个函数来返回训练数据
+集,构建另一个函数返回测试数据集.函数应该返回两个对象:
+<ul class="org-ul">
+<li>一个字典,键值为特征名称,值为张量(或者稀疏张量)包含对应的特征数据
+</li>
+<li>一个或者多个张量,代表当前样本的标签
+</li>
+</ul>
+<p>
+如下代码为数据集注入函数片段:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">input_fn</span>(dataset):
+  ...  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">manipulate dataset, extracting the feature dict and the label</span>
+<span style="color: #00bfff; font-weight: bold;">return</span> feature_dict, label
+</pre>
+</div>
+</li>
+<li><b>Define the feature columns</b> 需要定义 <b>tf.feature_column</b> ,来指定输入的特
+征名称,对应特征的类型,特征预处理.例如:如下的代码片段创建了三个特征列,特征
+类型为 int 或者 float.前两个特征列指定了特征名称和类型.第三个特征列此外制定了
+一个 <b>lambda</b> 函数用来对输入特征进行变换:
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Define three numeric feature columns.</span>
+<span style="font-weight: bold; font-style: italic;">population</span> = tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">'population'</span>)
+<span style="font-weight: bold; font-style: italic;">crime_rate</span> = tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">'crime_rate'</span>)
+<span style="font-weight: bold; font-style: italic;">median_education</span> = tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">'median_education'</span>,
+                    normalizer_fn=<span style="color: #00bfff; font-weight: bold;">lambda</span> x: x - global_education_mean)
+</pre>
+</div>
+</li>
+<li><b>Instantiate the relevant pre-made Estimator</b> 如下为内置的
+<b>LinearClassifier</b> Estimator 模型初始化:
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Instantiate an estimator, passing the feature columns.</span>
+<span style="font-weight: bold; font-style: italic;">estimator</span> = tf.estimator.LinearClassifier(
+    feature_columns=[population, crime_rate, median_education],
+    )
+</pre>
+</div>
+</li>
+<li><b>Call a training, evaluation, or inference method</b> 如下为调用模型的训练方
+法:
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">my_training_set is the function created in Step 1</span>
+estimator.train(input_fn=my_training_set, steps=2000)
+</pre>
+</div>
+</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Benefits of pre-made Estimators</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+<b>Pre-made Estimators</b> 实现了最佳特性:
+</p>
+<ul class="org-ul">
+<li>决定了模型哪部分需要计算,实现了单机和集群训练
+</li>
+<li>实现了事件收集机制
+</li>
+</ul>
+
+
+<p>
+如果是自己实现模型,需要自己实现上述特性.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Custom Estimators</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+不管是内置的还是自己适配的 Estimator,关键的核心方法为 <b>model function</b>,该方法
+构建训练,评估,预测模型的计算图.如果使用的是内置 Estimator,那么该方法已经有人实
+现了.如果是自己适配的 Estimator,那么主要是需要实现该方法,具体实现的方法可以参
+考 <b><a href="https://www.tensorflow.org/guide/custom_estimators">https://www.tensorflow.org/guide/custom_estimators</a></b>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Recommended workflow</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+推荐的构建流:
+</p>
+<ul class="org-ul">
+<li>先使用内置 Estimator 构建模型作为基础模型
+</li>
+<li>构建和测试整个工作流,将输入的数据集和内置 Estimator 集成在一起进行评估
+</li>
+<li>在内置 Estimator 模型上去评估和迭代训练最好的模型
+</li>
+<li>如果可以的话,通过自己实现适配 Estimator 来提高模型表现
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Creating Estimators from keras models</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+也可以将 <b>Keras</b> 模型转为 Estimator.这样可以使得基于 <b>Keras</b> 实现的模型也利用
+Estimator 的特性,例如分布式训练等.调用 <b>tf.keras.estimator.model_to_estimator</b>
+方法:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Instantiate a Keras inception v3 model.</span>
+<span style="font-weight: bold; font-style: italic;">keras_inception_v3</span> = tf.keras.applications.inception_v3.InceptionV3(weights=<span style="font-weight: bold; text-decoration: underline;">None</span>)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Compile model with the optimizer, loss, and metrics you'd like to train with.</span>
+keras_inception_v3.<span style="font-weight: bold;">compile</span>(optimizer=tf.keras.optimizers.SGD(lr=0.0001, momentum=0.9),
+                          loss=<span style="color: #daa520; font-style: italic;">'categorical_crossentropy'</span>,
+                          metric=<span style="color: #daa520; font-style: italic;">'accuracy'</span>)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Create an Estimator from the compiled Keras model. Note the initial model</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">state of the keras model is preserved in the created Estimator.</span>
+<span style="font-weight: bold; font-style: italic;">est_inception_v3</span> = tf.keras.estimator.model_to_estimator(keras_model=keras_inception_v3)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Treat the derived Estimator as you would with any other Estimator.</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">First, recover the input name(s) of Keras model, so we can use them as the</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">feature column name(s) of the Estimator input function:</span>
+keras_inception_v3.input_names  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">print out: ['input_1']</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Once we have the input name(s), we can create the input function, for example,</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">for input(s) in the format of numpy ndarray:</span>
+<span style="font-weight: bold; font-style: italic;">train_input_fn</span> = tf.estimator.inputs.numpy_input_fn(
+    x={<span style="color: #daa520; font-style: italic;">"input_1"</span>: train_data},
+    y=train_labels,
+    num_epochs=1,
+    shuffle=<span style="font-weight: bold; text-decoration: underline;">False</span>)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">To train, we call Estimator's train function:</span>
+est_inception_v3.train(input_fn=train_input_fn, steps=2000)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

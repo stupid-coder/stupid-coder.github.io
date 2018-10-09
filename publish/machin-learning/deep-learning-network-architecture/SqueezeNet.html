@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
 <head>
 <title>SqueezeNet</title>
-<!-- 2018-10-04 Thu 22:00 -->
+<!-- 2018-10-08 Mon 16:50 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="stupid-coder" />
@@ -134,6 +134,7 @@ for the JavaScript code in this tag.
 </li>
 <li><a href="#sec-7">CNN Macro-Architecture Design Space Exploration</a></li>
 <li><a href="#sec-8">Conclusions</a></li>
+<li><a href="#sec-9">Implementation with tf.keras</a></li>
 </ul>
 </div>
 </div>
@@ -596,6 +597,182 @@ AlexNet 网络参数规模,但是可以达到和 AlexNet 一样的准确性.并�
 缩到 0.5MB 以下,510 倍少于 AlexNet.并且如果采取信的模型压缩方法
 Dense-Sparse-Dense<sup><a id="fnr.11" name="fnr.11" class="footref" href="#fn.11">11</a></sup>,该种方法在训练过程中作用和正则化一样可以提高模型的准确
 性.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-9" class="outline-2">
+<h2 id="sec-9">Implementation with tf.keras</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+SqueezeNet 有很多实现,如下是基于 tf.keras 实现.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">import</span> tensorflow <span style="color: #00bfff; font-weight: bold;">as</span> tf
+<span style="color: #00bfff; font-weight: bold;">from</span> tensorflow <span style="color: #00bfff; font-weight: bold;">import</span> keras
+
+<span style="color: #00bfff; font-weight: bold;">import</span> argparse
+
+<span style="font-weight: bold; font-style: italic;">parser</span> = argparse.ArgumentParser(description=<span style="color: #daa520; font-style: italic;">"SqueezeNet"</span>)
+
+parser.add_argument(<span style="color: #daa520; font-style: italic;">"--base"</span>, <span style="font-weight: bold;">type</span>=<span style="font-weight: bold;">int</span>, default=128,
+                    <span style="font-weight: bold;">help</span>=<span style="color: #daa520; font-style: italic;">"number of base filters"</span>)
+
+parser.add_argument(<span style="color: #daa520; font-style: italic;">"--incr"</span>, <span style="font-weight: bold;">type</span>=<span style="font-weight: bold;">int</span>, default=128,
+                    <span style="font-weight: bold;">help</span>=<span style="color: #daa520; font-style: italic;">"increment number after every freq fire module"</span>)
+
+parser.add_argument(<span style="color: #daa520; font-style: italic;">"--pct"</span>, <span style="font-weight: bold;">type</span>=<span style="font-weight: bold;">float</span>, default=0.5,
+                    <span style="font-weight: bold;">help</span>=<span style="color: #daa520; font-style: italic;">"percent of 1*1 with 3*3 in fire module"</span>)
+
+parser.add_argument(<span style="color: #daa520; font-style: italic;">"--freq"</span>, <span style="font-weight: bold;">type</span>=<span style="font-weight: bold;">int</span>, default=2,
+                    <span style="font-weight: bold;">help</span>=<span style="color: #daa520; font-style: italic;">"every freq fire module the number of filters must increment"</span>)
+
+parser.add_argument(<span style="color: #daa520; font-style: italic;">"--sr"</span>, <span style="font-weight: bold;">type</span>=<span style="font-weight: bold;">float</span>, default=0.125,
+                    <span style="font-weight: bold;">help</span>=<span style="color: #daa520; font-style: italic;">"squeeze ratio"</span>)
+
+
+<span style="color: #00bfff; font-weight: bold;">class</span> <span style="font-weight: bold; text-decoration: underline;">SqueezeNet</span>(<span style="font-weight: bold;">object</span>):
+    <span style="color: #daa520; font-style: italic;">"""Keras Implementation of SqueezeNet(arXiv 1602.073600)</span>
+
+<span style="color: #daa520; font-style: italic;">    @param options: SqueezeNet archtecture setting</span>
+
+<span style="color: #daa520; font-style: italic;">    Arguments:</span>
+<span style="color: #daa520; font-style: italic;">    input_shape -- shape of the input images (rows, cols, channel)</span>
+<span style="color: #daa520; font-style: italic;">    nclass -- number of final categories</span>
+
+<span style="color: #daa520; font-style: italic;">    """</span>
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">__init__</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, options: argparse.Namespace, input_shape: <span style="font-weight: bold;">list</span>=[224, 224, 3], nclass: <span style="font-weight: bold;">int</span>=1000, small: <span style="font-weight: bold;">bool</span>=<span style="font-weight: bold; text-decoration: underline;">False</span>):
+        <span style="color: #00bfff; font-weight: bold;">if</span> small:
+            <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton = SqueezeNet._build_skeleton_small(input_shape, nclass, options)
+        <span style="color: #00bfff; font-weight: bold;">else</span>:
+            <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton = SqueezeNet._build_skeleton(input_shape, nclass, options)
+        <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton.summary()
+
+    <span style="font-weight: bold; text-decoration: underline;">@staticmethod</span>
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_build_fire_module</span>(<span style="font-weight: bold;">input</span>, nkernel, sr, pct, name):
+        <span style="font-weight: bold; font-style: italic;">squeeze</span> = keras.layers.Conv2D(filters=<span style="font-weight: bold;">int</span>(nkernel * sr), kernel_size=3, strides=1,
+                                      padding=<span style="color: #daa520; font-style: italic;">'same'</span>, name=<span style="color: #daa520; font-style: italic;">"{}_squeeze"</span>.<span style="font-weight: bold;">format</span>(name))(<span style="font-weight: bold;">input</span>)
+        <span style="font-weight: bold; font-style: italic;">expand1</span> = keras.layers.Conv2D(filters=<span style="font-weight: bold;">int</span>(nkernel * (1-pct)), kernel_size=1, strides=1,
+                                      padding=<span style="color: #daa520; font-style: italic;">'same'</span>, name=<span style="color: #daa520; font-style: italic;">"{}_expand1"</span>.<span style="font-weight: bold;">format</span>(name))(squeeze)
+        <span style="font-weight: bold; font-style: italic;">expand2</span> = keras.layers.Conv2D(filters=<span style="font-weight: bold;">int</span>(nkernel * pct), kernel_size=3, strides=1,
+                                      padding=<span style="color: #daa520; font-style: italic;">'same'</span>, name=<span style="color: #daa520; font-style: italic;">"{}_expand2"</span>.<span style="font-weight: bold;">format</span>(name))(squeeze)
+        <span style="color: #00bfff; font-weight: bold;">return</span> keras.layers.concatenate([expand1, expand2], axis=-1, name=name)
+
+    <span style="font-weight: bold; text-decoration: underline;">@staticmethod</span>
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_calculate_nkernel</span>(nbase, layer, freq, incr):
+        <span style="color: #00bfff; font-weight: bold;">return</span> nbase + layer // freq * incr
+
+    <span style="font-weight: bold; text-decoration: underline;">@staticmethod</span>
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_build_skeleton</span>(input_shape, nclass, options):
+        <span style="font-weight: bold; font-style: italic;">input_img</span> = keras.Input(shape=input_shape)
+
+        <span style="font-weight: bold; font-style: italic;">conv1</span> = keras.layers.Conv2D(filters=96, kernel_size=7, strides=2, padding=<span style="color: #daa520; font-style: italic;">'same'</span>,
+                                    activation=keras.activations.relu, name=<span style="color: #daa520; font-style: italic;">'conv1'</span>)(input_img)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool1</span> = keras.layers.MaxPooling2D(pool_size=3, strides=2, name=<span style="color: #daa520; font-style: italic;">'maxpool1'</span>)(conv1)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 0, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire2</span> = SqueezeNet._build_fire_module(maxpool1, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire2"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 1, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire3</span> = SqueezeNet._build_fire_module(fire2, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire3"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 2, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire4</span> = SqueezeNet._build_fire_module(fire3, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire4"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool4</span> = keras.layers.MaxPooling2D(pool_size=3, strides=2, name=<span style="color: #daa520; font-style: italic;">"maxpool4"</span>)(fire4)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 3, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire5</span> = SqueezeNet._build_fire_module(maxpool4, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire5"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 4, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire6</span> = SqueezeNet._build_fire_module(fire5, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire6"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 5, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire7</span> = SqueezeNet._build_fire_module(fire6, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire7"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 6, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire8</span> = SqueezeNet._build_fire_module(fire7, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire8"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool8</span> = keras.layers.MaxPooling2D(pool_size=3, strides=2, name=<span style="color: #daa520; font-style: italic;">"maxpool8"</span>)(fire8)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 7, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire9</span> = SqueezeNet._build_fire_module(maxpool8, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire9"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">fire9_dropout</span> = keras.layers.Dropout(0.5, name=<span style="color: #daa520; font-style: italic;">"fire9_dropout"</span>)(fire9)
+        <span style="font-weight: bold; font-style: italic;">conv10</span> = keras.layers.Conv2D(filters=nclass, kernel_size=1, strides=1, padding=<span style="color: #daa520; font-style: italic;">'valid'</span>,
+                                     activation=keras.activations.relu, name=<span style="color: #daa520; font-style: italic;">'conv10'</span>)(fire9_dropout)
+
+        <span style="font-weight: bold; font-style: italic;">global_avgpool10</span> = keras.layers.GlobalAvgPool2D()(conv10)
+        <span style="font-weight: bold; font-style: italic;">softmax</span> = keras.layers.Activation(keras.activations.softmax, name=<span style="color: #daa520; font-style: italic;">"softmax"</span>)(global_avgpool10)
+        <span style="color: #00bfff; font-weight: bold;">return</span> keras.Model(inputs=input_img, outputs=softmax)
+
+    <span style="font-weight: bold; text-decoration: underline;">@staticmethod</span>
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_build_skeleton_small</span>(input_shape, nclass, options):
+        <span style="font-weight: bold; font-style: italic;">input_img</span> = keras.Input(shape=input_shape)
+
+        <span style="font-weight: bold; font-style: italic;">conv1</span> = keras.layers.Conv2D(96, kernel_size=2, strides=1, padding=<span style="color: #daa520; font-style: italic;">'same'</span>,
+                                    activation=keras.activations.relu, name=<span style="color: #daa520; font-style: italic;">'conv1'</span>)(input_img)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool1</span> = keras.layers.MaxPooling2D(pool_size=2, strides=2, name=<span style="color: #daa520; font-style: italic;">"maxpool1"</span>)(conv1)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 0, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire2</span> = SqueezeNet._build_fire_module(maxpool1, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">'fire2'</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 1, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire3</span> = SqueezeNet._build_fire_module(fire2, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire3"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 2, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire4</span> = SqueezeNet._build_fire_module(fire3, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire4"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool4</span> = keras.layers.MaxPooling2D(pool_size=2, strides=2, name=<span style="color: #daa520; font-style: italic;">"maxpool4"</span>)(fire4)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 3, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire5</span> = SqueezeNet._build_fire_module(maxpool4, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire5"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 4, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire6</span> = SqueezeNet._build_fire_module(fire5, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire6"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 5, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire7</span> = SqueezeNet._build_fire_module(fire6, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire7"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 6, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire8</span> = SqueezeNet._build_fire_module(fire7, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire8"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">maxpool8</span> = keras.layers.MaxPooling2D(pool_size=2, strides=2, name=<span style="color: #daa520; font-style: italic;">"maxpool8"</span>)(fire8)
+
+        <span style="font-weight: bold; font-style: italic;">nkernel</span> = SqueezeNet._calculate_nkernel(options.base, 7, options.freq, options.incr)
+        <span style="font-weight: bold; font-style: italic;">fire9</span> = SqueezeNet._build_fire_module(maxpool8, nkernel, options.sr, options.pct, name=<span style="color: #daa520; font-style: italic;">"fire9"</span>)
+
+        <span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">fire9_dropout = keras.layers.Dropout(0.5, name="fire9_dropout")(fire9)</span>
+        <span style="font-weight: bold; font-style: italic;">conv10</span> = keras.layers.Conv2D(filters=nclass, kernel_size=1, strides=1, padding=<span style="color: #daa520; font-style: italic;">'valid'</span>,
+                                     activation=keras.activations.relu, name=<span style="color: #daa520; font-style: italic;">'conv10'</span>)(fire9)
+
+        <span style="font-weight: bold; font-style: italic;">global_avgpool10</span> = keras.layers.GlobalAvgPool2D()(conv10)
+        <span style="font-weight: bold; font-style: italic;">softmax</span> = keras.layers.Activation(keras.activations.softmax, name=<span style="color: #daa520; font-style: italic;">"softmax"</span>)(global_avgpool10)
+
+        <span style="color: #00bfff; font-weight: bold;">return</span> keras.Model(inputs=input_img, outputs=softmax)
+
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">train</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, X, y, batch_size, epochs, cpdir):
+        <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton.<span style="font-weight: bold;">compile</span>(optimizer=keras.optimizers.SGD(lr=0.01, momentum=0.9, decay=0.9, nesterov=<span style="font-weight: bold; text-decoration: underline;">True</span>),
+                              loss=<span style="color: #daa520; font-style: italic;">"categorical_crossentropy"</span>,
+                              metrics=[<span style="color: #daa520; font-style: italic;">"accuracy"</span>])
+        <span style="font-weight: bold; font-style: italic;">tb</span> = keras.callbacks.TensorBoard()
+        <span style="font-weight: bold; font-style: italic;">ck</span> = keras.callbacks.ModelCheckpoint(cpdir, period=5)
+        <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton.fit(X, y, batch_size=batch_size, epochs=epochs, callbacks=[tb, ck])
+
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">evaluate</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, X, y, batch_size):
+        <span style="color: #00bfff; font-weight: bold;">return</span> <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton.evaluate(X, y, batch_size=batch_size)
+
+    <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">predicate</span>(<span style="color: #00bfff; font-weight: bold;">self</span>, X):
+        <span style="color: #00bfff; font-weight: bold;">return</span> <span style="color: #00bfff; font-weight: bold;">self</span>.skeleton.predict(X)
+</pre>
+</div>
+<p>
+<b>_calculate_nkernel</b> 静态方法用来计算每个 FireModule 的卷积核数量.然后根据设置的
+ SqueezeNet 网络的参数来分类 squeeze 层的卷积核数量和 expand 层的 1*1 卷积核和 3*3 卷积核
+ 数量.
 </p>
 </div>
 </div>

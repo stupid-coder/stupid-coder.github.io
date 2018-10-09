@@ -10,11 +10,13 @@
          + guide
            + high-level-apis
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/keras.org][keras in tensorflow 2018-09-25]]
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/introduction-to-estimators.org][Introduction to Estimators 2018-10-09]]
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/importing-data.org][Importing Data 2018-10-09]]
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
-           + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
      + deep-learning-network-architecture
-       + [[file:machin-learning/deep-learning-network-architecture/SqueezeNet.org][SqueezeNet 2018-10-04]]
+       + [[file:machin-learning/deep-learning-network-architecture/SqueezeNet.org][SqueezeNet 2018-10-07]]
        + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-10-04]]
+       + [[file:machin-learning/deep-learning-network-architecture/AlexNet.org][ImageNet Classification with Deep Convolutional Neural Networks 2018-10-08]]
      + cs231n
        + neural-networks
          + [[file:machin-learning/cs231n/neural-networks/putting-it-together-minimal-neural-network-case-study.org][Putting it together: Minimal Neural Network Case Study 2018-08-27]]
@@ -22,7 +24,7 @@
          + [[file:machin-learning/cs231n/neural-networks/neural-networks-part-3-learning-and-evaluation.org][Learning and Evaluation 2018-08-27]]
          + [[file:machin-learning/cs231n/neural-networks/neural-networks-part-2-setting-up-data-and-the-loss.org][Setting up the Data and the Loss 2018-08-27]]
          + [[file:machin-learning/cs231n/neural-networks/neural-networks-part-1-setting-the-architecture.org][setting the architecture 2018-08-20]]
-         + [[file:machin-learning/cs231n/neural-networks/linear-classification-support-vector-machine-softmax.org][Linear classification: Support Vector Machine, Softmax 2018-08-14]]
+         + [[file:machin-learning/cs231n/neural-networks/linear-classification-support-vector-machine-softmax.org][Linear classification: Support Vector Machine, Softmax 2018-10-08]]
          + [[file:machin-learning/cs231n/neural-networks/image-classifcation-data-driven-approach-k-nearest-neighbor-train-val-test-splits.org][Image Classification: Data-driven Approach, k-Nearest Neighbor, train/val/test splits 2018-08-09]]
          + [[file:machin-learning/cs231n/neural-networks/backpropagation-intuitions.org][Backpropagation, Intuitions 2018-08-22]]
        + convolutional-neural-networks

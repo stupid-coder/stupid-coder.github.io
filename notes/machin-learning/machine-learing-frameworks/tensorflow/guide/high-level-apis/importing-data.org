@@ -1,0 +1,652 @@
+#+TITLE: Importing Data 
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: num:nil H:2
+
+
+原文: https://www.tensorflow.org/guide/datasets
+
+#+BEGIN_QUOTE
+本文为翻译,用来学习 Tensorflow dataset 机制.
+#+END_QUOTE
+
+*tf.data* 提供了简单和可复用的数据读取接口.可以直接读取分布式文件系统上的图像文
+件,然后对图像文件进行随机打乱,然后随机选取多张图像作为一个批次,喂给模型训练.也可
+以在读取文本信息的同时,从原始数据中抽取符号,然后将这些符号转为对应的嵌入表达
+(/embedding/),然后批次送给文本模型.tf.data 可以很容易的读取大量不同格式的数据,调
+用不同的数据转换.
+
+tf.data 引入了两个抽象对象:
++ =tf.data.Dataset= :: 用来表示一个数据集,该数据集有多个元素,每个元素可以是一个
+     或者多个 *Tensor* 组成.例如:读取图像的输入流,数据集中的元素为一个训练样本,
+     该样本由两个张量组成,一个是图像数据,一个是对应的标签.如下为两种构建数据集的
+     方法:
+  + 从一个或者多个 tf.Tensor 数据源对象构建数据集(Dataset.from_tensor_slices())
+  + 从一个或者多个 tf.data.Dataset 上执行转换构建数据集(Dataset.batch())
++ =tf.data.Interator= :: 提供从数据集对象中获取元素的方法. *Iterator.get_next()*
+     返回的操作符返回数据集中的下一个样本.最简单的迭代器是 *one-shot iterator* ,
+     用来迭代数据集一次.更灵活的用法是,调用 *Iterator.initializer* 操作符来重新
+     初始化迭代器,从而可以多次的在不同的数据集上进行数据迭代.
+
+* Basic mechanics
+本节主要用来描述创建 Dataset 和 Iteator 对象的用法和获取样本.
+
+首先需要定义数据来源(/source/).例如:从内存中的 Tensor 对象构建 Dataset:
+#+BEGIN_SRC python
+  tf.data.Dataset.from_tensors()
+  # or
+  tf.data.Dataset.from_tensor_slices()
+#+END_SRC
+
+如果输入数据是在硬盘上,且格式为 *TFRecord* ,可以通过调用
+*tf.data.TFRecordDataset* 来构建数据集.
+
+构建 Dataset 对象后,可以调用相关的方法来对输入的数据进行转换.例如可以调用
+*Dataset.map()* 方法来对输入的每个样本进行转换(对每个样本执行一个转换函数).或则
+调用 *Dataset.batch()* 来使用多个样本构建一个训练批次.可以参考[[https://www.tensorflow.org/api_docs/python/tf/data/Dataset][tf.data.Dataset]]文
+档查看转换方法.
+
+从 Dataset 中读取数据的方法是用当前的数据集 Dataset 构建一个迭代其 Iterator,Iterator
+提供读取样本数据的方法(Dataset.make_one_shot_iterator()).tf.data.Iterator 迭代器
+提供两个操作:Iterator.initializer 用来初始化和重置迭代器;Iterator.get_next()用来
+返回数据集中的下一个样本.
+
+** Dataset structure
+数据集 Dataset 中的样本元素具有相同的结构.一个样本元素包含一个或者多个 tf.Tensor 对
+象,叫做组件(/components/).每个组件都有一个类型 *tf.DType* 和 维度
+*tf.TensorShape* . *Dataset.output_types* 和 *Dataset.
+_shapes* 用来显示数据集中的样本元素的类型和维度.
+#+BEGIN_SRC python
+  dataset1 = tf.data.Dataset.from_tensor_slices(tf.random_uniform([4, 10]))
+  print(dataset1.output_types)  # ==> "tf.float32"
+  print(dataset1.output_shapes)  # ==> "(10,)"
+
+  dataset2 = tf.data.Dataset.from_tensor_slices(
+     (tf.random_uniform([4]),
+      tf.random_uniform([4, 100], maxval=100, dtype=tf.int32)))
+  print(dataset2.output_types)  # ==> "(tf.float32, tf.int32)"
+  print(dataset2.output_shapes)  # ==> "((), (100,))"
+
+  dataset3 = tf.data.Dataset.zip((dataset1, dataset2))
+  print(dataset3.output_types)  # ==> (tf.float32, (tf.float32, tf.int32))
+  print(dataset3.output_shapes)  # ==> "(10, ((), (100,)))"
+#+END_SRC
+
+Dataset 也支持对样本元素进行命名,例如:一个样本的不同特征.构建 Dataset 的时候可以使
+用字典或者 *collections.namedtuple* 映射命名到 Tensors:
+#+BEGIN_SRC python
+  dataset = tf.data.Dataset.from_tensor_slices(
+      {"a": tf.random_uniform([4]),
+       "b": tf.random_uniform([4, 100], maxval=100, dtype=tf.int32)})
+  print(dataset.output_types)  # ==> "{'a': tf.float32, 'b': tf.int32}"
+  print(dataset.output_shapes)  # ==> "{'a': (), 'b': (100,)}"
+#+END_SRC
+
+Dataset 转换支持任意的结构.当使用 *Dataset.map(), Dataset.flat_map(),
+Dataset.filter()* 将转换函数作用到每一个样本元素上,函数的参数由样本元素的结构决
+定:
+#+BEGIN_SRC python
+  dataset1 = dataset1.map(lambda x: ...)
+
+  dataset2 = dataset2.flat_map(lambda x, y: ...)
+
+  # Note: Argument destructuring is not available in Python 3.
+  dataset3 = dataset3.filter(lambda x, (y, z): ...)
+#+END_SRC
+
+** Creating an iterator
+创建 Dataset 之后,下一步就是创建迭代器 Iterator 来遍历数据集. *tf.data* 接口支持
+如下迭代器,以抽象等级增加排列:
+- one-shot
+- initializable
+- reinitializable
+- feedable
+
+
+*one-shot* 是最简单的迭代器,不需要手动初始化,只支持迭代数据集一遍. *one-shot* 迭
+代器支持基于队列的输入流,但是不支持参数特化.使用 *Dataset.range()*:
+#+BEGIN_SRC python
+  dataset = tf.data.Dataset.range(100)
+  iterator = dataset.make_one_shot_iterator()
+  next_element = iterator.get_next()
+
+  for i in range(100):
+    value = sess.run(next_element)
+    assert i == value
+#+END_SRC
+
+-----
+*initializable* 迭代器需要显示的调用迭代器的初始化操作符 *iterator.initializer*
+才能使用.可以在初始化接口中以一个或多个参数 *tf.placeholder* 特化 Dataset.如下还
+是以 *Dataset.range()* 为例:
+#+BEGIN_SRC python
+  max_value = tf.placeholder(tf.int64, shape=[])
+  dataset = tf.data.Dataset.range(max_value)
+  iterator = dataset.make_initializable_iterator()
+  next_element = iterator.get_next()
+
+  # Initialize an iterator over a dataset with 10 elements.
+  sess.run(iterator.initializer, feed_dict={max_value: 10})
+  for i in range(10):
+    value = sess.run(next_element)
+    assert i == value
+
+  # Initialize the same iterator over a dataset with 100 elements.
+  sess.run(iterator.initializer, feed_dict={max_value: 100})
+  for i in range(100):
+    value = sess.run(next_element)
+    assert i == value
+
+#+END_SRC
+
+-----
+*reinitializable* 可重置的迭代器可以从不同的 Dataset 对象初始化.例如:可以在训练输
+入流中的图片使用随机扰动来提升模型泛化,在验证输入流上预测未修改的图像.
+#+BEGIN_SRC python
+  # Define training and validation datasets with the same structure.
+  training_dataset = tf.data.Dataset.range(100).map(
+      lambda x: x + tf.random_uniform([], -10, 10, tf.int64))
+  validation_dataset = tf.data.Dataset.range(50)
+
+  # A reinitializable iterator is defined by its structure. We could use the
+  # `output_types` and `output_shapes` properties of either `training_dataset`
+  # or `validation_dataset` here, because they are compatible.
+  iterator = tf.data.Iterator.from_structure(training_dataset.output_types,
+                                             training_dataset.output_shapes)
+  next_element = iterator.get_next()
+
+  training_init_op = iterator.make_initializer(training_dataset)
+  validation_init_op = iterator.make_initializer(validation_dataset)
+
+  # Run 20 epochs in which the training dataset is traversed, followed by the
+  # validation dataset.
+  for _ in range(20):
+    # Initialize an iterator over the training dataset.
+    sess.run(training_init_op)
+    for _ in range(100):
+      sess.run(next_element)
+
+    # Initialize an iterator over the validation dataset.
+    sess.run(validation_init_op)
+    for _ in range(50):
+      sess.run(next_element)
+#+END_SRC
+
+-----
+*feedable* 迭代器可以和 *tf.placeholder* 一起使用,从而在每次 *tf.Session.run* 中
+来选择不同的迭代器使用.功能和 *reinitializable* 迭代器差不多相似,但是不需要每次
+都重新初始化.例如:使用上述相同训练集和验证集,可以使用
+*tf.data.Iterator.from_string_handle* 来定义 *feedable* 迭代器,从而实现两个数据
+集的切换:
+#+BEGIN_SRC python
+  # Define training and validation datasets with the same structure.
+  training_dataset = tf.data.Dataset.range(100).map(
+      lambda x: x + tf.random_uniform([], -10, 10, tf.int64)).repeat()
+  validation_dataset = tf.data.Dataset.range(50)
+
+  # A feedable iterator is defined by a handle placeholder and its structure. We
+  # could use the `output_types` and `output_shapes` properties of either
+  # `training_dataset` or `validation_dataset` here, because they have
+  # identical structure.
+  handle = tf.placeholder(tf.string, shape=[])
+  iterator = tf.data.Iterator.from_string_handle(
+      handle, training_dataset.output_types, training_dataset.output_shapes)
+  next_element = iterator.get_next()
+
+  # You can use feedable iterators with a variety of different kinds of iterator
+  # (such as one-shot and initializable iterators).
+  training_iterator = training_dataset.make_one_shot_iterator()
+  validation_iterator = validation_dataset.make_initializable_iterator()
+
+  # The `Iterator.string_handle()` method returns a tensor that can be evaluated
+  # and used to feed the `handle` placeholder.
+  training_handle = sess.run(training_iterator.string_handle())
+  validation_handle = sess.run(validation_iterator.string_handle())
+
+  # Loop forever, alternating between training and validation.
+  while True:
+    # Run 200 steps using the training dataset. Note that the training dataset is
+    # infinite, and we resume from where we left off in the previous `while` loop
+    # iteration.
+    for _ in range(200):
+      sess.run(next_element, feed_dict={handle: training_handle})
+
+    # Run one pass over the validation dataset.
+    sess.run(validation_iterator.initializer)
+    for _ in range(50):
+      sess.run(next_element, feed_dict={handle: validation_handle})
+#+END_SRC
+
+** Consuming values from an iterator
+*Iterator.get_next()* 返回一个或多个 *tf.Tensor* 对象,这些对像为对应的 Dataset 的
+下一个样本元素符号.每次运行这些 Tensors,都会返回对应的下一个样本元素.
+
+一旦 Iterator 迭代到数据集的最后,运行 *Iterator.get_next()* 操作符会抛出
+*tf.errors.OutOfRangeError*.需要重新初始化迭代器,才能使用.
+
+#+BEGIN_SRC python
+  dataset = tf.data.Dataset.range(5)
+  iterator = dataset.make_initializable_iterator()
+  next_element = iterator.get_next()
+
+  # Typically `result` will be the output of a model, or an optimizer's
+  # training operation.
+  result = tf.add(next_element, next_element)
+
+  sess.run(iterator.initializer)
+  print(sess.run(result))  # ==> "0"
+  print(sess.run(result))  # ==> "2"
+  print(sess.run(result))  # ==> "4"
+  print(sess.run(result))  # ==> "6"
+  print(sess.run(result))  # ==> "8"
+  try:
+    sess.run(result)
+  except tf.errors.OutOfRangeError:
+    print("End of dataset")  # ==> "End of dataset"
+#+END_SRC
+
+所以,一个常规的使用方法是将训练流程放在 *try-except* 中:
+#+BEGIN_SRC python
+  sess.run(iterator.initializer)
+  while True:
+      try:
+          sess.run(result)
+      except tf.errors.OutOfRangeError:
+          break
+#+END_SRC
+
+Dataset 中的样本元素为结构化的,所以 *Iterator.get_next()* 返回为一个或多个
+*tf.Tensor* 对象:
+#+BEGIN_SRC python
+  dataset1 = tf.data.Dataset.from_tensor_slices(tf.random_uniform([4, 10]))
+  dataset2 = tf.data.Dataset.from_tensor_slices((tf.random_uniform([4]), tf.random_uniform([4, 100])))
+  dataset3 = tf.data.Dataset.zip((dataset1, dataset2))
+
+  iterator = dataset3.make_initializable_iterator()
+
+  sess.run(iterator.initializer)
+  next1, (next2, next3) = iterator.get_next()
+#+END_SRC
+next1,next2,next3 为同一个操作符/节点(*Iterator.get_next()*)运行得到的.所以运行
+这三个中任意的张量,会运行迭代器向前移动.
+
+** Saving iterator state
+*tf.contrib.data.make_saveable_from_iterator* 函数返回迭代器的 *SaveableObject*
+,可以用来保存和回复当前迭代器的状态.该对象可以加到 *tf.train.Saver* 变量列表中或
+者 *tf.GraphKeys.SAVEABLE_OBJECTS* 集合中,就可以和常规的变量 *tf.variable* 一样
+保存和还原了.可以参考[[https://www.tensorflow.org/guide/saved_model][Saving and Restoring]]查看如何保存和还原变量.
+#+BEGIN_SRC python
+  # Create saveable object from iterator.
+  saveable = tf.contrib.data.make_saveable_from_iterator(iterator)
+
+  # Save the iterator state by adding it to the saveable objects collection.
+  tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, saveable)
+  saver = tf.train.Saver()
+
+  with tf.Session() as sess:
+
+    if should_checkpoint:
+      saver.save(path_to_checkpoint)
+
+  # Restore the iterator state.
+  with tf.Session() as sess:
+    saver.restore(sess, path_to_checkpoint)
+#+END_SRC
+
+* Reading input data
+** Consuming NumPy arrays
+如果所有的数据可以存储到内存中,那么最简单创建 Dataset 的方法就是调用
+*Dataset.from_tensor_slices* 将内存中的对象转成*tf.Tensor*.
+#+BEGIN_SRC python
+  # Load the training data into two NumPy arrays, for example using `np.load()`.
+  with np.load("/var/data/training_data.npy") as data:
+    features = data["features"]
+    labels = data["labels"]
+
+  # Assume that each row of `features` corresponds to the same row as `labels`.
+  assert features.shape[0] == labels.shape[0]
+
+  dataset = tf.data.Dataset.from_tensor_slices((features, labels))
+#+END_SRC
+
+上述的代码就会将内存中的 features 和 labels 数组嵌入 TensorFlow 的图中的
+*tf.costant()* 操作符.这种方式比较适合较小的数据集,但是由于需要多次拷贝,所以会浪
+费较多的内存.
+
+另外一种方案,可以使用 *tf.placeholder()* 张量定义 Dataset,然后将 NumPy 数组喂给迭
+代器:
+#+BEGIN_SRC python
+  # Load the training data into two NumPy arrays, for example using `np.load()`.
+  with np.load("/var/data/training_data.npy") as data:
+    features = data["features"]
+    labels = data["labels"]
+
+  # Assume that each row of `features` corresponds to the same row as `labels`.
+  assert features.shape[0] == labels.shape[0]
+
+  features_placeholder = tf.placeholder(features.dtype, features.shape)
+  labels_placeholder = tf.placeholder(labels.dtype, labels.shape)
+
+  dataset = tf.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
+  # [Other transformations on `dataset`...]
+  dataset = ...
+  iterator = dataset.make_initializable_iterator()
+
+  sess.run(iterator.initializer, feed_dict={features_placeholder: features,
+                                            labels_placeholder: labels})
+#+END_SRC
+
+** Consuming TFRecord data
+*tf.data* 支持多种文件格式,可以用来处理无法存储在内存中的数据.例如: TFRecord 文
+件格式为 TensorFlow 存储的二进制文件格式. *tf.data.TFRecordDataset* 类可以用来流式
+遍历 TFRecord 文件:
+#+BEGIN_SRC python
+  # Creates a dataset that reads all of the examples from two files.
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+#+END_SRC
+
+TFRecordDataset 的初始化参数 filenames 可以是字符串,字符串列表或者字符串的张量.如
+果有两个文件,一个训练文件,一个验证文件,那么可以使用 *tf.placeholder(tf.string)*
+来代表文件名,采取不同文件名来初始化迭代器:
+#+BEGIN_SRC python
+  filenames = tf.placeholder(tf.string, shape=[None])
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(...)  # Parse the record into tensors.
+  dataset = dataset.repeat()  # Repeat the input indefinitely.
+  dataset = dataset.batch(32)
+  iterator = dataset.make_initializable_iterator()
+
+  # You can feed the initializer with the appropriate filenames for the current
+  # phase of execution, e.g. training vs. validation.
+
+  # Initialize `iterator` with training data.
+  training_filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  sess.run(iterator.initializer, feed_dict={filenames: training_filenames})
+
+  # Initialize `iterator` with validation data.
+  validation_filenames = ["/var/data/validation1.tfrecord", ...]
+  sess.run(iterator.initializer, feed_dict={filenames: validation_filenames})
+#+END_SRC
+
+** Consuming text data
+*tf.data.TextLineDataset* 用来支持从文本文件创建 Dataset.类似 TFRecordDataset 一
+ 样,可以接受一个 *tf.Tensor* 作为 filenames,然后参数特化迭代器:
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.txt", "/var/data/file2.txt"]
+  dataset = tf.data.TextLineDataset(filenames)
+#+END_SRC
+
+默认 TextLineDataset 会将文本文件中的每一行作为一个样本,有时候第一行有可能是描述
+行,或者包含一些注视.这些行可以通过调用 *Dataset.skip()* 和 *Dataset.filter()* 转
+换函数来过滤掉.可以调用 *Dataset.flat_map()* 来分别过滤对应文件的 Dataset:
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.txt", "/var/data/file2.txt"]
+
+  dataset = tf.data.Dataset.from_tensor_slices(filenames)
+
+  # Use `Dataset.flat_map()` to transform each file as a separate nested dataset,
+  # and then concatenate their contents sequentially into a single "flat" dataset.
+  # * Skip the first line (header row).
+  # * Filter out lines beginning with "#" (comments).
+  dataset = dataset.flat_map(
+      lambda filename: (
+          tf.data.TextLineDataset(filename)
+          .skip(1)
+          .filter(lambda line: tf.not_equal(tf.substr(line, 0, 1), "#"))))
+#+END_SRC
+
+** Consuming CSV data
+CSV 格式文件也是很常见的文件格式. *tf.contrib.data.CsvDataset* 类支持从一个或者
+多个 CSV 格式文件中读取样本.通过提供一个或者多个文件名和默认类型列表,CsvDataset
+可以解析和返回对应类型一样的样本.和其他的文件格式 Dataset 一样,可以使用 tf.Tensor 作
+为 filenames,通过输入 tf.placehodler(tf.string)作为参数特化数据库:
+#+BEGIN_SRC python
+  # Creates a dataset that reads all of the records from two CSV files, each with
+  # eight float columns
+  filenames = ["/var/data/file1.csv", "/var/data/file2.csv"]
+  record_defaults = [tf.float32] * 8   # Eight required float columns
+  dataset = tf.contrib.data.CsvDataset(filenames, record_defaults)
+#+END_SRC
+
+由于 Csv 允许元素缺失,所以也可以提供默认值来填充:
+#+BEGIN_SRC python
+  # Creates a dataset that reads all of the records from two CSV files, each with
+  # four float columns which may have missing values
+  record_defaults = [[0.0]] * 8
+  dataset = tf.contrib.data.CsvDataset(filenames, record_defaults)
+#+END_SRC
+
+默认 CsvDataset 会将文件的每一行和每一列都解析作为样本,有时不是每一行和每一列都是
+有效的.可以通过 *header* 和 *select_cols* 参数来过滤掉:
+#+BEGIN_SRC python
+  # Creates a dataset that reads all of the records from two CSV files with
+  # headers, extracting float data from columns 2 and 4.
+  record_defaults = [[0.0]] * 2  # Only provide defaults for the selected columns
+  dataset = tf.contrib.data.CsvDataset(filenames, record_defaults, header=True, select_cols=[2,4])
+#+END_SRC
+
+* Preprocessing data with Dataset.map()
+*Dataset.map(f)* 转换函数会将函数 *f* 应用到数据集中的每个样本,然后产生新的数据
+集.函数 *f* 接受样本元素,执行相关转换操作,返回转换后的元素作为新的数据集的样本.
+
+如下显示了 *Dataset.map()* 的一些例子.
+
+** Parsing tf.Example protocol buffer messages
+从 TFRecord 文件格式读取的样本元素类型为 *tf.train.Example* protocol buffer message.每个
+*tf.train.Example* 记录包含一个或多个特征,输入流需要将 ExamplePB 格式的特征转为张量:
+#+BEGIN_SRC python
+  # Transforms a scalar string `example_proto` into a pair of a scalar string and
+  # a scalar integer, representing an image and its label, respectively.
+  def _parse_function(example_proto):
+    features = {"image": tf.FixedLenFeature((), tf.string, default_value=""),
+                "label": tf.FixedLenFeature((), tf.int64, default_value=0)}
+    parsed_features = tf.parse_single_example(example_proto, features)
+    return parsed_features["image"], parsed_features["label"]
+
+  # Creates a dataset that reads all of the examples from two files, and extracts
+  # the image and label features.
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(_parse_function)
+#+END_SRC
+
+** Decoding image data and resizing it
+当输入为图像时,常常需要将不同分辨率的图像缩放到统一分辨率,从而实现多张图像实现批
+次训练:
+#+BEGIN_SRC python
+  # Reads an image from a file, decodes it into a dense tensor, and resizes it
+  # to a fixed shape.
+  def _parse_function(filename, label):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_jpeg(image_string)
+    image_resized = tf.image.resize_images(image_decoded, [28, 28])
+    return image_resized, label
+
+  # A vector of filenames.
+  filenames = tf.constant(["/var/data/image1.jpg", "/var/data/image2.jpg", ...])
+
+  # `labels[i]` is the label for the image in `filenames[i].
+  labels = tf.constant([0, 37, ...])
+
+  dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+  dataset = dataset.map(_parse_function)
+#+END_SRC
+
+** Applying arbitrary Python logic with tf.py_func()
+为了性能问题,最好只采用 TensorFlow 的内置函数来预处理数据集.但是有时候确实需要调用
+其他的 Python 库来处理输入数据.可以通过使用 *tf.py_func* 包括普通 Python 函数,将
+Python 函数转为 TensorFlow 可以调用的操作:
+#+BEGIN_SRC python
+  import cv2
+
+  # Use a custom OpenCV function to read the image, instead of the standard
+  # TensorFlow `tf.read_file()` operation.
+  def _read_py_function(filename, label):
+    image_decoded = cv2.imread(filename.decode(), cv2.IMREAD_GRAYSCALE)
+    return image_decoded, label
+
+  # Use standard TensorFlow operations to resize the image to a fixed shape.
+  def _resize_function(image_decoded, label):
+    image_decoded.set_shape([None, None, None])
+    image_resized = tf.image.resize_images(image_decoded, [28, 28])
+    return image_resized, label
+
+  filenames = ["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
+  labels = [0, 37, 29, 1, ...]
+
+  dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+  dataset = dataset.map(
+      lambda filename, label: tuple(tf.py_func(
+          _read_py_function, [filename, label], [tf.uint8, label.dtype])))
+  dataset = dataset.map(_resize_function)
+#+END_SRC
+
+* Batching dataset elements
+** Simple batching
+*Dataset.batch()* 可以将多个数据集中连续的样本元素堆叠成一个批次.每个批次组件内
+ 的张量都具有相同的形状:
+ #+BEGIN_SRC python
+   inc_dataset = tf.data.Dataset.range(100)
+   dec_dataset = tf.data.Dataset.range(0, -100, -1)
+   dataset = tf.data.Dataset.zip((inc_dataset, dec_dataset))
+   batched_dataset = dataset.batch(4)
+
+   iterator = batched_dataset.make_one_shot_iterator()
+   next_element = iterator.get_next()
+
+   print(sess.run(next_element))  # ==> ([0, 1, 2,   3],   [ 0, -1,  -2,  -3])
+   print(sess.run(next_element))  # ==> ([4, 5, 6,   7],   [-4, -5,  -6,  -7])
+   print(sess.run(next_element))  # ==> ([8, 9, 10, 11],   [-8, -9, -10, -11])
+ #+END_SRC
+
+** Batching tensors with padding
+上面所有的样本元素都需要具有相同的维度.然而很多模型(序列模型)的输入数据长度不定.
+*Dataset.padded_batch()* 可以通过填充数据来使得样本保持相同维度,从而实现批次训
+练:
+#+BEGIN_SRC python
+  dataset = tf.data.Dataset.range(100)
+  dataset = dataset.map(lambda x: tf.fill([tf.cast(x, tf.int32)], x))
+  dataset = dataset.padded_batch(4, padded_shapes=[None])
+
+  iterator = dataset.make_one_shot_iterator()
+  next_element = iterator.get_next()
+
+  print(sess.run(next_element))  # ==> [[0, 0, 0], [1, 0, 0], [2, 2, 0], [3, 3, 3]]
+  print(sess.run(next_element))  # ==> [[4, 4, 4, 4, 0, 0, 0],
+                                 #      [5, 5, 5, 5, 5, 0, 0],
+                                 #      [6, 6, 6, 6, 6, 6, 0],
+                                 #      [7, 7, 7, 7, 7, 7, 7]]
+#+END_SRC
+
+* Training workflows 
+** Processing multiple epochs
+*tf.data* 支持两种方法实现训练集的多次迭代训练.
+
+最简单的方法是调用 *Dataset.repeat()* :
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(...)
+  dataset = dataset.repeat(10)
+  dataset = dataset.batch(32)
+#+END_SRC
+
+如果没有参数,那么数据集将无限循环输入. *Dataset.repeat* 只是将有限的数据循环使用,在
+每次新的循环开始时候并不发出任何反馈.
+
+如果想要在每次数据集迭代完成时收到一个通知,可以在训练循环中去捕获
+*tf.errors.OutOfRangeError* .从而实现在每次数据集迭代完成后去收集一些信息:
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(...)
+  dataset = dataset.batch(32)
+  iterator = dataset.make_initializable_iterator()
+  next_element = iterator.get_next()
+
+  # Compute for 100 epochs.
+  for _ in range(100):
+    sess.run(iterator.initializer)
+    while True:
+      try:
+        sess.run(next_element)
+      except tf.errors.OutOfRangeError:
+        break
+
+    # [Perform end-of-epoch calculations here.]
+#+END_SRC
+
+** Randomly shuffling input data
+*Dataset.shuffle()* 可以用来随机打乱训练集数据,算法类似于
+*tf.RandomShuffleQueue*:内部保持一个规定长度的缓存,然后从缓存中随机挑选样本.
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(...)
+  dataset = dataset.shuffle(buffer_size=10000)
+  dataset = dataset.batch(32)
+  dataset = dataset.repeat()
+#+END_SRC
+
+** Using high-level APIs
+*tf.train.MonitoredTrainingSession* 接口简化了 TensorFlow 训练.
+MonitoredTrainingSession 通过捕获 *tf.errors.OutOfRangeError* 来记录训练流程是
+否结束,所以推荐使用 *Dataset.make_one_shot_iterator()* :
+#+BEGIN_SRC python
+  filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+  dataset = tf.data.TFRecordDataset(filenames)
+  dataset = dataset.map(...)
+  dataset = dataset.shuffle(buffer_size=10000)
+  dataset = dataset.batch(32)
+  dataset = dataset.repeat(num_epochs)
+  iterator = dataset.make_one_shot_iterator()
+
+  next_example, next_label = iterator.get_next()
+  loss = model_function(next_example, next_label)
+
+  training_op = tf.train.AdagradOptimizer(...).minimize(loss)
+
+  with tf.train.MonitoredTrainingSession(...) as sess:
+    while not sess.should_stop():
+      sess.run(training_op)
+#+END_SRC
+
+在采用 *tf.estimator.Estimator* 来训练时, input_fn 参数直接返回一个 Dataset 对象
+即可,整个 estimator 会自动创建迭代器并初始化:
+#+BEGIN_SRC python
+  def dataset_input_fn():
+    filenames = ["/var/data/file1.tfrecord", "/var/data/file2.tfrecord"]
+    dataset = tf.data.TFRecordDataset(filenames)
+
+    # Use `tf.parse_single_example()` to extract data from a `tf.Example`
+    # protocol buffer, and perform any additional per-record preprocessing.
+    def parser(record):
+      keys_to_features = {
+          "image_data": tf.FixedLenFeature((), tf.string, default_value=""),
+          "date_time": tf.FixedLenFeature((), tf.int64, default_value=""),
+          "label": tf.FixedLenFeature((), tf.int64,
+                                      default_value=tf.zeros([], dtype=tf.int64)),
+      }
+      parsed = tf.parse_single_example(record, keys_to_features)
+
+      # Perform additional preprocessing on the parsed data.
+      image = tf.image.decode_jpeg(parsed["image_data"])
+      image = tf.reshape(image, [299, 299, 1])
+      label = tf.cast(parsed["label"], tf.int32)
+
+      return {"image_data": image, "date_time": parsed["date_time"]}, label
+
+    # Use `Dataset.map()` to build a pair of a feature dictionary and a label
+    # tensor for each example.
+    dataset = dataset.map(parser)
+    dataset = dataset.shuffle(buffer_size=10000)
+    dataset = dataset.batch(32)
+    dataset = dataset.repeat(num_epochs)
+
+    # Each element of `dataset` is tuple containing a dictionary of features
+    # (in which each value is a batch of values for that feature), and a batch of
+    # labels.
+    return dataset
+#+END_SRC

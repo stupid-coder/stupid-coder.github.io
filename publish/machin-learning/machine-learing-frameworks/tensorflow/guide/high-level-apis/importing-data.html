@@ -1,0 +1,1004 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Importing Data</title>
+<!-- 2018-10-09 Tue 19:30 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Importing Data</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Basic mechanics</a>
+<ul>
+<li><a href="#sec-1-1">Dataset structure</a></li>
+<li><a href="#sec-1-2">Creating an iterator</a></li>
+<li><a href="#sec-1-3">Consuming values from an iterator</a></li>
+<li><a href="#sec-1-4">Saving iterator state</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">Reading input data</a>
+<ul>
+<li><a href="#sec-2-1">Consuming NumPy arrays</a></li>
+<li><a href="#sec-2-2">Consuming TFRecord data</a></li>
+<li><a href="#sec-2-3">Consuming text data</a></li>
+<li><a href="#sec-2-4">Consuming CSV data</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Preprocessing data with Dataset.map()</a>
+<ul>
+<li><a href="#sec-3-1">Parsing tf.Example protocol buffer messages</a></li>
+<li><a href="#sec-3-2">Decoding image data and resizing it</a></li>
+<li><a href="#sec-3-3">Applying arbitrary Python logic with tf.py_func()</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">Batching dataset elements</a>
+<ul>
+<li><a href="#sec-4-1">Simple batching</a></li>
+<li><a href="#sec-4-2">Batching tensors with padding</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">Training workflows</a>
+<ul>
+<li><a href="#sec-5-1">Processing multiple epochs</a></li>
+<li><a href="#sec-5-2">Randomly shuffling input data</a></li>
+<li><a href="#sec-5-3">Using high-level APIs</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+原文: <a href="https://www.tensorflow.org/guide/datasets">https://www.tensorflow.org/guide/datasets</a>
+</p>
+
+<blockquote>
+<p>
+本文为翻译,用来学习 Tensorflow dataset 机制.
+</p>
+</blockquote>
+
+<p>
+<b>tf.data</b> 提供了简单和可复用的数据读取接口.可以直接读取分布式文件系统上的图像文
+件,然后对图像文件进行随机打乱,然后随机选取多张图像作为一个批次,喂给模型训练.也可
+以在读取文本信息的同时,从原始数据中抽取符号,然后将这些符号转为对应的嵌入表达
+(<i>embedding</i>),然后批次送给文本模型.tf.data 可以很容易的读取大量不同格式的数据,调
+用不同的数据转换.
+</p>
+
+<p>
+tf.data 引入了两个抽象对象:
+</p>
+<dl class="org-dl">
+<dt> <code>tf.data.Dataset</code> </dt><dd>用来表示一个数据集,该数据集有多个元素,每个元素可以是一个
+或者多个 <b>Tensor</b> 组成.例如:读取图像的输入流,数据集中的元素为一个训练样本,
+该样本由两个张量组成,一个是图像数据,一个是对应的标签.如下为两种构建数据集的
+方法:
+<ul class="org-ul">
+<li>从一个或者多个 tf.Tensor 数据源对象构建数据集(Dataset.from_tensor_slices())
+</li>
+<li>从一个或者多个 tf.data.Dataset 上执行转换构建数据集(Dataset.batch())
+</li>
+</ul>
+</dd>
+<dt> <code>tf.data.Interator</code> </dt><dd>提供从数据集对象中获取元素的方法. <b>Iterator.get_next()</b>
+返回的操作符返回数据集中的下一个样本.最简单的迭代器是 <b>one-shot iterator</b> ,
+用来迭代数据集一次.更灵活的用法是,调用 <b>Iterator.initializer</b> 操作符来重新
+初始化迭代器,从而可以多次的在不同的数据集上进行数据迭代.
+</dd>
+</dl>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Basic mechanics</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+本节主要用来描述创建 Dataset 和 Iteator 对象的用法和获取样本.
+</p>
+
+<p>
+首先需要定义数据来源(<i>source</i>).例如:从内存中的 Tensor 对象构建 Dataset:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python">tf.data.Dataset.from_tensors()
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">or</span>
+tf.data.Dataset.from_tensor_slices()
+</pre>
+</div>
+
+<p>
+如果输入数据是在硬盘上,且格式为 <b>TFRecord</b> ,可以通过调用
+<b>tf.data.TFRecordDataset</b> 来构建数据集.
+</p>
+
+<p>
+构建 Dataset 对象后,可以调用相关的方法来对输入的数据进行转换.例如可以调用
+<b>Dataset.map()</b> 方法来对输入的每个样本进行转换(对每个样本执行一个转换函数).或则
+调用 <b>Dataset.batch()</b> 来使用多个样本构建一个训练批次.可以参考<a href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset">tf.data.Dataset</a>文
+档查看转换方法.
+</p>
+
+<p>
+从 Dataset 中读取数据的方法是用当前的数据集 Dataset 构建一个迭代其 Iterator,Iterator
+提供读取样本数据的方法(Dataset.make_one_shot_iterator()).tf.data.Iterator 迭代器
+提供两个操作:Iterator.initializer 用来初始化和重置迭代器;Iterator.get_next()用来
+返回数据集中的下一个样本.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Dataset structure</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+数据集 Dataset 中的样本元素具有相同的结构.一个样本元素包含一个或者多个 tf.Tensor 对
+象,叫做组件(<i>components</i>).每个组件都有一个类型 <b>tf.DType</b> 和 维度
+<b>tf.TensorShape</b> . <b>Dataset.output_types</b> 和 <b>Dataset.
+_shapes</b> 用来显示数据集中的样本元素的类型和维度.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset1</span> = tf.data.Dataset.from_tensor_slices(tf.random_uniform([4, 10]))
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset1.output_types)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "tf.float32"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset1.output_shapes)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "(10,)"</span>
+
+<span style="font-weight: bold; font-style: italic;">dataset2</span> = tf.data.Dataset.from_tensor_slices(
+   (tf.random_uniform([4]),
+    tf.random_uniform([4, 100], maxval=100, dtype=tf.int32)))
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset2.output_types)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "(tf.float32, tf.int32)"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset2.output_shapes)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "((), (100,))"</span>
+
+<span style="font-weight: bold; font-style: italic;">dataset3</span> = tf.data.Dataset.<span style="font-weight: bold;">zip</span>((dataset1, dataset2))
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset3.output_types)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; (tf.float32, (tf.float32, tf.int32))</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset3.output_shapes)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "(10, ((), (100,)))"</span>
+</pre>
+</div>
+
+<p>
+Dataset 也支持对样本元素进行命名,例如:一个样本的不同特征.构建 Dataset 的时候可以使
+用字典或者 <b>collections.namedtuple</b> 映射命名到 Tensors:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices(
+    {<span style="color: #daa520; font-style: italic;">"a"</span>: tf.random_uniform([4]),
+     <span style="color: #daa520; font-style: italic;">"b"</span>: tf.random_uniform([4, 100], maxval=100, dtype=tf.int32)})
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset.output_types)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "{'a': tf.float32, 'b': tf.int32}"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(dataset.output_shapes)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "{'a': (), 'b': (100,)}"</span>
+</pre>
+</div>
+
+<p>
+Dataset 转换支持任意的结构.当使用 <b>Dataset.map(), Dataset.flat_map(),
+Dataset.filter()</b> 将转换函数作用到每一个样本元素上,函数的参数由样本元素的结构决
+定:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset1</span> = dataset1.<span style="font-weight: bold;">map</span>(<span style="color: #00bfff; font-weight: bold;">lambda</span> x: ...)
+
+<span style="font-weight: bold; font-style: italic;">dataset2</span> = dataset2.flat_map(<span style="color: #00bfff; font-weight: bold;">lambda</span> x, y: ...)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Note: Argument destructuring is not available in Python 3.</span>
+<span style="font-weight: bold; font-style: italic;">dataset3</span> = dataset3.<span style="font-weight: bold;">filter</span>(<span style="color: #00bfff; font-weight: bold;">lambda</span> x, (y, z): ...)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Creating an iterator</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+创建 Dataset 之后,下一步就是创建迭代器 Iterator 来遍历数据集. <b>tf.data</b> 接口支持
+如下迭代器,以抽象等级增加排列:
+</p>
+<ul class="org-ul">
+<li>one-shot
+</li>
+<li>initializable
+</li>
+<li>reinitializable
+</li>
+<li>feedable
+</li>
+</ul>
+
+
+<p>
+<b>one-shot</b> 是最简单的迭代器,不需要手动初始化,只支持迭代数据集一遍. <b>one-shot</b> 迭
+代器支持基于队列的输入流,但是不支持参数特化.使用 <b>Dataset.range()</b>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(100)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_one_shot_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(100):
+  <span style="font-weight: bold; font-style: italic;">value</span> = sess.run(next_element)
+  <span style="color: #00bfff; font-weight: bold;">assert</span> i == value
+</pre>
+</div>
+
+<hr  />
+<p>
+<b>initializable</b> 迭代器需要显示的调用迭代器的初始化操作符 <b>iterator.initializer</b>
+才能使用.可以在初始化接口中以一个或多个参数 <b>tf.placeholder</b> 特化 Dataset.如下还
+是以 <b>Dataset.range()</b> 为例:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">max_value</span> = tf.placeholder(tf.int64, shape=[])
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(max_value)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_initializable_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize an iterator over a dataset with 10 elements.</span>
+sess.run(iterator.initializer, feed_dict={max_value: 10})
+<span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(10):
+  <span style="font-weight: bold; font-style: italic;">value</span> = sess.run(next_element)
+  <span style="color: #00bfff; font-weight: bold;">assert</span> i == value
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize the same iterator over a dataset with 100 elements.</span>
+sess.run(iterator.initializer, feed_dict={max_value: 100})
+<span style="color: #00bfff; font-weight: bold;">for</span> i <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(100):
+  <span style="font-weight: bold; font-style: italic;">value</span> = sess.run(next_element)
+  <span style="color: #00bfff; font-weight: bold;">assert</span> i == value
+</pre>
+</div>
+
+<hr  />
+<p>
+<b>reinitializable</b> 可重置的迭代器可以从不同的 Dataset 对象初始化.例如:可以在训练输
+入流中的图片使用随机扰动来提升模型泛化,在验证输入流上预测未修改的图像.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Define training and validation datasets with the same structure.</span>
+<span style="font-weight: bold; font-style: italic;">training_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(100).<span style="font-weight: bold;">map</span>(
+    <span style="color: #00bfff; font-weight: bold;">lambda</span> x: x + tf.random_uniform([], -10, 10, tf.int64))
+<span style="font-weight: bold; font-style: italic;">validation_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(50)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">A reinitializable iterator is defined by its structure. We could use the</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">`output_types` and `output_shapes` properties of either `training_dataset`</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">or `validation_dataset` here, because they are compatible.</span>
+<span style="font-weight: bold; font-style: italic;">iterator</span> = tf.data.Iterator.from_structure(training_dataset.output_types,
+                                           training_dataset.output_shapes)
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="font-weight: bold; font-style: italic;">training_init_op</span> = iterator.make_initializer(training_dataset)
+<span style="font-weight: bold; font-style: italic;">validation_init_op</span> = iterator.make_initializer(validation_dataset)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Run 20 epochs in which the training dataset is traversed, followed by the</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">validation dataset.</span>
+<span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(20):
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize an iterator over the training dataset.</span>
+  sess.run(training_init_op)
+  <span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(100):
+    sess.run(next_element)
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize an iterator over the validation dataset.</span>
+  sess.run(validation_init_op)
+  <span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(50):
+    sess.run(next_element)
+</pre>
+</div>
+
+<hr  />
+<p>
+<b>feedable</b> 迭代器可以和 <b>tf.placeholder</b> 一起使用,从而在每次 <b>tf.Session.run</b> 中
+来选择不同的迭代器使用.功能和 <b>reinitializable</b> 迭代器差不多相似,但是不需要每次
+都重新初始化.例如:使用上述相同训练集和验证集,可以使用
+<b>tf.data.Iterator.from_string_handle</b> 来定义 <b>feedable</b> 迭代器,从而实现两个数据
+集的切换:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Define training and validation datasets with the same structure.</span>
+<span style="font-weight: bold; font-style: italic;">training_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(100).<span style="font-weight: bold;">map</span>(
+    <span style="color: #00bfff; font-weight: bold;">lambda</span> x: x + tf.random_uniform([], -10, 10, tf.int64)).repeat()
+<span style="font-weight: bold; font-style: italic;">validation_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(50)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">A feedable iterator is defined by a handle placeholder and its structure. We</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">could use the `output_types` and `output_shapes` properties of either</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">`training_dataset` or `validation_dataset` here, because they have</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">identical structure.</span>
+<span style="font-weight: bold; font-style: italic;">handle</span> = tf.placeholder(tf.string, shape=[])
+<span style="font-weight: bold; font-style: italic;">iterator</span> = tf.data.Iterator.from_string_handle(
+    handle, training_dataset.output_types, training_dataset.output_shapes)
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">You can use feedable iterators with a variety of different kinds of iterator</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">(such as one-shot and initializable iterators).</span>
+<span style="font-weight: bold; font-style: italic;">training_iterator</span> = training_dataset.make_one_shot_iterator()
+<span style="font-weight: bold; font-style: italic;">validation_iterator</span> = validation_dataset.make_initializable_iterator()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">The `Iterator.string_handle()` method returns a tensor that can be evaluated</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">and used to feed the `handle` placeholder.</span>
+<span style="font-weight: bold; font-style: italic;">training_handle</span> = sess.run(training_iterator.string_handle())
+<span style="font-weight: bold; font-style: italic;">validation_handle</span> = sess.run(validation_iterator.string_handle())
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Loop forever, alternating between training and validation.</span>
+<span style="color: #00bfff; font-weight: bold;">while</span> <span style="font-weight: bold; text-decoration: underline;">True</span>:
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Run 200 steps using the training dataset. Note that the training dataset is</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">infinite, and we resume from where we left off in the previous `while` loop</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">iteration.</span>
+  <span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(200):
+    sess.run(next_element, feed_dict={handle: training_handle})
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Run one pass over the validation dataset.</span>
+  sess.run(validation_iterator.initializer)
+  <span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(50):
+    sess.run(next_element, feed_dict={handle: validation_handle})
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Consuming values from an iterator</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+<b>Iterator.get_next()</b> 返回一个或多个 <b>tf.Tensor</b> 对象,这些对像为对应的 Dataset 的
+下一个样本元素符号.每次运行这些 Tensors,都会返回对应的下一个样本元素.
+</p>
+
+<p>
+一旦 Iterator 迭代到数据集的最后,运行 <b>Iterator.get_next()</b> 操作符会抛出
+<b>tf.errors.OutOfRangeError</b>.需要重新初始化迭代器,才能使用.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(5)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_initializable_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Typically `result` will be the output of a model, or an optimizer's</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">training operation.</span>
+<span style="font-weight: bold; font-style: italic;">result</span> = tf.add(next_element, next_element)
+
+sess.run(iterator.initializer)
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(result))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "0"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(result))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "2"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(result))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "4"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(result))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "6"</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(result))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "8"</span>
+<span style="color: #00bfff; font-weight: bold;">try</span>:
+  sess.run(result)
+<span style="color: #00bfff; font-weight: bold;">except</span> tf.errors.OutOfRangeError:
+  <span style="color: #00bfff; font-weight: bold;">print</span>(<span style="color: #daa520; font-style: italic;">"End of dataset"</span>)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; "End of dataset"</span>
+</pre>
+</div>
+
+<p>
+所以,一个常规的使用方法是将训练流程放在 <b>try-except</b> 中:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python">sess.run(iterator.initializer)
+<span style="color: #00bfff; font-weight: bold;">while</span> <span style="font-weight: bold; text-decoration: underline;">True</span>:
+    <span style="color: #00bfff; font-weight: bold;">try</span>:
+        sess.run(result)
+    <span style="color: #00bfff; font-weight: bold;">except</span> tf.errors.OutOfRangeError:
+        <span style="color: #00bfff; font-weight: bold;">break</span>
+</pre>
+</div>
+
+<p>
+Dataset 中的样本元素为结构化的,所以 <b>Iterator.get_next()</b> 返回为一个或多个
+<b>tf.Tensor</b> 对象:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset1</span> = tf.data.Dataset.from_tensor_slices(tf.random_uniform([4, 10]))
+<span style="font-weight: bold; font-style: italic;">dataset2</span> = tf.data.Dataset.from_tensor_slices((tf.random_uniform([4]), tf.random_uniform([4, 100])))
+<span style="font-weight: bold; font-style: italic;">dataset3</span> = tf.data.Dataset.<span style="font-weight: bold;">zip</span>((dataset1, dataset2))
+
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset3.make_initializable_iterator()
+
+sess.run(iterator.initializer)
+next1, (next2, next3) = iterator.get_next()
+</pre>
+</div>
+<p>
+next1,next2,next3 为同一个操作符/节点(<b>Iterator.get_next()</b>)运行得到的.所以运行
+这三个中任意的张量,会运行迭代器向前移动.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">Saving iterator state</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+<b>tf.contrib.data.make_saveable_from_iterator</b> 函数返回迭代器的 <b>SaveableObject</b>
+,可以用来保存和回复当前迭代器的状态.该对象可以加到 <b>tf.train.Saver</b> 变量列表中或
+者 <b>tf.GraphKeys.SAVEABLE_OBJECTS</b> 集合中,就可以和常规的变量 <b>tf.variable</b> 一样
+保存和还原了.可以参考<a href="https://www.tensorflow.org/guide/saved_model">Saving and Restoring</a>查看如何保存和还原变量.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Create saveable object from iterator.</span>
+<span style="font-weight: bold; font-style: italic;">saveable</span> = tf.contrib.data.make_saveable_from_iterator(iterator)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Save the iterator state by adding it to the saveable objects collection.</span>
+tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, saveable)
+<span style="font-weight: bold; font-style: italic;">saver</span> = tf.train.Saver()
+
+<span style="color: #00bfff; font-weight: bold;">with</span> tf.Session() <span style="color: #00bfff; font-weight: bold;">as</span> sess:
+
+  <span style="color: #00bfff; font-weight: bold;">if</span> should_checkpoint:
+    saver.save(path_to_checkpoint)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Restore the iterator state.</span>
+<span style="color: #00bfff; font-weight: bold;">with</span> tf.Session() <span style="color: #00bfff; font-weight: bold;">as</span> sess:
+  saver.restore(sess, path_to_checkpoint)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Reading input data</h2>
+<div class="outline-text-2" id="text-2">
+</div><div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Consuming NumPy arrays</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+如果所有的数据可以存储到内存中,那么最简单创建 Dataset 的方法就是调用
+<b>Dataset.from_tensor_slices</b> 将内存中的对象转成*tf.Tensor*.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Load the training data into two NumPy arrays, for example using `np.load()`.</span>
+<span style="color: #00bfff; font-weight: bold;">with</span> np.load(<span style="color: #daa520; font-style: italic;">"/var/data/training_data.npy"</span>) <span style="color: #00bfff; font-weight: bold;">as</span> data:
+  <span style="font-weight: bold; font-style: italic;">features</span> = data[<span style="color: #daa520; font-style: italic;">"features"</span>]
+  <span style="font-weight: bold; font-style: italic;">labels</span> = data[<span style="color: #daa520; font-style: italic;">"labels"</span>]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Assume that each row of `features` corresponds to the same row as `labels`.</span>
+<span style="color: #00bfff; font-weight: bold;">assert</span> features.shape[0] == labels.shape[0]
+
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices((features, labels))
+</pre>
+</div>
+
+<p>
+上述的代码就会将内存中的 features 和 labels 数组嵌入 TensorFlow 的图中的
+<b>tf.costant()</b> 操作符.这种方式比较适合较小的数据集,但是由于需要多次拷贝,所以会浪
+费较多的内存.
+</p>
+
+<p>
+另外一种方案,可以使用 <b>tf.placeholder()</b> 张量定义 Dataset,然后将 NumPy 数组喂给迭
+代器:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Load the training data into two NumPy arrays, for example using `np.load()`.</span>
+<span style="color: #00bfff; font-weight: bold;">with</span> np.load(<span style="color: #daa520; font-style: italic;">"/var/data/training_data.npy"</span>) <span style="color: #00bfff; font-weight: bold;">as</span> data:
+  <span style="font-weight: bold; font-style: italic;">features</span> = data[<span style="color: #daa520; font-style: italic;">"features"</span>]
+  <span style="font-weight: bold; font-style: italic;">labels</span> = data[<span style="color: #daa520; font-style: italic;">"labels"</span>]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Assume that each row of `features` corresponds to the same row as `labels`.</span>
+<span style="color: #00bfff; font-weight: bold;">assert</span> features.shape[0] == labels.shape[0]
+
+<span style="font-weight: bold; font-style: italic;">features_placeholder</span> = tf.placeholder(features.dtype, features.shape)
+<span style="font-weight: bold; font-style: italic;">labels_placeholder</span> = tf.placeholder(labels.dtype, labels.shape)
+
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">[Other transformations on `dataset`...]</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = ...
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_initializable_iterator()
+
+sess.run(iterator.initializer, feed_dict={features_placeholder: features,
+                                          labels_placeholder: labels})
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Consuming TFRecord data</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+<b>tf.data</b> 支持多种文件格式,可以用来处理无法存储在内存中的数据.例如: TFRecord 文
+件格式为 TensorFlow 存储的二进制文件格式. <b>tf.data.TFRecordDataset</b> 类可以用来流式
+遍历 TFRecord 文件:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Creates a dataset that reads all of the examples from two files.</span>
+<span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+</pre>
+</div>
+
+<p>
+TFRecordDataset 的初始化参数 filenames 可以是字符串,字符串列表或者字符串的张量.如
+果有两个文件,一个训练文件,一个验证文件,那么可以使用 <b>tf.placeholder(tf.string)</b>
+来代表文件名,采取不同文件名来初始化迭代器:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = tf.placeholder(tf.string, shape=[<span style="font-weight: bold; text-decoration: underline;">None</span>])
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(...)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Parse the record into tensors.</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.repeat()  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Repeat the input indefinitely.</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_initializable_iterator()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">You can feed the initializer with the appropriate filenames for the current</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">phase of execution, e.g. training vs. validation.</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize `iterator` with training data.</span>
+<span style="font-weight: bold; font-style: italic;">training_filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+sess.run(iterator.initializer, feed_dict={filenames: training_filenames})
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Initialize `iterator` with validation data.</span>
+<span style="font-weight: bold; font-style: italic;">validation_filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/validation1.tfrecord"</span>, ...]
+sess.run(iterator.initializer, feed_dict={filenames: validation_filenames})
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">Consuming text data</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+<b>tf.data.TextLineDataset</b> 用来支持从文本文件创建 Dataset.类似 TFRecordDataset 一
+ 样,可以接受一个 <b>tf.Tensor</b> 作为 filenames,然后参数特化迭代器:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.txt"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.txt"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TextLineDataset(filenames)
+</pre>
+</div>
+
+<p>
+默认 TextLineDataset 会将文本文件中的每一行作为一个样本,有时候第一行有可能是描述
+行,或者包含一些注视.这些行可以通过调用 <b>Dataset.skip()</b> 和 <b>Dataset.filter()</b> 转
+换函数来过滤掉.可以调用 <b>Dataset.flat_map()</b> 来分别过滤对应文件的 Dataset:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.txt"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.txt"</span>]
+
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices(filenames)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Use `Dataset.flat_map()` to transform each file as a separate nested dataset,</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">and then concatenate their contents sequentially into a single "flat" dataset.</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">* Skip the first line (header row).</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">* Filter out lines beginning with "#" (comments).</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.flat_map(
+    <span style="color: #00bfff; font-weight: bold;">lambda</span> filename: (
+        tf.data.TextLineDataset(filename)
+        .skip(1)
+        .<span style="font-weight: bold;">filter</span>(<span style="color: #00bfff; font-weight: bold;">lambda</span> line: tf.not_equal(tf.substr(line, 0, 1), <span style="color: #daa520; font-style: italic;">"#"</span>))))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4">Consuming CSV data</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+CSV 格式文件也是很常见的文件格式. <b>tf.contrib.data.CsvDataset</b> 类支持从一个或者
+多个 CSV 格式文件中读取样本.通过提供一个或者多个文件名和默认类型列表,CsvDataset
+可以解析和返回对应类型一样的样本.和其他的文件格式 Dataset 一样,可以使用 tf.Tensor 作
+为 filenames,通过输入 tf.placehodler(tf.string)作为参数特化数据库:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Creates a dataset that reads all of the records from two CSV files, each with</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">eight float columns</span>
+<span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.csv"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.csv"</span>]
+<span style="font-weight: bold; font-style: italic;">record_defaults</span> = [tf.float32] * 8   <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Eight required float columns</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.contrib.data.CsvDataset(filenames, record_defaults)
+</pre>
+</div>
+
+<p>
+由于 Csv 允许元素缺失,所以也可以提供默认值来填充:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Creates a dataset that reads all of the records from two CSV files, each with</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">four float columns which may have missing values</span>
+<span style="font-weight: bold; font-style: italic;">record_defaults</span> = [[0.0]] * 8
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.contrib.data.CsvDataset(filenames, record_defaults)
+</pre>
+</div>
+
+<p>
+默认 CsvDataset 会将文件的每一行和每一列都解析作为样本,有时不是每一行和每一列都是
+有效的.可以通过 <b>header</b> 和 <b>select_cols</b> 参数来过滤掉:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Creates a dataset that reads all of the records from two CSV files with</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">headers, extracting float data from columns 2 and 4.</span>
+<span style="font-weight: bold; font-style: italic;">record_defaults</span> = [[0.0]] * 2  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Only provide defaults for the selected columns</span>
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.contrib.data.CsvDataset(filenames, record_defaults, header=<span style="font-weight: bold; text-decoration: underline;">True</span>, select_cols=[2,4])
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Preprocessing data with Dataset.map()</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<b>Dataset.map(f)</b> 转换函数会将函数 <b>f</b> 应用到数据集中的每个样本,然后产生新的数据
+集.函数 <b>f</b> 接受样本元素,执行相关转换操作,返回转换后的元素作为新的数据集的样本.
+</p>
+
+<p>
+如下显示了 <b>Dataset.map()</b> 的一些例子.
+</p>
+</div>
+
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1">Parsing tf.Example protocol buffer messages</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+从 TFRecord 文件格式读取的样本元素类型为 <b>tf.train.Example</b> protocol buffer message.每个
+<b>tf.train.Example</b> 记录包含一个或多个特征,输入流需要将 ExamplePB 格式的特征转为张量:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Transforms a scalar string `example_proto` into a pair of a scalar string and</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">a scalar integer, representing an image and its label, respectively.</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_parse_function</span>(example_proto):
+  <span style="font-weight: bold; font-style: italic;">features</span> = {<span style="color: #daa520; font-style: italic;">"image"</span>: tf.FixedLenFeature((), tf.string, default_value=<span style="color: #daa520; font-style: italic;">""</span>),
+              <span style="color: #daa520; font-style: italic;">"label"</span>: tf.FixedLenFeature((), tf.int64, default_value=0)}
+  <span style="font-weight: bold; font-style: italic;">parsed_features</span> = tf.parse_single_example(example_proto, features)
+  <span style="color: #00bfff; font-weight: bold;">return</span> parsed_features[<span style="color: #daa520; font-style: italic;">"image"</span>], parsed_features[<span style="color: #daa520; font-style: italic;">"label"</span>]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Creates a dataset that reads all of the examples from two files, and extracts</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the image and label features.</span>
+<span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(_parse_function)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2">Decoding image data and resizing it</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+当输入为图像时,常常需要将不同分辨率的图像缩放到统一分辨率,从而实现多张图像实现批
+次训练:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Reads an image from a file, decodes it into a dense tensor, and resizes it</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">to a fixed shape.</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_parse_function</span>(filename, label):
+  <span style="font-weight: bold; font-style: italic;">image_string</span> = tf.read_file(filename)
+  <span style="font-weight: bold; font-style: italic;">image_decoded</span> = tf.image.decode_jpeg(image_string)
+  <span style="font-weight: bold; font-style: italic;">image_resized</span> = tf.image.resize_images(image_decoded, [28, 28])
+  <span style="color: #00bfff; font-weight: bold;">return</span> image_resized, label
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">A vector of filenames.</span>
+<span style="font-weight: bold; font-style: italic;">filenames</span> = tf.constant([<span style="color: #daa520; font-style: italic;">"/var/data/image1.jpg"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/image2.jpg"</span>, ...])
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">`labels[i]` is the label for the image in `filenames[i].</span>
+<span style="font-weight: bold; font-style: italic;">labels</span> = tf.constant([0, 37, ...])
+
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices((filenames, labels))
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(_parse_function)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3">Applying arbitrary Python logic with tf.py_func()</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+为了性能问题,最好只采用 TensorFlow 的内置函数来预处理数据集.但是有时候确实需要调用
+其他的 Python 库来处理输入数据.可以通过使用 <b>tf.py_func</b> 包括普通 Python 函数,将
+Python 函数转为 TensorFlow 可以调用的操作:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">import</span> cv2
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Use a custom OpenCV function to read the image, instead of the standard</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">TensorFlow `tf.read_file()` operation.</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_read_py_function</span>(filename, label):
+  <span style="font-weight: bold; font-style: italic;">image_decoded</span> = cv2.imread(filename.decode(), cv2.IMREAD_GRAYSCALE)
+  <span style="color: #00bfff; font-weight: bold;">return</span> image_decoded, label
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Use standard TensorFlow operations to resize the image to a fixed shape.</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">_resize_function</span>(image_decoded, label):
+  image_decoded.set_shape([<span style="font-weight: bold; text-decoration: underline;">None</span>, <span style="font-weight: bold; text-decoration: underline;">None</span>, <span style="font-weight: bold; text-decoration: underline;">None</span>])
+  <span style="font-weight: bold; font-style: italic;">image_resized</span> = tf.image.resize_images(image_decoded, [28, 28])
+  <span style="color: #00bfff; font-weight: bold;">return</span> image_resized, label
+
+<span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/image1.jpg"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/image2.jpg"</span>, ...]
+<span style="font-weight: bold; font-style: italic;">labels</span> = [0, 37, 29, 1, ...]
+
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.from_tensor_slices((filenames, labels))
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(
+    <span style="color: #00bfff; font-weight: bold;">lambda</span> filename, label: <span style="font-weight: bold;">tuple</span>(tf.py_func(
+        _read_py_function, [filename, label], [tf.uint8, label.dtype])))
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(_resize_function)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Batching dataset elements</h2>
+<div class="outline-text-2" id="text-4">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Simple batching</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<b>Dataset.batch()</b> 可以将多个数据集中连续的样本元素堆叠成一个批次.每个批次组件内
+ 的张量都具有相同的形状:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">inc_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(100)
+<span style="font-weight: bold; font-style: italic;">dec_dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(0, -100, -1)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">zip</span>((inc_dataset, dec_dataset))
+<span style="font-weight: bold; font-style: italic;">batched_dataset</span> = dataset.batch(4)
+
+<span style="font-weight: bold; font-style: italic;">iterator</span> = batched_dataset.make_one_shot_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(next_element))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; ([0, 1, 2,   3],   [ 0, -1,  -2,  -3])</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(next_element))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; ([4, 5, 6,   7],   [-4, -5,  -6,  -7])</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(next_element))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; ([8, 9, 10, 11],   [-8, -9, -10, -11])</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">Batching tensors with padding</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+上面所有的样本元素都需要具有相同的维度.然而很多模型(序列模型)的输入数据长度不定.
+<b>Dataset.padded_batch()</b> 可以通过填充数据来使得样本保持相同维度,从而实现批次训
+练:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.Dataset.<span style="font-weight: bold;">range</span>(100)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(<span style="color: #00bfff; font-weight: bold;">lambda</span> x: tf.fill([tf.cast(x, tf.int32)], x))
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.padded_batch(4, padded_shapes=[<span style="font-weight: bold; text-decoration: underline;">None</span>])
+
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_one_shot_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(next_element))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; [[0, 0, 0], [1, 0, 0], [2, 2, 0], [3, 3, 3]]</span>
+<span style="color: #00bfff; font-weight: bold;">print</span>(sess.run(next_element))  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">==&gt; [[4, 4, 4, 4, 0, 0, 0],</span>
+                               <span style="font-weight: bold; font-style: italic;">#      </span><span style="font-weight: bold; font-style: italic;">[5, 5, 5, 5, 5, 0, 0],</span>
+                               <span style="font-weight: bold; font-style: italic;">#      </span><span style="font-weight: bold; font-style: italic;">[6, 6, 6, 6, 6, 6, 0],</span>
+                               <span style="font-weight: bold; font-style: italic;">#      </span><span style="font-weight: bold; font-style: italic;">[7, 7, 7, 7, 7, 7, 7]]</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Training workflows</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1">Processing multiple epochs</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+<b>tf.data</b> 支持两种方法实现训练集的多次迭代训练.
+</p>
+
+<p>
+最简单的方法是调用 <b>Dataset.repeat()</b> :
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(...)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.repeat(10)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+</pre>
+</div>
+
+<p>
+如果没有参数,那么数据集将无限循环输入. <b>Dataset.repeat</b> 只是将有限的数据循环使用,在
+每次新的循环开始时候并不发出任何反馈.
+</p>
+
+<p>
+如果想要在每次数据集迭代完成时收到一个通知,可以在训练循环中去捕获
+<b>tf.errors.OutOfRangeError</b> .从而实现在每次数据集迭代完成后去收集一些信息:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(...)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_initializable_iterator()
+<span style="font-weight: bold; font-style: italic;">next_element</span> = iterator.get_next()
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Compute for 100 epochs.</span>
+<span style="color: #00bfff; font-weight: bold;">for</span> _ <span style="color: #00bfff; font-weight: bold;">in</span> <span style="font-weight: bold;">range</span>(100):
+  sess.run(iterator.initializer)
+  <span style="color: #00bfff; font-weight: bold;">while</span> <span style="font-weight: bold; text-decoration: underline;">True</span>:
+    <span style="color: #00bfff; font-weight: bold;">try</span>:
+      sess.run(next_element)
+    <span style="color: #00bfff; font-weight: bold;">except</span> tf.errors.OutOfRangeError:
+      <span style="color: #00bfff; font-weight: bold;">break</span>
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">[Perform end-of-epoch calculations here.]</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2">Randomly shuffling input data</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+<b>Dataset.shuffle()</b> 可以用来随机打乱训练集数据,算法类似于
+<b>tf.RandomShuffleQueue</b>:内部保持一个规定长度的缓存,然后从缓存中随机挑选样本.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(...)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.shuffle(buffer_size=10000)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.repeat()
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3">Using high-level APIs</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+<b>tf.train.MonitoredTrainingSession</b> 接口简化了 TensorFlow 训练.
+MonitoredTrainingSession 通过捕获 <b>tf.errors.OutOfRangeError</b> 来记录训练流程是
+否结束,所以推荐使用 <b>Dataset.make_one_shot_iterator()</b> :
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+<span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(...)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.shuffle(buffer_size=10000)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+<span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.repeat(num_epochs)
+<span style="font-weight: bold; font-style: italic;">iterator</span> = dataset.make_one_shot_iterator()
+
+<span style="font-weight: bold; font-style: italic;">next_example</span>, <span style="font-weight: bold; font-style: italic;">next_label</span> = iterator.get_next()
+<span style="font-weight: bold; font-style: italic;">loss</span> = model_function(next_example, next_label)
+
+<span style="font-weight: bold; font-style: italic;">training_op</span> = tf.train.AdagradOptimizer(...).minimize(loss)
+
+<span style="color: #00bfff; font-weight: bold;">with</span> tf.train.MonitoredTrainingSession(...) <span style="color: #00bfff; font-weight: bold;">as</span> sess:
+  <span style="color: #00bfff; font-weight: bold;">while</span> <span style="color: #00bfff; font-weight: bold;">not</span> sess.should_stop():
+    sess.run(training_op)
+</pre>
+</div>
+
+<p>
+在采用 <b>tf.estimator.Estimator</b> 来训练时, input_fn 参数直接返回一个 Dataset 对象
+即可,整个 estimator 会自动创建迭代器并初始化:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">dataset_input_fn</span>():
+  <span style="font-weight: bold; font-style: italic;">filenames</span> = [<span style="color: #daa520; font-style: italic;">"/var/data/file1.tfrecord"</span>, <span style="color: #daa520; font-style: italic;">"/var/data/file2.tfrecord"</span>]
+  <span style="font-weight: bold; font-style: italic;">dataset</span> = tf.data.TFRecordDataset(filenames)
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Use `tf.parse_single_example()` to extract data from a `tf.Example`</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">protocol buffer, and perform any additional per-record preprocessing.</span>
+  <span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">parser</span>(record):
+    <span style="font-weight: bold; font-style: italic;">keys_to_features</span> = {
+        <span style="color: #daa520; font-style: italic;">"image_data"</span>: tf.FixedLenFeature((), tf.string, default_value=<span style="color: #daa520; font-style: italic;">""</span>),
+        <span style="color: #daa520; font-style: italic;">"date_time"</span>: tf.FixedLenFeature((), tf.int64, default_value=<span style="color: #daa520; font-style: italic;">""</span>),
+        <span style="color: #daa520; font-style: italic;">"label"</span>: tf.FixedLenFeature((), tf.int64,
+                                    default_value=tf.zeros([], dtype=tf.int64)),
+    }
+    <span style="font-weight: bold; font-style: italic;">parsed</span> = tf.parse_single_example(record, keys_to_features)
+
+    <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Perform additional preprocessing on the parsed data.</span>
+    <span style="font-weight: bold; font-style: italic;">image</span> = tf.image.decode_jpeg(parsed[<span style="color: #daa520; font-style: italic;">"image_data"</span>])
+    <span style="font-weight: bold; font-style: italic;">image</span> = tf.reshape(image, [299, 299, 1])
+    <span style="font-weight: bold; font-style: italic;">label</span> = tf.cast(parsed[<span style="color: #daa520; font-style: italic;">"label"</span>], tf.int32)
+
+    <span style="color: #00bfff; font-weight: bold;">return</span> {<span style="color: #daa520; font-style: italic;">"image_data"</span>: image, <span style="color: #daa520; font-style: italic;">"date_time"</span>: parsed[<span style="color: #daa520; font-style: italic;">"date_time"</span>]}, label
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Use `Dataset.map()` to build a pair of a feature dictionary and a label</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">tensor for each example.</span>
+  <span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.<span style="font-weight: bold;">map</span>(parser)
+  <span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.shuffle(buffer_size=10000)
+  <span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.batch(32)
+  <span style="font-weight: bold; font-style: italic;">dataset</span> = dataset.repeat(num_epochs)
+
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Each element of `dataset` is tuple containing a dictionary of features</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">(in which each value is a batch of values for that feature), and a batch of</span>
+  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">labels.</span>
+  <span style="color: #00bfff; font-weight: bold;">return</span> dataset
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

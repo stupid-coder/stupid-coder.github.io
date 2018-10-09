@@ -1,0 +1,129 @@
+#+TITLE: Introduction to Estimators
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: num:nil H:2
+
+
+原文: https://www.tensorflow.org/guide/estimators
+
+本文介绍 *tf.estimator* ,简化训练流程的高级 TensorFlow 模型接口.Estimators 支持如下方法:
+- training :: 训练方法
+- evaluation :: 评估方法
+- prediction :: 预测方法
+- export for serving :: 服务化方法
+
+
+*Estimators* 内置了一些成熟的模型,提供给用户直接开箱即用.此外也支持通过传入向前传
+播函数来适配定义自己的 Estimator.不管内置的还是自己适配的 *Estimators* 都是通过继承
+*tf.estimator.Estimator*.
+
+* Advantages of Estimators
+  *Estimator* 框架提供如下优点:
+  - 基于 Estimator 实现的模型可以不需要更改代码,就可以在不同的运行环境(单机 or 集群)
+    上运行.并且支持在不同的硬件环境上无缝切换(CPU,GPU,TPU).
+  - Estimator 实现的模型代码清晰紧凑,更容易发布
+  - Estimator 内部负责构建计算图,初始化,加载数据等操作:
+    + 构建计算图
+    + 初始化变量
+    + 加载数据
+    + 处理异常
+    + 创建 CheckPoint 文件,从错误恢复训练
+    + 保存可视化数据
+
+
+  当采取 Estimator 构建模型,需要将输入数据流和模型实现分开实现,这种方法简化了在不
+  同训练集上作实验.
+
+* Pre-made Estimators
+  *Pre-made Estimators* 允许比 TensorFlow 接口更高阶抽象等级上构建模型,无需再考
+  虑计算图的构建,会话的创建等一些繁琐的事情.
+
+** Structure of a pre-made Estimators program
+   基于 *Pre-made Estimator* 的程序,由如下 4 步组成:
+   1. *Write one or more dataset importing functions* 构建一个函数来返回训练数据
+      集,构建另一个函数返回测试数据集.函数应该返回两个对象:
+      + 一个字典,键值为特征名称,值为张量(或者稀疏张量)包含对应的特征数据
+      + 一个或者多个张量,代表当前样本的标签
+      如下代码为数据集注入函数片段:
+      #+BEGIN_SRC python
+        def input_fn(dataset):
+          ...  # manipulate dataset, extracting the feature dict and the label
+        return feature_dict, label
+      #+END_SRC
+   2. *Define the feature columns* 需要定义 *tf.feature_column* ,来指定输入的特
+      征名称,对应特征的类型,特征预处理.例如:如下的代码片段创建了三个特征列,特征
+      类型为 int 或者 float.前两个特征列指定了特征名称和类型.第三个特征列此外制定了
+      一个 *lambda* 函数用来对输入特征进行变换:
+      #+BEGIN_SRC python
+        # Define three numeric feature columns.
+        population = tf.feature_column.numeric_column('population')
+        crime_rate = tf.feature_column.numeric_column('crime_rate')
+        median_education = tf.feature_column.numeric_column('median_education',
+                            normalizer_fn=lambda x: x - global_education_mean)
+      #+END_SRC
+   3. *Instantiate the relevant pre-made Estimator* 如下为内置的
+      *LinearClassifier* Estimator 模型初始化:
+      #+BEGIN_SRC python
+        # Instantiate an estimator, passing the feature columns.
+        estimator = tf.estimator.LinearClassifier(
+            feature_columns=[population, crime_rate, median_education],
+            )
+      #+END_SRC
+   4. *Call a training, evaluation, or inference method* 如下为调用模型的训练方
+      法:
+      #+BEGIN_SRC python
+        # my_training_set is the function created in Step 1
+        estimator.train(input_fn=my_training_set, steps=2000)
+      #+END_SRC
+
+** Benefits of pre-made Estimators
+   *Pre-made Estimators* 实现了最佳特性:
+   + 决定了模型哪部分需要计算,实现了单机和集群训练
+   + 实现了事件收集机制
+
+
+   如果是自己实现模型,需要自己实现上述特性.
+
+* Custom Estimators
+  不管是内置的还是自己适配的 Estimator,关键的核心方法为 *model function*,该方法
+  构建训练,评估,预测模型的计算图.如果使用的是内置 Estimator,那么该方法已经有人实
+  现了.如果是自己适配的 Estimator,那么主要是需要实现该方法,具体实现的方法可以参
+  考 *https://www.tensorflow.org/guide/custom_estimators*.
+
+* Recommended workflow
+  推荐的构建流:
+  + 先使用内置 Estimator 构建模型作为基础模型
+  + 构建和测试整个工作流,将输入的数据集和内置 Estimator 集成在一起进行评估
+  + 在内置 Estimator 模型上去评估和迭代训练最好的模型
+  + 如果可以的话,通过自己实现适配 Estimator 来提高模型表现
+
+* Creating Estimators from keras models
+  也可以将 *Keras* 模型转为 Estimator.这样可以使得基于 *Keras* 实现的模型也利用
+  Estimator 的特性,例如分布式训练等.调用 *tf.keras.estimator.model_to_estimator*
+  方法:
+  #+BEGIN_SRC python
+    # Instantiate a Keras inception v3 model.
+    keras_inception_v3 = tf.keras.applications.inception_v3.InceptionV3(weights=None)
+    # Compile model with the optimizer, loss, and metrics you'd like to train with.
+    keras_inception_v3.compile(optimizer=tf.keras.optimizers.SGD(lr=0.0001, momentum=0.9),
+                              loss='categorical_crossentropy',
+                              metric='accuracy')
+    # Create an Estimator from the compiled Keras model. Note the initial model
+    # state of the keras model is preserved in the created Estimator.
+    est_inception_v3 = tf.keras.estimator.model_to_estimator(keras_model=keras_inception_v3)
+
+    # Treat the derived Estimator as you would with any other Estimator.
+    # First, recover the input name(s) of Keras model, so we can use them as the
+    # feature column name(s) of the Estimator input function:
+    keras_inception_v3.input_names  # print out: ['input_1']
+    # Once we have the input name(s), we can create the input function, for example,
+    # for input(s) in the format of numpy ndarray:
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"input_1": train_data},
+        y=train_labels,
+        num_epochs=1,
+        shuffle=False)
+    # To train, we call Estimator's train function:
+    est_inception_v3.train(input_fn=train_input_fn, steps=2000)
+  #+END_SRC

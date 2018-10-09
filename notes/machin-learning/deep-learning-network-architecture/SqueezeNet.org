@@ -272,6 +272,172 @@ AlexNet 网络参数规模,但是可以达到和 AlexNet 一样的准确性.并�
 Dense-Sparse-Dense[fn:14],该种方法在训练过程中作用和正则化一样可以提高模型的准确
 性.
 
+* Implementation with tf.keras
+SqueezeNet 有很多实现,如下是基于 tf.keras 实现.
+#+BEGIN_SRC python
+  import tensorflow as tf
+  from tensorflow import keras
+
+  import argparse
+
+  parser = argparse.ArgumentParser(description="SqueezeNet")
+
+  parser.add_argument("--base", type=int, default=128,
+                      help="number of base filters")
+
+  parser.add_argument("--incr", type=int, default=128,
+                      help="increment number after every freq fire module")
+
+  parser.add_argument("--pct", type=float, default=0.5,
+                      help="percent of 1*1 with 3*3 in fire module")
+
+  parser.add_argument("--freq", type=int, default=2,
+                      help="every freq fire module the number of filters must increment")
+
+  parser.add_argument("--sr", type=float, default=0.125,
+                      help="squeeze ratio")
+
+
+  class SqueezeNet(object):
+      """Keras Implementation of SqueezeNet(arXiv 1602.073600)
+
+      @param options: SqueezeNet archtecture setting
+
+      Arguments:
+      input_shape -- shape of the input images (rows, cols, channel)
+      nclass -- number of final categories
+
+      """
+      def __init__(self, options: argparse.Namespace, input_shape: list=[224, 224, 3], nclass: int=1000, small: bool=False):
+          if small:
+              self.skeleton = SqueezeNet._build_skeleton_small(input_shape, nclass, options)
+          else:
+              self.skeleton = SqueezeNet._build_skeleton(input_shape, nclass, options)
+          self.skeleton.summary()
+
+      @staticmethod
+      def _build_fire_module(input, nkernel, sr, pct, name):
+          squeeze = keras.layers.Conv2D(filters=int(nkernel * sr), kernel_size=3, strides=1,
+                                        padding='same', name="{}_squeeze".format(name))(input)
+          expand1 = keras.layers.Conv2D(filters=int(nkernel * (1-pct)), kernel_size=1, strides=1,
+                                        padding='same', name="{}_expand1".format(name))(squeeze)
+          expand2 = keras.layers.Conv2D(filters=int(nkernel * pct), kernel_size=3, strides=1,
+                                        padding='same', name="{}_expand2".format(name))(squeeze)
+          return keras.layers.concatenate([expand1, expand2], axis=-1, name=name)
+
+      @staticmethod
+      def _calculate_nkernel(nbase, layer, freq, incr):
+          return nbase + layer // freq * incr
+
+      @staticmethod
+      def _build_skeleton(input_shape, nclass, options):
+          input_img = keras.Input(shape=input_shape)
+
+          conv1 = keras.layers.Conv2D(filters=96, kernel_size=7, strides=2, padding='same',
+                                      activation=keras.activations.relu, name='conv1')(input_img)
+
+          maxpool1 = keras.layers.MaxPooling2D(pool_size=3, strides=2, name='maxpool1')(conv1)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 0, options.freq, options.incr)
+          fire2 = SqueezeNet._build_fire_module(maxpool1, nkernel, options.sr, options.pct, name="fire2")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 1, options.freq, options.incr)
+          fire3 = SqueezeNet._build_fire_module(fire2, nkernel, options.sr, options.pct, name="fire3")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 2, options.freq, options.incr)
+          fire4 = SqueezeNet._build_fire_module(fire3, nkernel, options.sr, options.pct, name="fire4")
+
+          maxpool4 = keras.layers.MaxPooling2D(pool_size=3, strides=2, name="maxpool4")(fire4)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 3, options.freq, options.incr)
+          fire5 = SqueezeNet._build_fire_module(maxpool4, nkernel, options.sr, options.pct, name="fire5")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 4, options.freq, options.incr)
+          fire6 = SqueezeNet._build_fire_module(fire5, nkernel, options.sr, options.pct, name="fire6")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 5, options.freq, options.incr)
+          fire7 = SqueezeNet._build_fire_module(fire6, nkernel, options.sr, options.pct, name="fire7")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 6, options.freq, options.incr)
+          fire8 = SqueezeNet._build_fire_module(fire7, nkernel, options.sr, options.pct, name="fire8")
+
+          maxpool8 = keras.layers.MaxPooling2D(pool_size=3, strides=2, name="maxpool8")(fire8)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 7, options.freq, options.incr)
+          fire9 = SqueezeNet._build_fire_module(maxpool8, nkernel, options.sr, options.pct, name="fire9")
+
+          fire9_dropout = keras.layers.Dropout(0.5, name="fire9_dropout")(fire9)
+          conv10 = keras.layers.Conv2D(filters=nclass, kernel_size=1, strides=1, padding='valid',
+                                       activation=keras.activations.relu, name='conv10')(fire9_dropout)
+
+          global_avgpool10 = keras.layers.GlobalAvgPool2D()(conv10)
+          softmax = keras.layers.Activation(keras.activations.softmax, name="softmax")(global_avgpool10)
+          return keras.Model(inputs=input_img, outputs=softmax)
+
+      @staticmethod
+      def _build_skeleton_small(input_shape, nclass, options):
+          input_img = keras.Input(shape=input_shape)
+
+          conv1 = keras.layers.Conv2D(96, kernel_size=2, strides=1, padding='same',
+                                      activation=keras.activations.relu, name='conv1')(input_img)
+
+          maxpool1 = keras.layers.MaxPooling2D(pool_size=2, strides=2, name="maxpool1")(conv1)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 0, options.freq, options.incr)
+          fire2 = SqueezeNet._build_fire_module(maxpool1, nkernel, options.sr, options.pct, name='fire2')
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 1, options.freq, options.incr)
+          fire3 = SqueezeNet._build_fire_module(fire2, nkernel, options.sr, options.pct, name="fire3")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 2, options.freq, options.incr)
+          fire4 = SqueezeNet._build_fire_module(fire3, nkernel, options.sr, options.pct, name="fire4")
+
+          maxpool4 = keras.layers.MaxPooling2D(pool_size=2, strides=2, name="maxpool4")(fire4)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 3, options.freq, options.incr)
+          fire5 = SqueezeNet._build_fire_module(maxpool4, nkernel, options.sr, options.pct, name="fire5")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 4, options.freq, options.incr)
+          fire6 = SqueezeNet._build_fire_module(fire5, nkernel, options.sr, options.pct, name="fire6")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 5, options.freq, options.incr)
+          fire7 = SqueezeNet._build_fire_module(fire6, nkernel, options.sr, options.pct, name="fire7")
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 6, options.freq, options.incr)
+          fire8 = SqueezeNet._build_fire_module(fire7, nkernel, options.sr, options.pct, name="fire8")
+
+          maxpool8 = keras.layers.MaxPooling2D(pool_size=2, strides=2, name="maxpool8")(fire8)
+
+          nkernel = SqueezeNet._calculate_nkernel(options.base, 7, options.freq, options.incr)
+          fire9 = SqueezeNet._build_fire_module(maxpool8, nkernel, options.sr, options.pct, name="fire9")
+
+          #fire9_dropout = keras.layers.Dropout(0.5, name="fire9_dropout")(fire9)
+          conv10 = keras.layers.Conv2D(filters=nclass, kernel_size=1, strides=1, padding='valid',
+                                       activation=keras.activations.relu, name='conv10')(fire9)
+
+          global_avgpool10 = keras.layers.GlobalAvgPool2D()(conv10)
+          softmax = keras.layers.Activation(keras.activations.softmax, name="softmax")(global_avgpool10)
+
+          return keras.Model(inputs=input_img, outputs=softmax)
+
+      def train(self, X, y, batch_size, epochs, cpdir):
+          self.skeleton.compile(optimizer=keras.optimizers.SGD(lr=0.01, momentum=0.9, decay=0.9, nesterov=True),
+                                loss="categorical_crossentropy",
+                                metrics=["accuracy"])
+          tb = keras.callbacks.TensorBoard()
+          ck = keras.callbacks.ModelCheckpoint(cpdir, period=5)
+          self.skeleton.fit(X, y, batch_size=batch_size, epochs=epochs, callbacks=[tb, ck])
+
+      def evaluate(self, X, y, batch_size):
+          return self.skeleton.evaluate(X, y, batch_size=batch_size)
+
+      def predicate(self, X):
+          return self.skeleton.predict(X)
+#+END_SRC
+*_calculate_nkernel* 静态方法用来计算每个 FireModule 的卷积核数量.然后根据设置的
+ SqueezeNet 网络的参数来分类 squeeze 层的卷积核数量和 expand 层的 1*1 卷积核和 3*3 卷积核
+ 数量.
+ 
 * Footnotes
 
 [fn:14] Regularizing deep neural networks with dense-sparse-dense training flow

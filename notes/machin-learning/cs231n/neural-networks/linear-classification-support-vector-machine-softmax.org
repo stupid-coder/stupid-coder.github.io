@@ -225,7 +225,7 @@
 
 *** Probabilistic interpretation
     重新审视一下 *maxsoft* 得分函数：
-    \begin_{equation}
+    \begin{equation}
     P(y_{i}|x_{i};W) = \frac{e^{f_{y_i}}}{\sum_{j}e^{f_j}}
     \end{equation}
     可以被设为在参数 /W/ 情况下，输入图像 /x_i/ 得到的归一化后 /y_i/ 类别概率。
@@ -246,7 +246,6 @@
     可以通过选择一个合适的 /C/ 来提高数值计算的结果的稳定性。常规的选择是
     /$logC=-max_{j}f_{j}$/ 。
     
-
 ** SVM vs. Softmax
    下图用来说明 SVM 分类器和 Softmax 分类器的区别：
    -----
