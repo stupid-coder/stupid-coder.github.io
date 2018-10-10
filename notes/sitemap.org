@@ -15,6 +15,8 @@
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/introduction-to-estimators.org][Introduction to Estimators 2018-10-09]]
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/importing-data.org][Importing Data 2018-10-09]]
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/basic-classification-with-keras.org][basic classification with tf.keras 2018-09-25]]
+           + estimators
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/estimators/feature-columns.org][feature columns 2018-10-10]]
      + deep-learning-network-architecture
        + [[file:machin-learning/deep-learning-network-architecture/SqueezeNet.org][SqueezeNet 2018-10-07]]
        + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-10-04]]

@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>feature columns</title>
+<!-- 2018-10-10 Wed 23:08 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">feature columns</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Input to a Deep Neural Network</a></li>
+<li><a href="#sec-2">Feature Columns</a>
+<ul>
+<li><a href="#sec-2-1">Numeric column</a></li>
+<li><a href="#sec-2-2">Bucketized column</a></li>
+<li><a href="#sec-2-3">Categorical identity column</a></li>
+<li><a href="#sec-2-4">Categorical vocabulary column</a></li>
+<li><a href="#sec-2-5">Hashed Column</a></li>
+<li><a href="#sec-2-6">Crossed column</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Indicator and embedding columns</a></li>
+<li><a href="#sec-4">Passing feature columns to Estimators</a></li>
+</ul>
+</div>
+</div>
+<p>
+原文: <a href="https://www.tensorflow.org/guide/feature_columns">https://www.tensorflow.org/guide/feature_columns</a>
+</p>
+
+<p>
+<b>feature columns</b> 可以看作是原始特征与 Estimator 模型之间的桥梁,主要支持多种特征工程,从而快速简单的将多种原始数据变换成模型可以直接使用的特征.
+</p>
+
+<p>
+数学模型只能接受数值作为特征,所以字符串等种类数据也常常需要编码成独热向量,模型才能进行优化和学习.真实数据中有各种各样的数据:
+</p>
+<hr  />
+<div class="center">
+
+<div id="feature-cloud" class="figure">
+<p><img src="assets/feature-columns/feature_cloud.jpg" alt="feature_cloud.jpg" />
+</p>
+</div>
+<blockquote>
+<p>
+真实世界中数据种类(例如:经纬度)有一些是数值类,单也有不是数值类的数据.
+</p>
+</blockquote>
+</div>
+<hr  />
+
+<p>
+一句话, <b>feature columns</b> 主要用来将真实数据中的数据转为模型可以使用的类型.
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Input to a Deep Neural Network</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+那么哪种类型的数据是深度神经网络可以学习的呢?答案是数值类(例如: <b>tf.float32</b>).因为神经网络中的神经元只是简单的执行数值间的元算.真实数据常常包含非数值类数据(<i>categorical</i>).例如: <b>product_class</b> 特征就可以是包含如下三个非数值类的数据:
+</p>
+<ul class="org-ul">
+<li>kitchenware
+</li>
+<li>electronics
+</li>
+<li>sports
+</li>
+</ul>
+
+
+<p>
+机器学习模型常规做法是将非数值类数据进行独热编码(向量,其中某位为 1,代表该值出现;0,表示不出现).例如:如果 product_class 为 sports 时,那么一般 product_class 表示为[0,0,1]:
+</p>
+<ul class="org-ul">
+<li>第一位 0: kitchenware 缺失
+</li>
+<li>第二位 0: electronics 缺失
+</li>
+<li>第三位 1: sports 出现
+</li>
+</ul>
+
+
+<p>
+可以看到虽然真实数据可以是数值类和非数值类,但是机器学习模型只能采用数值类特征.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Feature Columns</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+如下图所示:Estimator 通过 feature_columns 参数来将输入的数据进行特征工程,转换成模型可以使用的数值类型.
+</p>
+<hr  />
+<div class="center">
+
+<div id="inputs-to-model-bridge" class="figure">
+<p><img src="assets/feature-columns/inputs_to_model_bridge.jpg" alt="inputs_to_model_bridge.jpg" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> feature columns 用来将输入的原始数据转换到模型可以使用的特征类型</p>
+</div>
+</div>
+<hr  />
+
+<p>
+<b>tf.feature_column</b> 模块中包含 9 个用来创建 feature columns 的函数.下图显示了 9 个函数除了 <b>bucketized_column</b>, 其余函数返回的对象为:Categorical-Columns 或者 Dense-Columns.
+</p>
+<hr  />
+<div class="center">
+
+<div id="feature-column-constructors" class="figure">
+<p><img src="assets/feature-columns/some_constructors.jpg" alt="some_constructors.jpg" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> feature column 构建方法返回的对象为 categorical 和 dense,还有一个返回两种集合.</p>
+</div>
+</div>
+<hr  />
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Numeric column</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Iris 分类器采用 <b>tf.feature_column.numeric_column</b> 函数来创建所有的特征列:
+</p>
+<ul class="org-ul">
+<li>SepalLength
+</li>
+<li>SepalWidth
+</li>
+<li>PetalLength
+</li>
+<li>PetalWidth
+</li>
+</ul>
+
+
+<p>
+<b>tf.numeric_column</b> 函数提供了其他可选参数, 但是采用如下的调用方式只需要指定数值特征的名称即可,默认采用 <b>tf.float32</b> 作为特征数值类型:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Defaults to a tf.float32 scalar.</span>
+<span style="font-weight: bold; font-style: italic;">numeric_feature_column</span> = tf.feature_column.numeric_column(key=<span style="color: #daa520; font-style: italic;">"SepalLength"</span>)
+</pre>
+</div>
+
+<p>
+通过 dtype 传入对应的数据类型参数指定特征数值类型:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Represent a tf.float64 scalar.</span>
+<span style="font-weight: bold; font-style: italic;">numeric_feature_column</span> = tf.feature_column.numeric_column(key=<span style="color: #daa520; font-style: italic;">"SepalLength"</span>,
+                                                          dtype=tf.float64)
+</pre>
+</div>
+
+<p>
+默认的数值特征列创建的是标量值(<i>scalar</i>).可以通过 shape 参数传入特征维度:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Represent a 10-element vector in which each cell contains a tf.float32.</span>
+<span style="font-weight: bold; font-style: italic;">vector_feature_column</span> = tf.feature_column.numeric_column(key=<span style="color: #daa520; font-style: italic;">"Bowling"</span>,
+                                                         shape=10)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Represent a 10x5 matrix in which each cell contains a tf.float32.</span>
+<span style="font-weight: bold; font-style: italic;">matrix_feature_column</span> = tf.feature_column.numeric_column(key=<span style="color: #daa520; font-style: italic;">"MyMatrix"</span>,
+                                                         shape=[10,5])
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-2" class="outline-3">
+<h3 id="sec-2-2">Bucketized column</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+有时候,尤其是面对浮点型数据数值时,不希望直接将数值数据喂给模型,而是将数值划分到不同的值域区间内,从而实现值域内的数据作为同一个特征值喂给模型. <b>tf.feature_column.bucketized_column</b> 可以实现划分逻辑.例如:如果原始特征代表房屋年龄,不希望直接使用该数值作为特征值,而是可以根据如下阈值区间划分:
+</p>
+<hr  />
+<div class="center">
+
+<div id="bucketized-column" class="figure">
+<p><img src="assets/feature-columns/bucketized_column.jpg" alt="bucketized_column.jpg" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> 将房屋年龄划分到不同区间</p>
+</div>
+</div>
+<hr  />
+
+<p>
+feature column 会根据不同的输入输出向量:
+</p>
+<table id="bucketized-result" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Date Range</th>
+<th scope="col" class="left">Represented as&#x2026;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">&lt; 1960</td>
+<td class="left">[1, 0, 0, 0]</td>
+</tr>
+
+<tr>
+<td class="left">&gt;= 1960 but &lt; 1980</td>
+<td class="left">[0, 1, 0, 0]</td>
+</tr>
+
+<tr>
+<td class="left">&gt;= 1980 but &lt; 2000</td>
+<td class="left">[0, 0, 1, 0]</td>
+</tr>
+
+<tr>
+<td class="left">&gt;= 2000</td>
+<td class="left">[0, 0, 0, 1]</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+为什么需要将已经适合模型学习的数值特征通过区间划分为类目特征?主要原因是通过区间划分,单独数值特征变成具有 4 个元素的类目特征向量.从而模型可以学习到 4 个独立的权值;4 个权值模型表征能力要强于 1 个权值.更重要的是,由于类目特征是独热编码,所以可以更具输入的数据选取一个单独的权值进行学习和预测,也就是说这样可以认为模型扩展成了 4 个线性模型.
+</p>
+
+<p>
+如下代码说明了如何创建类目特征:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">First, convert the raw input to a numeric column.</span>
+<span style="font-weight: bold; font-style: italic;">numeric_feature_column</span> = tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">"Year"</span>)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Then, bucketize the numeric column on the years 1960, 1980, and 2000.</span>
+<span style="font-weight: bold; font-style: italic;">bucketized_feature_column</span> = tf.feature_column.bucketized_column(
+    source_column = numeric_feature_column,
+    boundaries = [1960, 1980, 2000])
+</pre>
+</div>
+
+<p>
+上述代码创建了 3 个元素的区间边界,从而产生包含 4 个元素的独热编码结果.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3">Categorical identity column</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+<b>Categorical identity columns</b> 可以看作是特殊的 <b>Bucketized columns</b>.在 <b>bucketized columns</b> 中,每个分类桶都由一个值域区间表示(例如:房屋年 1960-1979 龄).在 <b>categorical identity column</b> 中,每个分类桶由一个单独的值表示.例如:面对[0,4)之间的数值,也就是说输入的数值可以为 0,1,2,3, <b>categorical identity column</b> 映射如下:
+</p>
+<hr  />
+<div class="center">
+
+<div id="categorical-identity-column" class="figure">
+<p><img src="assets/feature-columns/categorical_column_with_identity.jpg" alt="categorical_column_with_identity.jpg" />
+</p>
+<p><span class="figure-number">&#22270;5&nbsp;</span> 可以看到 categorical identity column 编码可以认为就是独热编码</p>
+</div>
+</div>
+<hr  />
+
+<p>
+一样,通过上述编码的特征可以使得模型针对每一个输入固定的特征值都学习一个权值.例如:可以使用使用整数来表示 product_class 的特征值:
+</p>
+<ul class="org-ul">
+<li>0="kitchenware"
+</li>
+<li>1="electronics"
+</li>
+<li>2="sport"
+</li>
+</ul>
+
+
+<p>
+调用 <b>tf.feature_column.categorical_column_with_identity</b> 来创建 <b>categorical identity column</b>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Create categorical output for an integer feature named "my_feature_b",</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">The values of my_feature_b must be &gt;= 0 and &lt; num_buckets</span>
+<span style="font-weight: bold; font-style: italic;">identity_feature_column</span> = tf.feature_column.categorical_column_with_identity(
+    key=<span style="color: #daa520; font-style: italic;">'my_feature_b'</span>,
+    num_buckets=4) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Values [0, 4)</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">In order for the preceding call to work, the input_fn() must return</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">a dictionary containing 'my_feature_b' as a key. Furthermore, the values</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">assigned to 'my_feature_b' must belong to the set [0, 4).</span>
+<span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">input_fn</span>():
+    ...
+    <span style="color: #00bfff; font-weight: bold;">return</span> ({ <span style="color: #daa520; font-style: italic;">'my_feature_a'</span>:[7, 9, 5, 2], <span style="color: #daa520; font-style: italic;">'my_feature_b'</span>:[3, 1, 2, 2] },
+            [Label_values])
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2-4" class="outline-3">
+<h3 id="sec-2-4">Categorical vocabulary column</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+字符串类型数据是无法直接喂给模型使用的.首先需要将字符串映射到数值类型或者类目类型.一种想法是将字符串映射成一个整形,由于整形之间没有数值上的大小关系,所以无法直接使用;或者采用 bucketized 映射.这里需要采取 <b>categorical identity column</b> 将数值映射为独热编码. <b>categorical vocabulary column</b> 的作用就是上面两步操作合并在一起.例如:
+</p>
+<hr  />
+<div class="center">
+
+<div id="categorical-vocabulary-column" class="figure">
+<p><img src="assets/feature-columns/categorical_column_with_vocabulary.jpg" alt="categorical_column_with_vocabulary.jpg" />
+</p>
+<p><span class="figure-number">&#22270;6&nbsp;</span> 字符串数据格局词典映射成独热编码</p>
+</div>
+</div>
+<hr  />
+
+<p>
+可以看到 <b>categorical vocabulary columns</b> 类似是枚举类型的 <b>categorical identity columns</b>.TensorFlow 提供两个函数,用来创建 <b>categorical vocabulary columns</b>:
+</p>
+<ul class="org-ul">
+<li>tf.feature_column.categorical_column_with_vocabulary_list
+</li>
+<li>tf.feature_column.categorical_column_with_vocabulary_file
+</li>
+</ul>
+
+
+<p>
+<b>categorical_column_with_vocabulary_list</b> 根据输入的字典序列将字符串映射成整形数值:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Given input "feature_name_from_input_fn" which is a string,</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">create a categorical feature by mapping the input to one of</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the elements in the vocabulary list.</span>
+<span style="font-weight: bold; font-style: italic;">vocabulary_feature_column</span> =
+    tf.feature_column.categorical_column_with_vocabulary_list(
+        key=feature_name_from_input_fn,
+        vocabulary_list=[<span style="color: #daa520; font-style: italic;">"kitchenware"</span>, <span style="color: #daa520; font-style: italic;">"electronics"</span>, <span style="color: #daa520; font-style: italic;">"sports"</span>])
+</pre>
+</div>
+
+<p>
+如果需要映射的字符串非常多,可以使用 <b>tf.feature_column.categorical_column_with_vocabulary_file</b>,允许将字符串存储在文件中:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Given input "feature_name_from_input_fn" which is a string,</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">create a categorical feature to our model by mapping the input to one of</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">the elements in the vocabulary file</span>
+<span style="font-weight: bold; font-style: italic;">vocabulary_feature_column</span> =
+    tf.feature_column.categorical_column_with_vocabulary_file(
+        key=feature_name_from_input_fn,
+        vocabulary_file=<span style="color: #daa520; font-style: italic;">"product_class.txt"</span>,
+        vocabulary_size=3)
+</pre>
+</div>
+
+<p>
+<b>product_class.txt</b> 内应该每一行都是对应的一个类目字符串:
+</p>
+<pre class="example">
+kitchenware
+electronics
+sports
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-2-5" class="outline-3">
+<h3 id="sec-2-5">Hashed Column</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+上述面对的都是类目非常少的情况.例如:product_class 特征只有 3 个类目.实际情况下,类目数量有可能非常多,多到需要太多内存才能存储将所有的类目.在这种情况下,一般两种做法:根据出现频率选取部分类目;或者存储 hash 后的值.实际上, <b>tf.feature_column.categorical_column_with_hash_bucket</b> 函数存储 hash 后的值作为特征值,首先根据输入的数据计算 hash 值,然后通过取模操作,将特征值映射到 <b>hash_bucket_size</b> 个类目中,如下为对应的伪代码:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">pseudocode</span>
+<span style="font-weight: bold; font-style: italic;">feature_id</span> = <span style="font-weight: bold;">hash</span>(raw_feature) % hash_bucket_size
+</pre>
+</div>
+
+<p>
+创建对应的 feature_column 的代码如下:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">hashed_feature_column</span> =
+    tf.feature_column.categorical_column_with_hash_bucket(
+        key = <span style="color: #daa520; font-style: italic;">"some_feature"</span>,
+        hash_bucket_size = 100) <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">The number of categories</span>
+</pre>
+</div>
+
+<p>
+由于上述方法会将多个特征值映射到一个小规模的类目上,这里同样会出现 hash 值碰撞.下图显示了这种情况,可以看到 <b>kitchenware</b> 和 <b>sports</b> 映射到了同一个 hash 类目 12 下:
+</p>
+<hr  />
+<div class="center">
+
+<div id="hash-buckets" class="figure">
+<p><img src="assets/feature-columns/hashed_column.jpg" alt="hashed_column.jpg" />
+</p>
+<p><span class="figure-number">&#22270;7&nbsp;</span> 采用 hash bucket 实现特征转换</p>
+</div>
+</div>
+<hr  />
+
+<p>
+hash 方法常常在机器学习模型中变现都较好,主要原因是因为模型可以通过其他特征来区分冲撞的特征.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-6" class="outline-3">
+<h3 id="sec-2-6">Crossed column</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+一般可以通过将多个特征组合成一个特征,使得模型可以为每个多特征交叉学习独立的权值,从而提高模型表征能力.
+</p>
+
+<p>
+更具体的是,假设我们想要学习一个模型,用来计算 Atlanta 的房地产价格.由于房地产价格和所处的地区有很大的关系.将经纬度分开单独使用,模型是无法学习到真正的地区信息.可以将经纬度交叉形成单独的特征,从而为交叉后的特征学习独立的权值来表示地区对房地产价格的贡献.例如:可以将 Atlanta 划分成 100*100 个区域,从而可以交叉经纬度来定位 10,000 个区域.从而使得模型可以学习到独立区域的权值,这样会比单独使用经纬度更为强大.
+</p>
+
+<p>
+下图显示了对应的地图信息:
+</p>
+<hr  />
+<div class="center">
+
+<div class="figure">
+<p><img src="assets/feature-columns/Atlanta.jpg" alt="Atlanta.jpg" />
+</p>
+<p><span class="figure-number">&#22270;8&nbsp;</span> Atlanta 地图,通过经纬度将整个地区分为 10000 个区域.</p>
+</div>
+</div>
+<hr  />
+
+<p>
+可以同时使用 <b>bucketized_column</b> 和 <b>tf.feature_column.crossed_column</b>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="color: #00bfff; font-weight: bold;">def</span> <span style="font-weight: bold;">make_dataset</span>(latitude, longitude, labels):
+    <span style="color: #00bfff; font-weight: bold;">assert</span> latitude.shape == longitude.shape == labels.shape
+
+    <span style="font-weight: bold; font-style: italic;">features</span> = {<span style="color: #daa520; font-style: italic;">'latitude'</span>: latitude.flatten(),
+                <span style="color: #daa520; font-style: italic;">'longitude'</span>: longitude.flatten()}
+    <span style="font-weight: bold; font-style: italic;">labels</span>=labels.flatten()
+
+    <span style="color: #00bfff; font-weight: bold;">return</span> tf.data.Dataset.from_tensor_slices((features, labels))
+
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Bucketize the latitude and longitude using the `edges`</span>
+<span style="font-weight: bold; font-style: italic;">latitude_bucket_fc</span> = tf.feature_column.bucketized_column(
+    tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">'latitude'</span>),
+    <span style="font-weight: bold;">list</span>(atlanta.latitude.edges))
+
+<span style="font-weight: bold; font-style: italic;">longitude_bucket_fc</span> = tf.feature_column.bucketized_column(
+    tf.feature_column.numeric_column(<span style="color: #daa520; font-style: italic;">'longitude'</span>),
+    <span style="font-weight: bold;">list</span>(atlanta.longitude.edges))
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Cross the bucketized columns, using 5000 hash bins.</span>
+<span style="font-weight: bold; font-style: italic;">crossed_lat_lon_fc</span> = tf.feature_column.crossed_column(
+    [latitude_bucket_fc, longitude_bucket_fc], 5000)
+
+<span style="font-weight: bold; font-style: italic;">fc</span> = [
+    latitude_bucket_fc,
+    longitude_bucket_fc,
+    crossed_lat_lon_fc]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Build and train the Estimator.</span>
+<span style="font-weight: bold; font-style: italic;">est</span> = tf.estimator.LinearRegressor(fc, ...)
+</pre>
+</div>
+
+<p>
+由于交叉特征有可能非常多,所以可以在 crossed_column 中传入 hash_bucket_size 对交叉后的特征进行 hash.
+</p>
+
+<blockquote>
+<p>
+虽然创建了交叉特征,提升了模型的表征能力.但是由于有 hash 碰撞,所以常常需要保留交叉前的特征,从而使得模型可以通过交叉前的特征来区分冲撞后的交叉特征来自哪些具体特征.
+</p>
+</blockquote>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Indicator and embedding columns</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+<b>indicator columns</b> 和 <b>embedding columns</b> 无法直接在原生数据上工作,而是将 <b>categorical columns</b> 作为输入.
+</p>
+
+<p>
+<b>indicator column</b> 主要是将 <b>categorical column</b> 输出特征转为独热向量:
+</p>
+<hr  />
+<div class="center">
+
+<div id="indicator-columns" class="figure">
+<p><img src="assets/feature-columns/categorical_column_with_identity.jpg" alt="categorical_column_with_identity.jpg" />
+</p>
+<p><span class="figure-number">&#22270;9&nbsp;</span> 采用 indicator 表示数据</p>
+</div>
+</div>
+<hr  />
+
+<p>
+<b>tf.feature_column.indicator_column</b> 用来创建 <b>indication column</b>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">categorical_column</span> = ... <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Create any type of categorical column.</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Represent the categorical column as an indicator column.</span>
+<span style="font-weight: bold; font-style: italic;">indicator_column</span> = tf.feature_column.indicator_column(categorical_column)
+</pre>
+</div>
+
+<p>
+那么如果拥有 100M 个类目,那么 <b>indicator_column</b> 独热编码就不再适用.
+</p>
+
+<p>
+这里可以采用 <b>embedding</b> 编码,通过将高维类目特征映射到低维稠密向量,在每个 cell 中可以是任意数字,而非独热编码的 0 或者 1.
+</p>
+
+<p>
+如下为 indicator 编码和 embedding 编码的对比.假设输入为 81 个单词.取其中的 4 个:
+</p>
+<ul class="org-ul">
+<li>dog
+</li>
+<li>spoon
+</li>
+<li>scissors
+</li>
+<li>guitar
+</li>
+</ul>
+
+
+<p>
+下图显示了 <b>indicator column</b> 和 <b>embedding column</b> 处理过程:
+</p>
+<hr  />
+<div class="center">
+
+<div id="embedding-vs-indicator" class="figure">
+<p><img src="assets/feature-columns/embedding_vs_indicator.jpg" alt="embedding_vs_indicator.jpg" />
+</p>
+<p><span class="figure-number">&#22270;10&nbsp;</span> embedding 编码将类目数据映射到低维稠密向量,indicator 采用独热编码方式.</p>
+</div>
+</div>
+<hr  />
+
+<p>
+样本数据首先经过 <b>categorical_column_with&#x2026;</b> 中的一个函数处理,将字符串数据映射到一个数值类目值.例如,将 spoon 映射到<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>.然后可以通过如下两个方法来处理类目数据:
+</p>
+<dl class="org-dl">
+<dt> <code>indicator column</code> </dt><dd>将每一个数值类目数据映射到 81 维的独热编码向量中(因为字符串类目总共 81 个).然后将数值编码中对应下标位置(0,32,79,80)设置为 1,其他为 0.
+</dd>
+<dt> <code>embedding column</code> </dt><dd>将数值类目数据(0,32,79,80)作为索引,去查表.表内存储长度为 3 的向量.
+</dd>
+</dl>
+
+<p>
+那么 <b>embedding</b> 编码中查找的表是如何获得的呢?是在模型训练中学习到的.模型通过学习将数值类目映射到哪些低维稠密向量后能够最大化提升模型能力,从而获取对应的 <b>embedding table</b>.可以理解是在特征处理这里增加了一层全链接层,从而学习到对应的权值.
+</p>
+
+<p>
+那么如何确定 <b>embedding</b> 的向量维度呢?如下为设置的维度经验公式:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">embedding_dimensions</span> =  number_of_categories**0.25
+</pre>
+</div>
+
+<p>
+通过调用 <b>tf.feature_column.embedding_column</b> 来创建 <b>embedding_column</b>:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">categorical_column</span> = ... <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Create any categorical column</span>
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Represent the categorical column as an embedding column.</span>
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">This means creating an embedding vector lookup table with one element for each category.</span>
+<span style="font-weight: bold; font-style: italic;">embedding_column</span> = tf.feature_column.embedding_column(
+    categorical_column=categorical_column,
+    dimension=embedding_dimensions)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Passing feature columns to Estimators</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+如下显示了内置的 Estimator 模型接受的 <b>feature column</b> 类型:
+</p>
+<dl class="org-dl">
+<dt> <code>tf.estimator.LinearClassifier 和 tf.estimator.LinearRegressor</code> </dt><dd>接受所有类型的特征
+</dd>
+<dt> <code>tf.estimator.DNNClassifier 和 tf.estimator.DNNRegressor</code> </dt><dd>只接受稠密特征.类目特征必须经过 <b>indicator_column</b> 和 <b>embedding_column</b> 处理
+</dd>
+<dt> <code>tf.estimator.DNNLinearCombinedClassifier 和 tf.estimator.DNNLinearCombinedRegressor</code> </dt><dd><ul class="org-ul">
+<li>linear_feature_column 接受任何类型特征
+</li>
+<li>dnn_feature_column 只接受稠密特征
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p>DEFINITION NOT FOUND.</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>
