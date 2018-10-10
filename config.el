@@ -1,3 +1,4 @@
+;; (setq debug-on-error t)
 (add-to-list 'load-path "lib/htmlize")
 
 (set-face-foreground 'font-lock-keyword-face "DeepSkyBlue")

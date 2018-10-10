@@ -8,6 +8,8 @@
      + machine-learing-frameworks
        + tensorflow
          + guide
+           + low-level-apis
+             + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/low-level-apis/introduction.org][Introduction to TensorFlow's Low-Level-APIs 2018-10-10]]
            + high-level-apis
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/keras.org][keras in tensorflow 2018-09-25]]
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/high-level-apis/introduction-to-estimators.org][Introduction to Estimators 2018-10-09]]
