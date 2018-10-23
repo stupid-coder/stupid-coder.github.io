@@ -18,6 +18,7 @@
            + estimators
              + [[file:machin-learning/machine-learing-frameworks/tensorflow/guide/estimators/feature-columns.org][feature columns 2018-10-10]]
      + deep-learning-network-architecture
+       + [[file:machin-learning/deep-learning-network-architecture/ZfNet.org][Visualizing and Understanding Convolutional Networks 2018-10-23]]
        + [[file:machin-learning/deep-learning-network-architecture/SqueezeNet.org][SqueezeNet 2018-10-07]]
        + [[file:machin-learning/deep-learning-network-architecture/LeNet.org][LeNet-5 2018-10-04]]
        + [[file:machin-learning/deep-learning-network-architecture/AlexNet.org][ImageNet Classification with Deep Convolutional Neural Networks 2018-10-08]]
@@ -36,6 +37,8 @@
          + [[file:machin-learning/cs231n/convolutional-neural-networks/transfer-learning-and-fine-tuning-convolutional-neural-networks.org][Transfer Learning and Fine tuning Convolutional Neural Networks 2018-09-11]]
          + [[file:machin-learning/cs231n/convolutional-neural-networks/convolutional-neural-networks-architectures-convolution-pooling-layers.org][Architectures, Convolution/Pooling Layers 2018-09-11]]
      + computer-vision
+       + style-transfer
+         + [[file:machin-learning/computer-vision/style-transfer/image-style-transfer-using-convolutional-neural-networks.org][Image Style Transfer Using Convoluational Neural Networks 2018-10-16]]
        + image-retrival
          + [[file:machin-learning/computer-vision/image-retrival/deep-learning-of-binary-hash-codes-for-fast-image-retrieval.org][deep learning of binary hash codes for fast image retrieval 2018-08-08]]
        + dataset

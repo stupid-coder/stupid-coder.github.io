@@ -1,0 +1,646 @@
+#+TITLE: Efficient BackProp
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2 num:nil
+
+论文: [[http://yann.lecun.com/exdb/publis/index.html#lecun-98b][Efficient BackProp]]
+
+#+BEGIN_QUOTE
+可以通过分析反向传播算法(/back-propagation/)收敛学习来解释一些应用过程中的现象.在应用反向传播过程中,出现了很多不希望出现的现象.这些现象可以通过使用一些技巧来克服.但是这些技巧却很少发表出来.本轮文展示了相应的技巧,然后解释了反向传播是如何工作.
+
+很多论文作者都建议采取二次优化算法(/second-order methods/)来训练神经网络.但是结果显示常规的二次优化算法在大规模神经网络训练上并不适用.本文给出一些优化算法并没有这些限制.
+#+END_QUOTE
+
+* Introduction
+  由于反向传播理论上较为简单明了,计算有效,所以在神经网络训练上是最为常见的优化方法.然而,让反向传播算法具有良好的优化效果的方法更像一门艺术,而非科学.采用反向传播设计和训练神经网络需要做很多超参设置,例如:神经元的个数和类型,网络层的个数和类型,学习率,训练和测试集等等.这些选择是非常的关键的,但是由于这些超参的选择是非常苦难,并和数据集有很大关系,所以没有公式来确定这些超参.但是有很多启发式方法和一些基础理论来指导如何选择更好的超参.
+  如下第一部分会先介绍以下标准的反向传播算法和一些用来提高模型性能的简单启发式技巧.随后讨论网络收敛相关问题,并描述了一些经典的二次非线性优化方法,并且显示这些方法在神经网络训练中具有很多限制.最后展示了一些二次优化算法在一些特定情况下具有加速训练功能.
+
+* Learning and Generalization
+  最常见的机器学习优化算法是基于梯度的学习方法(/gradient-based learning methods/).如[[figure-1]]所示,一个可学习机器用来输出得分函数 $M(Z^{p},W)$ ,其中 $Z^{p}$ 为第 p 个输入样本, W 为系统中可学习参数集.损失函数为 $E^{p}=C(D^{p},M(Z^{p},W))$ 用来度量希望输出 $D^{p}$ 和系统实际输出差值.均值损失函数 $E_{train}(W)$ 为在训练集(/train set/)上 ${(Z^{1},D^{1}),...(Z^{p},D^{p})}$ 对应错误 $E^{p}$ 的求均值.优化方法就是通过调整参数 W 最小训练集上的损失函数 $E_{train}(W)$.实际应用中,在训练集上的损失指标没有在实际应用场景下的错误更为有用.所以可以在和训练集没有交集的测试集(/test set/)来度量该指标.最为常见的损失函数为均值方差错误(/Mean Squared Error/):
+  $$
+  E^{p} = \frac{1}{2}(D^{p} - M(Z^{p},W))^{2},\: \: E_{train} = \frac{1}{P}\sum_{p=1}{E^{p}}
+  $$
+  -----
+  #+BEGIN_CENTER
+  #+NAME: figure-1
+  #+CAPTION: 基于梯度的学习机器
+  [[file:assets/efficient-backprop/figure-1.png]]
+  #+END_CENTER
+  -----
+
+  本部分主要展示一些提升最小化损失函数过程的相关策略.这些策略必须和最大化网络泛化能力(/generalize/)结合使用.泛化能力是指输入的样本是模型训练过程中从未见过,并且能够预测预测正确的能力.
+
+  为了理解泛化,需要我们思考反向传播是如何工作的.最开始,我们拥有一个样本集,该样本集是输入和输出的数据对,输入和输出的映射关系就是需要学习的.由于数据的采集过程中往往具有一些不确定性,所以采集的数据也具有一定的噪声和错误.可以想象我们采集了多个样本集,那么由于样本集存在噪声和采样过程不完全一样,那么样本集之间有一些不同的.那么这些样本集会使得神经网络最小化的损失函数也具有一定的不同,那么学习到的映射关系和真实存在的映射关系也就会具有一些不同.本部分,主要关注在如何在特征的样本集上去提高最小化损失函数的过程.泛化技术主要是在选择特定数据集的基础上和数据集上的错误引入的情况下,尽量正确输出映射关系.上述两个方面都很重要.
+
+  理论上,进行过很多尝试分析如何学习最小化训练集的错误的过程(该过程有时候叫做最小化经验风险 /Empirical Risk Minimization/).
+
+  有一些理论分析是基于将泛化错误分成两个部分:偏置(/bias/)和方差(/variance/).偏置是用来度量神经网络输出和真实输出在所有数据集上的期望差值.方差是用来度量神经网络在不同数据集上的输出的扰动情况.在训练的前期,由于模型还没有收敛,错误一般由偏置占主导,面对不同样本模型输出基本不变,所以方差较小.在训练后期,由于模型收敛后,偏置将变小.但是如果训练的时间太久,神经网络会学习到对应数据集中的噪声和错误样本.那么这时的神经网络就叫做过度训练(/overtraining/).在这种情况下,由于在不同数据集上噪声差距比较大,所以方差将变的非常大.可以知道最小化全局错误,需要同时最小化偏置和方差.
+
+  在采用反向传播来训练神经网络时候,存在很多最大化泛化能力的技巧(例如:早停 /early stopping/,正则化 /regularization/).
+
+  因此,本文的主要用途是展示最小策略(损失函数)和加快最小化速度,提高最小化过程质量的相关技巧.很显然,模型的选择(/model selection/),模型的结构和损失函数是获得泛化能力较好的模型的关键.所以需要记住,如果选取错误的模型,那么即使将损失降到了非常好的情况,也不是一个非常好的模型.实际上,过度训练的存在,很多论文作者建议局部最小化或者非全局最小化损失函数的模型在泛化能力上可能比全局最小化的模型表现更好.
+
+* Standard Backpropagation
+虽然本节中展示的相关技巧和分析是在经典的多层前向神经网络中说明,其中的很多却适用于大多数其他基于梯度的学习方法.
+
+基于梯度最简单的多层学习器可以简单的看作是多个模块的堆叠,每个模块由函数 $X_{n}=F_{n}(W_{n},X_{n-1})$ 实现,其中 $X_{n}$ 为模块的输出向量, $W_{n}$ 为模块的可训练参数, $X_{n-1}$ 为模块的输入向量(也是前一个模块的输出向量).第一个模块的输入 $X_{0}$ 为输入样本 $Z^{p}$.如果样本损失 $E^{p}$ 对 $X_{n}$ 的偏导数已知,那么可以使用如下反向传播公式迭代求解样本损失 $E^{p}$ 对 $W_{n}$ 和 $X_{n-1}$ 的偏导数:
+\begin{equation}
+  \frac{\partial{E^{p}}}{\partial{W_{n}}} = \frac{F}{W}\left(W_{n},X_{n-1}\right)\frac{\partial{E^{p}}}{\partial{X_{n}}} \\
+  \frac{\partial{E^{p}}}{\partial{X_{n-1}}}=\frac{F}{X}\left(W_{n},X_{n-1}\right)\frac{\partial{E^{p}}}{\partial{X_{n}}}
+\end{equation}
+其中, $\frac{F}{W}\left(W_{n},X_{n-1}\right)$ 为函数 $F$ 对 $W$ 在 $(W_{n},X_{n-1})$ 点的雅克比矩阵(/Jacobian/)[fn:1]. $\frac{\partial{F}}{\partial{X}}(W_{n},X_{n-1})$ 为函数 $F$ 对 $X$ 的雅克比矩阵.当采用上述公式,需要以反向的方式执行,从模块 N 执行到模块 1,可以获得损失函数对所有参数的偏导数.上述计算梯度的过程就叫做方向传播算法.
+
+传统多层神经网络为上述学习器的的一种,其中的模块为矩阵相乘(权值),跟着逐元素的激活函数(神经元):
+\begin{equation}
+\begin{aligned}
+  Y_{n} &= W_{n}X_{n-1} \\
+  X_{n} &= F(Y_{n}) 
+\end{aligned}
+\end{equation}
+
+
+运用反向传播的链式传播法则,等式如下:
+\begin{equation}
+\begin{aligned}
+  \frac{\partial{E^{p}}}{\partial{y_{n}^{i}}} &= f^{'}(y_{n}^{i})\frac{\partial{E^{p}}}{\partial{x_{n}^{i}}} \\
+  \frac{\partial{E^{p}}}{\partial{w_{n}^{ij}}} &= x_{n-1}^{j}\frac{\partial{E^{p}}}{\partial{y_{n}^{i}}} \\
+  \frac{\partial{E^{p}}}{\partial{x_{n-1}^{k}}} &= \sum_{i}{w_{n}^{ik}\frac{\partial{E^{p}}}{\partial{y_{n}^{i}}}}
+\end{aligned}
+\end{equation}
+
+上述公式可以用矩阵方式表达:
+\begin{equation}
+\begin{aligned}
+  \frac{\partial{E^{p}}}{\partial{Y_{n}}} &= F^{'}(Y_{n})\frac{\partial{E^{p}}}{\partial{X_{n}}} \\
+  \frac{\partial{E^{p}}}{\partial{W_{n}}} &= X_{n-1}\frac{\partial{E^{p}}}{\partial{Y_{n}}} \\
+  \frac{\partial{E^{p}}}{\partial{X_{n-1}}} &= W_{n}^{T}\frac{\partial{E^{p}}}{\partial{Y_{n}}} \\
+\end{aligned}
+\end{equation}
+
+最简单的学习(最小化损失函数)的方法是梯度下降算法,即采用如下方法进行权值调整:
+\begin{equation}
+W(t)=W(t-1)-\eta\frac{\partial{E}}{\partial{W}}
+\end{equation}
+最简单情况下, $\eta$ 为常量标量.更为复杂点的算法是采用变量 $\eta$.其他方法中 $\eta$ 可以采用对角矩阵,或着在牛顿优化算法中采用海瑟矩阵(/Hessian Matrix/)[fn:2]的逆矩阵.
+
+* A Few Practical Tricks
+多层神经网络损失函数常常是非二次(/non-quadratic/),非凸(/non-convex/),并且由于输入是高维数据造成具有很多局部最小值和平滑平面存在,上述这些因素常常会使得反向传播在应用中收敛速度会变得非常慢.并且没有公式来保证 1.网络会收敛到一个较好的结果;2.快速收敛;3.结果一定收敛.本节,将会讨论一些相关技巧,来加速收敛速度,并且提高收敛的几率.
+
+** Stochastic versus Batch learning.
+每次迭代,公式(5)需要计算所有的训练集,获取训练集的真实梯度.由于整个训练集需要计算后才会更新权值,整个过程叫做批次学习(/batch learning/).替换方法,可以采用随机梯度(/stochastic/)学习方法,每次更新权值只需要从训练集上随机选取一个样本.真实梯度估计(/true gradient estimate/)是基于单个随机选取的样本的错误 $E^{t}$ ,然后更新权重:
+\begin{equation}
+W(t+1) = W(t) - \eta\frac{\partial{E^{t}}}{\partial{W}}.
+\end{equation}
+
+由于采用单个样本预估真实梯度有一定的错误和噪声,所以迭代更新权值并不一定会精准的朝真实的损失下降方向更新.梯度更新上的噪声其实是具有一定的优点.一般来说反向传播应该优先选取随机梯度进行学习,如下为随机梯度学习方法三个优点:
+-----
+#+BEGIN_QUOTE
++ 随机梯度优化算法优化速度要快于批次优化算法
++ 随机梯度优化算法优化模型的效果较好
++ 随机梯度优化算法可以用于追踪模型的修改过程
+#+END_QUOTE
+-----
+
+随机梯度优化算法一般要比批次优化算法在大规模冗余数据集上训练要快.原因非常简单.例如:一个训练集通过复制 100 个样本 10 次,从而获得 1K 样本.针对 1K 个样本的批次梯度计算和在 100 个样本的批次计算结果一样.所以批次梯度计算会浪费一部分计算.另外一方面来看,随机梯度下降可以看作 10 次在 100 个样本的训练集上迭代作为一次 epoch.实际上,在数据集上样本很少出现多次,但是有很多样本会非常相似.
+
+随机梯度优化算法由于更新过程的梯度具有一定的噪声,致使学习到的模型常常具有更好的性能.非线性网络模型常常具有多个局部极小值.训练的目标是将权重值更新到这些局部极小值的一个即可.批次训练会倾向于落入初始化区域范围内的局部极小值中.随机梯度优化算法由于在更新的过程中存在噪声,可以导致最后落入到其他盆地更深的局部极小值中.
+
+随机梯度优化算法在模型映射关系随着时间发生改变的情况下学习到更即时的映射关系.由于在实际应用中,模型需要学习的映射关系并不是一成不变的,如果模型无法快速的检测和学习到映射关系的改变,那么模型的泛化能力将变得越来越差.批次训练中,由于更新的权重值是根据全局样本集进行平均求解,所以在面对新的映射关系的时候,反馈速度较慢;而随机梯度优化算法中,可以通过将新输入的样本送入模型多次学习,那么权值更新更倾向于当前实时映射关系来学习和调整,从而获得更好的模型.
+
+虽然随机梯度优化算法具有如此的优点,批次训练还是有很多场景可以使用,如下为批次训练的一些优点:
+-----
+#+BEGIN_QUOTE
++ 收敛的状态容易理解.
++ 很多加速训练的技巧(共轭梯度 /conjugate gradient/)只能应用在批次梯度优化算法.
++ 权重动态更新和收敛速度在批次梯度优化算法中更容易分析.
+#+END_QUOTE
+-----
+
+随机梯度优化算法具有优点,正是梯度更新中引入的噪声带来的.这些噪声是收敛到更好的局部最小值的关键因素.停止收敛的其他一个因素是权重扰动(/weight fluctuations/).扰动的程度与随机更新中的噪声有关.在局部极小值附近的扰动方差和学习率成正比.所以为了减少权重扰动,既可以对学习率进行衰减(逆火 /anneal/),也可以采用可调整的批次大小进行训练.如下是一个学习率逆火策略:
+\begin{equation}
+\eta \sim \frac{c}{t},
+\end{equation}
+其中, $t$ 为输入到模型的样本数量, $c$ 是一个常量.实际应用中,该方法学习率衰减太快.
+
+另外一种去除噪声的方法是使用 小批次训练方法(/mini-batch/),训练开始时采用小数量的样本作为一个批次进行训练学习,然后随着训练过程增大批次中的样本数量.批次数量和学习率一样需要实验,非常难以直接确定对应的值.有效的方法是是学习率和批次中样本的大小有关.
+
+考虑到噪声在泛化能力提升中的作用,从数据集中去掉噪声并不是那么重要.过度训练也要比噪声对模型的影响大.
+
+批次训练的另外一个优点是可以采用二次优化方法加速训练过程.二次优化算法通过引入损失函数的曲率(/curvature/),从而快速的定位近似的局部最小值.
+
+尽管批次训练也具有很多优点,面对大规模数据集时,随机梯度优化算法由于计算更为简单和快速,所以是更优先的方法.
+
+** Shuffling the Examples
+由于神经网络从未见过的样本学习速度最快.因此建议在每次迭代中选择模型最不熟悉的样本(即模型分类错误的样本).可知的是,没有一个简单方法的来确定哪些样本对模型来说包含的信息最丰富,所以一个简单的技巧是每次选择的样本最好分布在不同类别的样本(相同类别下的样本携带的信息较为相似).
+
+另外一个用来判断训练集包含多少信息的启发式方法是通过度量神经网络的输入和实际目标之间的错误.错误越大表示当先输入样本模型还没有学习到,并且包含了大量新的信息.因此,可以通过更多的输入这样的样本来加速模型收敛.在网络模型训练过程中,这些样本的错误一直在变动,所以样本输入的频率也需要随着变动.一个修改样本输入频率的方法叫做:强调策略(/emphasizing shceme/).
+-----
+#+BEGIN_QUOTE
+#+BEGIN_CENTER
+*通过最大化信息内容选取样本.*
+#+END_CENTER
++ 通过随机化训练样本,从而使得输入模型的样本分属不同的类别.
++ 产生错误较大的样本应该输入给模型学习的频率更高
+#+END_QUOTE
+-----
+
+在修改样本输入模型的频率的时候,也就修改了不同样本对模型重要性.这里需要格外注意,因为该方法应用到模型中,由于异常点(/outlier/)往往会产生较大的错误,从而使得模型学习到异常关系.这些异常点在输入模型是需要避免的.另外一面,这种方法由于输入了更多不常见的样本,从而可以一定程度上提高模型性能.
+
+** Normalizing the Inputs
+如果训练集中的变量均值接近 0 时,模型的收敛速度更快.考虑一个极端情况,所有的输入变量都是正值.输入层的权重更新与 $\delta{x}$ 成正比,$\delta$ 是错误,x 为输入向量(参考公式(3.2)和(5)).如何输入的向量元素都是正数,那么更新的权重值都是相同符号.结果就是所有的权重面对一个样本的时候要不全部增加或者要不全部减少.所以权重的更新过程将会非常缓慢和充满抖动.
+
+在上述例子,输入的向量都是正数.一般,如果输入的样本均值远离 0 值的话,会对权值产生对应反向上的偏置,从而减缓模型训练.因此,在训练开始时,最好将输入的变量均值平移到 0.这种启发式方法应该应用在所有的网络层,因为每层的网络层输出都是下一层的输入.后续将会结合 sigmoid 激活函数一起谈论该问题.本小节只讨论输入的归一化.
+
+输入变量均值平移到 0 后,还需要缩放变量的方差(/covariance/)到一个固定值 $C_{i}$ :
+\begin{equation}
+C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
+\end{equation}
+其中, $P$ 为输入训练样本的数量,$C_{i}$ 为第 $i^{th}$ 输入变量的方差, $z_{i}^{p}$ 为第 $p^{th}$ 个样本的第 $i^{th}$ 输入变量.这种调整通过平衡对应节点学习权重更新的比例来加速训练.具体方差的值应该和激活值想匹配,例如在使用 sigmoid 的时候,方差应该为 1.
+
+如果假设输入的变量之间具有不同的重要性,那么方差不需要缩放到一个规定的值上.在这种情况下,可以通过将不重要的变量的方差调低,从而使得模型更新过程更关注其他变量.
+
+-----
+#+BEGIN_QUOTE
+#+BEGIN_CENTER
+*输入变量的调整*
+#+END_CENTER
+
++ 训练集中的样本均值应该接近 0.
++ 缩放输入的样本,从而使得方差相等.
++ 输入的变量之间应该尽量具有无关性.
+#+END_QUOTE
+-----
+
+上述两个平移均值和缩放方差的方法比较容易实现.另外一个方法更为有效,但是相对较难实现的是将输入的数据消除数据之间的相关性(/decorrelated/),从而使得在最下化损失时,调整权重值 $W_{1}$ 和调整权重值 $W_{2}$ 之间互不影响.换句话说,就是使得输入的两个变量具有无关性.如果输入变量之间具有相关性,那么同时学习两个变量是一个更为困难的问题.主成份分析(/Principal component analysis-PAC/)常常用来消除输入数据相关性.
+
+输入数据是线性相关(/linearly dependent/)同样会减慢学习.假设:一个输入变量永远是另外一个输入变量的两倍($z_{2}=2z_{1}$).网络输出如果是固定沿着直线 $W_{2}=v-(1/2)W_{1}$,$v$ 为常量.因此,损失梯度沿着直线永远是 0(如[[figure-2]]).沿着这些直线更新梯度,对损失函数没有任何学习作用.2-D 的机器学习问题退化为 1-D 的机器学问题.理想情况下,能够消除其中一个输入,从而简化整个模型和学习复杂度.
+-----
+#+BEGIN_CENTER
+#+NAME: figure-2
+#+CAPTION: 输入具有线性相关
+[[file:assets/efficient-backprop/figure-2.png]]
+#+END_CENTER
+-----
+
+图[[figure-3]]显示了整个输入变换的过程.过程为(1)平移输入值,使得均值为 0;(2)去除输入变量之间的相关性;(3)缩放变量,使得方差相等.
+-----
+#+BEGIN_CENTER
+#+NAME: figure-3
+#+CAPTION: 输入预处理
+[[file:assets/efficient-backprop/figure-3.png]]
+#+END_CENTER
+-----
+
+** The Sigmoid
+非线性激活函数的使用,使得神经网络拥有的非线性能力.最常用的激活函数是 sigmoid,该函数是一个单调递增函数.最常见的例子是标准 logistic 函数 $f(x)=1/(1+e^{-x})$ 和双曲正切函数 $f(x)=\tanh{(x)}$,如[[figure-4]]所示.优先采取[[figure-4]]b 所示的 sigmoid 函数,该函数关于 0 值对称,主要原因是该输出可能是下一层的输入,是已经平移到均值为 0 了.
+-----
+#+BEGIN_QUOTE
+#+BEGIN_CENTER
+*Sigmoids 函数*
+#+END_CENTER
+
++ 对称的 sigmoid 函数,例如双曲切线的收敛速度要快于标准的 logistic 函数 .
++ 推荐的 sigmoid 函数[fn:3]为 $f(x)=1.7159 \tanh{(\frac{2}{3}x)}$.由于 tanh 函数计算相对复杂,可以采用一个多项式乘以一个比例来近似.
++ 有时可以通过增加一个小的线性项来规避饱和状态,即接近与 1 和-1 的时候. $f(x)=\tanh{(x)}+ax$.
+#+END_QUOTE
+-----
+
+推荐的 sigmoid 函数中的常量的选择是根据归一化的输入经过 sigmoid 映射后的输出的方差也接近 1.该 sigmoid 函数具有如下性质:(a) $f(\pm)= \pm 1$. (b) 在 $x=1$ 时,二次导数最大. (c) 有效放大系数(/effective gain/)接近 1.
+
+使用对称 sigmoid 函数,一个潜在的问题是错误平面在原点时是一个平坦的平面.所以需要避免用较小的权重作为初始化.其次,由于 sigmoid 函数都具有自己的饱和区域(/saturation/),可以通过增加一个线性项来避免损失平坦区域出现.
+
+-----
+#+BEGIN_CENTER
+#+NAME: figure-4
+#+CAPTION: (a) 不推荐使用.标准 logistic 函数, $f(x)=1/(1+e^{-x})$. (b) 双曲切线, $f(x)=1.7159\ \tanh{(\frac{2}{3}x)}$
+[[file:assets/efficient-backprop/figure-4.png]]
+#+END_CENTER
+-----
+** Choosing Target Values
+在分类问题中,目标值一般都是二类(例如:{-1,+1}).一个可能的建议是将目标值用非对称的 sigmoid 函数的渐进线的值表示.但是这种方法具有很多弊端.
+
+首先,结果非常不稳定.训练过程是尽量渐进地将模型的输出值调整到目标值.由于渐进线的值在 sigmoid 函数的饱和区,所以会将权值调整到非常大来增大梯度.然而这些梯度值会乘以指数极的 sigmoid 导数(饱和区导数接近 0),最后权值更新量基本接近 0.也就是说会使得权值更新停止.
+
+其二,当输出值在 sigmoid 饱和区域时,网络模型无法有效的预测分类结果的置信度.当输入样本的结果输出位于决策边缘附近,那么预测的结果应该是未知的.理想情况下,上述不确定情况应该是模型输出值在两个可能的目标值之间来预示.但是,权值过大的模型,会强制模型的输出更倾向于 sigmoid 的饱和区域内,从而无法确定样本的分类置信度.
+
+一个解决上述问题的方法是将目标值放在 sigmoid 的值域区间内,而非 sigmoid 的渐进线值.值域需要仔细设计,确定值域不要是 sigmoid 近似线性的区域.最好的的方法是将目标值设置为 sigmoid 函数的二次导数的最大值位置,从而从分利用了 sigmoid 的非线性和避免 sigmoid 饱和状态出现.这也是[[figure-4]]b 的 sigmoid 是较好的另一个原因,二次导数在 $\pm 1$ 时最大,选取 $\pm 1$ 作为二分类目标值.
+
+-----
+#+BEGIN_QUOTE
+目标值选择:将目标值选择在 sigmoid 二次导数最大的位置,可以避免神经元饱和.
+#+END_QUOTE
+-----
+
+** Initializing the weights
+权重值的初始化会对训练过程具有极大的影响.权重值应该随机初始化,但是极可能会使得激活值落在线性区域.如果采用较大的权重值,那么 sigmoid 会落在饱和区域,使得梯度较小,从而使得训练速度较慢.如果权重值非常小,那么梯度仍然会非常小.临近 sigmoid 函数线性区域之外的权重值具有一些良好的特性:(1) 梯度够大,利于训练过程使用.(2) 网络模型可以先学习线性映射关系,然后再学习更为困难的非线性映射部分.
+
+为了实现上述情况,需要将训练集归一化操作, sigmoid 函数选择,权值初始化都考虑在内.首先需要保证网络层输出值的标准方差($\sigma$)接近为 1.输入层通过[[*Normalizing the Inputs][Normalizing the Inputs]]就可以实现输入数据的标准方差为 1.为了使得第一层网络层输出的标准方差为 1,只需要采用上述推荐的 sigmoid 函数,并且保证输入的数据的标准方差为 1 即可.假设神经元 $y_{i}$ 的输入数据标准方差为 1,并且已经去除相关性,那么通过权值加和后标准差为:
+\begin{equation}
+\sigma_{y_{i}} = \left(\sum_{j}{w_{ij}^{2}} \right)^{1/2}
+\end{equation}
+
+为了保证标准差 $\sigma_{y_{i}}$ 接近 1,那么权值需要从以均值为 0,方差如下的正态分布采样即可:
+\begin{equation}
+\sigma_{w} = m^{-1/2}
+\end{equation}
+$m$ 为输入到该神经元的输入数据数量.
+
+-----
+#+BEGIN_QUOTE
+#+BEGIN_CENTER
+*权值初始化*
+#+END_CENTER
+
+假设:
++ 训练集已经过归一化
++ 采用[[ figure-4]] b 描述的 sigmoid 函数
+
+  
+那么权值初始化需要从均值为 0,标准方差如下的分布随机采样:
+$$\sigma_{w}=m^{-1/2}$$
+其中: $m$ 为输入到神经元的数据个数(/fan-in/).
+#+END_QUOTE
+-----
+
+** Choosing Learning rates
+至少有一种具有良好理论解释的方法用来评估理想的学习率($\eta$).许多其他的策略(大多数不具有理论支持)提出自动动态调整学习率的方法.大多数是在权值向量出现震荡(/oscillates/)时候,对学习率进行衰减;并且当权值向量具有一个稳定的更新方向时,增大学习率.这些方法在随机梯度优化或者在线学习的场景下不再适用,因为权值向量在整个优化的过程都在震荡.
+
+除了选取一个全局的学习率,也可以为每一个权重单独选择和设置学习率,并且这种设置方法可以加速模型收敛.一个具有良好理论支持的方法是基于二次导数.主要的思想是确保所有的权重具有相同的收敛速度.
+
+由于错误损失函数平面具有不同的曲率,一些权重值可能需要较小的学习率避免震荡出局部极小值范围;其他的权值可能需要较大的学习率加速收敛.介于上述,学习率在低层网络层一般应该大于高层网络层(figure-21).在多大数的神经网络结构中,这个理论都成立.损失函数的二次导数在低层网络一般都比高层网络层的要小.基于上述观察的为不同权重设置不同的学习率的启发式方法将在随后讨论.
+
+如果使用共享权重,例如在时间序列神经网络(/time-delay neural networks/)和卷积神经网络(/convolutional networks/)中,学习率应该和共享该权值的神经元输入数量的平方根成比例.因为梯度是所有的采用该权重值的神经元梯度加和.
+
+-----
+#+BEGIN_QUOTE
+#+BEGIN_CENTER
+*相同的学习速度*
+#+END_CENTER
++ 给每个权重值设立单独的学习率
++ 学习率应该和神经元的输入链接数量的平方根成比例
++ 低层网络层的学习率应该大于高层网络层的学习率
+#+END_QUOTE
+-----
+
+加速训练收敛的技巧包括:
+
+*** Momentum
+-----
+\begin{equation}
+\Delta{w(t+1)}=\eta\frac{\partial{E_{t+1}}}{\partial{w}}+\mu{\Delta{w(t)}},
+\notag
+\end{equation}
+
+当损失平面不是一个球面的时候,可以增加模型收敛速度.因为,动能能够在高曲率(/curvature/)的方向上能够降低实际学习步长;在低曲率的方向上增大实际学习步长($\mu$ 用来表示动能项的强度系数).
+
+*** Adaptive learning rates
+-----
+很多作者包括 Sompolinsky et al.[fn:4], Darken&Moody [fn:5],Sutton [fn:6],Murata et al.[fn:7]提出了自动化调整学习率的一些规则(也看参考[fn:8]).这些规则都是通过基于错误率来提高和降低学习率,从而实现控制模型收敛速度.
+
+如下为动态调整学习率一些规则:(1)Hessian 矩阵的最小特征值必须足够小于第二小的特征值.(2)经过大量的迭代后,权值向量 $\mathcal{w}(t)$ 会沿着 Hessian 矩阵的最小特征向量方向移动到局部最小值附近.基于上述的情况,可以将参数的更新看作是一个一维更新过程,最小特征向量 $\nu$ 可以用如下公式近似:
+\begin{equation}
+  \nu = \langle \frac{\partial{E}}{\partial{\mathcal{w}}} \rangle / \lVert \langle \frac{\partial{E}}{\partial{\mathcal{w}}} \rangle \rVert,
+  \notag
+\end{equation}
+
+其中 $\lVert \rVert$ 表示 $L^{2}$ 范式.这里可以调整投影:
+\begin{equation}
+\xi = \langle \nu^{T} \frac{\partial{E}}{\partial{\mathcal{w}}} \rangle = \lVert \langle \frac{\partial{E}}{\partial{\mathcal{w}}} \rangle \rVert
+\end{equation}
+
+近似最小特征向量 $\nu$ 可以看作是在特征向量上到局部最小值的距离.这个距离可以用来控制学习率变化(具体细节参考[fn:7]).
+\begin{equation}
+\mathcal{w}(t+1)=\mathcal{w}(t)-\eta_{t}\frac{\partial{E_{t}}}{\partial{\mathcal{w}}}
+\end{equation}
+
+\begin{equation}
+\mathcal{r}(t+1)=(1-\sigma)\mathcal{r}(t)+\sigma\frac{\partial{E_{t}}}{\partial{\mathcal{w}}},\ (0<\sigma<1)
+\end{equation}
+
+\begin{equation}
+\eta(t+1)=\eta(t)+\alpha\eta(t)(\beta\lVert\mathcal{r}(t+1)\rVert-\eta(t)),
+\end{equation}
+
+$\sigma$ 用来控制最小特征向量方向保留系数, $\alpha,\beta$ 为常量, $\mathcal{r}$ 为辅助变量,用来计算梯度 $\frac{\partial{E}}{\partial{w}}$ 的累加.
+
+上述调整方法较为简单和直观.只需要简单的保留一个额外的向量(公式 13):梯度累加向量.该向量的范式控制学习率变化(公式 14).算法采用如下简单的直觉:在具有较大的距离的时候($\xi$ 较大)采用较大的步长,接近最小值的时候衰减学习率.
+
+-----
+#+NAME: figure-5
+#+CAPTION: 模型收敛轨迹.
+[[file:assets/efficient-backprop/figure-5.png]]
+-----
+
+** Radial Basis Functions s Sigmoid Units
+常见的神经元采用向量内积和 sigmoid 实现,还有其他类型的神经元可以采用.常见的就是径向基函数(/radial basis function RBF/).在 RBF 网络中,输入向量和权值向量内积操作替换成了输入向量和权值向量的欧几里德距离(/Euclidean distance/),sigmoid 激活函数替换成了指数函数.计算公式如下:
+\begin{equation}
+  g(x)=\sum_{i=1}^{N}{w_{i}\exp{(-\frac{1}{2\sigma_{i}^{2}}\lVert x-v_{i} \rVert^{2})}}
+\notag
+\end{equation}
+$v_{i},\sigma_{i}$ 分别是 i-th 高斯的分布的均值和方差.这些神经元用来替换或者和标准神经元共存,采用梯度下降进行训练,并且可以通过无监督聚类的方法确定 RBF 神经元的均值和神经元个数.
+
+不像 sigmoid 神经元接受的输入覆盖整个输入空间,一个 RBF 神经元只覆盖输入空间的一小块局部区域,从而学习收敛速度较快.RBF 神经元更适合在高层网络使用,sigmoid 更适合在底层网络使用.
+
+* Convergence of Gradient Descent
+** A Little Theory
+在本节,将会讨论前面给出的技巧背后的一些理论.先从一维数据开始,梯度下降的更新公式如下:
+\begin{equation}
+W(t+1)=W(t)-\eta{\frac{\mathrm{d}E(w)}{\mathrm{d}W}}
+\end{equation}
+
+我们想知道 $\eta$ 的值是如何影响学习速度和模型收敛.如[[figure-6]]所示,不同的 $\eta$ 对训练过程的影响.在一维情况下,很容易定义最优学习率 $\eta_{opt}$,学习率可以通过一步将权值移动到最小值的权重 $W_{min}$(如[[figure-6][figure-6(i)b]]所示).如果 $\eta$ 小于 $\eta_{opt
+}$ 那么移动的步长将变小,那么需要多步更新才能收敛.如果 $\eta$ 在 $\eta_{opt}$ 和 $2\eta_{opt}$ 之间,那么权重更新就会在 $W_{min}$ 附近震荡,但是最后会收敛(如[[figure-6][figure-6(i)c]]所示).如果 $\eta$ 大于两倍的最优学习率 $\eta_{opt}$,那么权重更新的步长太长,会使得权重与最小权重偏移的更大(如[[figure-6][figure-6(i)d]]所示),最终使得模型无法收敛.
+
+-----
+#+NAME: figure-6
+#+CAPTION: 不同学习率下的梯度下降.
+[[file:assets/efficient-backprop/figure-6.png]]
+-----
+
+那么最优学习率是多少呢?首先让我们在一维数据情况下考虑.假设 $E$ 为近似的二次函数,$\eta_{opt}$ 可以通过将 $E$ 在当前权重 $W_{c}$ 进行泰勒展开求得:
+\begin{equation}
+E(W)=E(W_{c})+(W-W_{c})\frac{\mathrm{d}E(W_{c})}{\mathrm{d}W}+\frac{1}{2}(W-W_{c})^{2}\frac{\mathrm{d}^{2}E(W_c)}{\mathrm{d}W^{2}}+...,
+\end{equation}
+
+如果 $E$ 是二次函数,那么二次导数就是常量,并且更高次导数为 0.公式的左右两次同时对 W 进行求导:
+\begin{equation}
+\frac{\mathrm{d}E(W)}{\mathrm{d}W}=\frac{\mathrm{d}E(W_{c})}{\mathrm{d}W}+(W-W_{c})\frac{\mathrm{d}^{2}E(W_{c})}{\mathrm{d}W^{2}}
+\end{equation}
+
+设 $W=W_{min}$,那么 $\mathrm{d}E(W_{min})/\mathrm{d}W=0$,上述公式变换如下:
+\begin{equation}
+W_{min}=W_{c}-\left(\frac{\mathrm{d}^{2}E(W_{c})}{\mathrm{d}W^{2}}\right)^{-1}\frac{\mathrm{d}E(W_{c})}{\mathrm{d}W}
+\end{equation}
+
+和公式(15)进行比较,可以发现只要采用如下学习率就可以一步移动到最小值位置:
+\begin{equation}
+\eta_{opt} = \left(\frac{\mathrm{d}^{2}E(W_{c})}{\mathrm{d}W^{2}}\right)^{-1}.
+\end{equation}
+
+一个更简单和直观的方法如图[[figure-6][figure-6(ii)]]所示.下图显示了函数 $E$ 的一阶导数函数.由于 $E$ 是二次函数,梯度就是一条直线,并且在梯度等于 0 的时候获得全局最小值.所以计算斜率公式:
+\begin{equation}
+\partial^{2}{E}/\partial^{2}{W}=\frac{\partial{E}(W_{c})/\partial{W}-0}{W_{c}-W_{min}}.
+\end{equation}
+
+求解出的 $W_{min}$ 和公式(18)一致.
+
+虽然最快收敛的最佳学习率是 $\eta_{opt}$,但是最大的可以使用的学习率,并且不会引起模型发散(/divergence/)是(如[[figure-6][figure-6(i)d]]所示):
+\begin{equation}
+\eta_{max}=2\eta_{opt}.
+\end{equation}
+
+如果 $E$ 不是一个二次函数,那么在公式(16)中的高阶项就不完全是 0,那么公式(18)只是一个近似结果.在这种情况下,即使使用最优学习率也需要迭代多次才能收敛,并且收敛速度依然非常快.
+
+在多维数据情况下,求解 $\eta_{opt}$ 相对困难一些,是因为公式(19)的右侧是一个逆矩阵 $H^{-1}$, $H$ 为 Hessian 矩阵,矩阵的元素如下计算:
+\begin{equation}
+H_{ij}=\frac{\partial^{2}{E}}{\partial{W_{i}}\partial{W_{j}}}
+\end{equation}
+
+$H$ 为 $E$ 曲率的度量.在二维数据, $E$ 的梯度等高线如[[figure-7][figure-7]]所示. Hessian 矩阵的特征向量为对应梯度主要和次要方向.特征值表示损失函数 $E$ 沿着两个方向的步长.
+
+-----
+#+NAME: figure-7
+#+CAPTION: E 等高线
+[[file:assets/efficient-backprop/figure-7.png]]
+-----
+
+*例子*.最小均值方差算法中,具有一个单层线性网络,则损失函数为:
+\begin{equation}
+E(W)=\frac{1}{2P}\sum_{p=1}^{P}\left|\mathcal{d}^{p}-\sum_{i}\mathcal{w}_{i}\mathcal{x}_{i}^{p} \right|^{2}
+\end{equation}
+
+其中,P 为训练集大小. 这种场景下,Hessian 和输入数据的协方差矩阵相同:
+\begin{equation}
+H=\frac{1}{P}\sum_{p}{x^{p}{x^{p}}^{T}}.
+\end{equation}
+
+因此,H 矩阵的每个特征值表示输入数据在该特征向量上的协方差或者分布强度,如[[figure-8]]所示.
+-----
+#+NAME: figure-8
+#+CAPTION: LMS 算法下,Hessian 矩阵度量了输入的数据分布.
+[[file:assets/efficient-backprop/figure-8.png]]
+-----
+
+采用标量学习率在多维度数据情况下是有问题的.希望采用较大的学习率,从而能够在 Hessian 特征值较小的方向上实现快速收敛,然而学习率太大,那么在 Hessian 特征值较大的方向上权值容易发散(/diverge/).为了说明上述情况,可以在最小值位置展开错误函数 $E$:
+\begin{equation}
+E(W)\simeq E(W_{min})+\frac{1}{2}(W-W_{min})^{T}H(W_{min})(W-W_{min}).
+\end{equation}
+
+对公式(25)进行微分,然后采用更新公式(15):
+\begin{equation}
+  \begin{aligned}
+    W(t+1) &= W(t) - \eta\frac{\partial{E}(t)}{\partial{W}} \\
+    &= W(t) - \eta H(W_{min})(W(t)-W_{min}).
+  \end{aligned}
+\end{equation}
+
+从公式两边都减去 $W_{min}$:
+\begin{equation}
+(W(t+1)-W_{min})=(I - \eta H(W_{min}))(W(t)-W_{min})
+\end{equation}
+如果前置项 $(I-\eta H(W_{min}))$ 为矩阵运算,如果该矩阵的特征值都是小于 1 的,那么模型就一定会收敛.
+
+那么如何选择学习率呢?理想情况下,希望在不同的特征向量上采用不同的学习率.如果特征向量和权值的坐标一直,那么就更简单,可以根据权值所在的特征向量方向上采用和特征值成比例的学习率.然而如果权值是耦合在一起的,需要对 Hessian 矩阵进行旋转,从而使得 H 变成对角阵,从而使得特征向量和坐标系一直(如[[figure-7][figure-7 b]]所示).
+
+设 \Lambda 为旋转矩阵:
+\begin{equation}
+\Lambda = \Theta H \Theta^{T}
+\end{equation}
+
+其中 $\Lambda$ 为对角矩阵,并且 $\Theta^{T}\Theta=I$.损失函数可以改写成如下:
+\begin{equation}
+E(W) \simeq E(W_{min}) + \frac{1}{2}\left[(W-W_{min})^{T}\Theta^{T}\right]\left[\Theta H(W_{min})\Theta^{T}\right]\left[\Theta(W-W_{min})\right].
+\end{equation}
+
+通过对权值作个调整 $\nu = \Theta(W-W_{min})$,则上述公式可以简化如下:
+\begin{equation}
+E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
+\end{equation}
+
+则更新公式更下:
+\begin{equation}
+\nu(t+1)=(I-\eta\Lambda)\nu(t).
+\end{equation}
+
+注意到 $I-\eta\Lambda$ 为对象矩阵,对象元素为 $1-\eta\lambda_{i}$. 当 $\left|1-\eta\lambda_{i}\right|<1$ 时,模型会收敛.例如:对于所有 i,$\eta < \frac{2}{\lambda_{i}}$.如果采用全局学习率,那么必须:
+\begin{equation}
+\eta < \frac{2}{\lambda_{max}}
+\end{equation}
+
+为了防止模型发散, $\lambda_{max}$ 为 Hessian 矩阵最大的特征值.为了最快收敛,可以设置:
+\begin{equation}
+\eta_{opt} = \frac{1}{\lambda_{max}}.
+\end{equation}
+
+如果 $\lambda_{min}$ 比 $\lambda_{max}$ 小很多,那么模型沿着 $\lambda_{min}$ 方向上收敛速度将非常慢.实际上,模型收敛时间和条件数(/condition number/) $\kappa = \lambda_{max}/\lambda_{min}$ 成比例.所以希望特征值分布越窄越好.
+
+由于我们已经通过旋转矩阵将 Hessian 矩阵变成了沿着坐标系的对角矩阵(公式 29),实际更新公式就变成了 N 个独立的 1 维更新公式.因此,可以针对不同的权重值选取不同的学习率.可以为第 i-th 权重选择最优学习率 $\eta_{opt,i}=\frac{1}{\lambda_{i}}$.
+** Examples
+*** Linear Network
+[[figure-10]]展示了从两个高斯分布采样的 100 个样本点,中心点分别是(-0.4,-0.8)和(0.4,0.8).这些样本点的协方差矩阵的特征值分别为 0.84 和 0.036.训练一个单层的线性网络,具有两个输入,一个输出,两个权值和一个偏置(如[[figure-9]]所示).采用 batch 的 LMS 算法.[[figure-11]]显示了 $\eta=1.5$ 和 $\eta=2.5$ 时训练过程中的权值更新和错误率.可以注意到最大学习率 $\eta_{max}=2/\lambda_{max}=2/.94=2.38$(公式(32)),所以 $\eta=2.5$ 时,模型会发散.
+
+-----
+#+NAME: figure-9
+#+CAPTION: 简单的线性模型
+[[file:assets/efficient-backprop/figure-9.png]]
+-----
+#+NAME: figure-10
+#+CAPTION: 中心点(-0.4,-0.8)和(0.4,0.8)的两个高斯采样数据集
+[[file:assets/efficient-backprop/figure-10.png]]
+-----
+#+NAME: figure-11
+#+CAPTION: 权值和错误率曲线.(a) $\eta=1.5$, (b) $\eta=2.5$.
+[[file:assets/efficient-backprop/figure-11.png]]
+-----
+
+[[figure-12]]显示了相同的训练集上,采用随机梯度进行优化,学习率为 $\eta=0.2$.可以看到权值的更新充满更多的噪声.损失值是按 epoch 计算的.
+
+-----
+#+NAME: figure-12
+#+CAPTION: 采用学习率为 $\eta=0.2$ 的随机梯度优化,相对应的权值更新和损失值.
+[[file:assets/efficient-backprop/figure-12.png]]
+-----
+
+*** Multilayer Network
+[[figure-14]]显示了一个非常简单的多层网络模型结构.有一个输入,一个隐层,一个输出节点.模型中具有 2 个权值和 2 个偏置.激活函数为 $f(x)=1.71\tanh{(\frac{2}{3}x)}$.训练集包含 10 个样本,标记为 2 个类别.每一类都是从标准方差 0.4 的高斯采样获得.类别 1 的均值为-1,类别 2 的均值为+1.所以类别 1 的目标值为-1,类别 2 的目标值为+1.[[figure-13]]显示了随机梯度优化过程.
+-----
+#+NAME: figure-13
+#+CAPTION: 1-1-1 网络模型,采用随机梯度优化,权值更新和损失值
+[[file:assets/efficient-backprop/figure-13.png]]
+-----
+#+NAME: figure-14
+#+CAPTION: 简单的多层网络模型
+[[file:assets/efficient-backprop/figure-14.png]]
+-----
+
+** Input Transformations and Error Surface Transformations Revisited 
+可以使用前面几节讨论的一些技巧.
+-----
+#+BEGIN_QUOTE
+对输入变量减去均值.
+#+END_QUOTE
+-----
+
+使用上述技巧的原因是非 0 均值的输入变量会使得 Hessian 矩阵具有较大的特征值,致使条件数(/condition number/)会比较大,也就是说损失平面会在某些方向上比较深,在某些方向上比较浅,从而使得训练收敛速度非常缓慢.简单的方法就是将输入的数据减去均值.
+
+对于一个单个的线性神经元,Hessian 的特征向量(减去均值)沿着训练样本向量的主成份轴([[figure-8]]).如果输入数据在不同轴上的分布分散,方差较大,会使得条件数变大,从而减慢训练速度.所以推荐:
+-----
+#+BEGIN_QUOTE
+对输入数据进行方差归一化.
+#+END_QUOTE
+-----
+
+如果输入变量之间具有相关性,会使得损失函数平面不是球面,并且会降低损失平面的偏曲率.
+
+具有相关性的输入变量常常会使得 Hessian 矩阵的特征向量偏离坐标轴([[figure-7][figure-7a usus 7b]]),导致权值更新无法分离.分离权重更新可以使的 *一个权重一个学习率* 方法最优化,因此具有如下技巧:
+-----
+#+BEGIN_QUOTE
+对输入数据进行去相关性.
+#+END_QUOTE
+-----
+
+假设现在输入数据已经去相关性后,Hessian 矩阵就是对角化的,并且特征值是沿着坐标轴的.在这种情况下,在图[[figure-7][figure-7b]]中显示更新的梯度并不是最好的梯度下降方向.在点 P 梯度方向并不指向最小值.但是如果我们给每一个权重值赋予自己的学习率(对应特征值的倒数),那么梯度下降方向就直接可以指向最小值:
+-----
+#+BEGIN_QUOTE
+对于任意的权值使用独立的学习率.
+#+END_QUOTE
+-----
+
+* Classical second order optimization methods
+随后的章节会简单介绍 Newton, conjugate gradient,Gauss-Newton,Levenberg Marquardt 和 Quasi-Newton(BFGS)方法,这些都是二阶优化算法.
+
+** Newton Algorithm
+为了理解 Newton 法,让我们回顾一下[[*A Little Theory][A Little Theory]],假设二次损失函数 E(公式 19),如[[figure-6][figure-6(ii)]]所示,我们可以计算权值更新(公式 16-18):
+\begin{equation}
+  \Delta{w}=\eta\left(\frac{\partial^{2}E}{\partial{w^{2}}}\right)^{-1}\frac{\partial{E}}{\partial{w}}=\eta H(w)^{-1}\frac{\partial{E}}{\partial{w}},
+\end{equation}
+
+由于 E 一般不是真正二次函数,所以 $\eta$ 必须在 $0<\eta<1$ 之间选择.等式考虑了 Hessian 矩阵形式.如果损失函数是二次函数,那么一步就可以达到收敛状态.
+
+常常最小值附近的能量平面并不是椭圆形,或者是圆形,这些情况都依赖于 Hessian 矩阵的条件数.白化转换(/whitening transform/),可以通过转换 $\mu = \Theta \Lambda^{1/2}w$ 将椭圆形变成球形(如[[figure-15]]和公式 28).如下两个方法都是相同的:(a)在未白化的权值空间上采用 Newton 算法;(b)在白化后的坐标系上执行常规梯度下降方法.
+
+总结,Newton 算法的能够在损失函数是二次函数的时候一步就收敛,并且对输入向量执行线性变换具有不变性.这就表示收敛时间不受输入数据的平移,缩放和旋转影响.然后,主要的缺点是需要计算 N*N 的 Hessian 矩阵和其逆矩阵,每次梯度更新迭代都需要执行 $O(N^{3})$ 的计算量.由于损失函数一般都不是二次函数,所以无法保证模型一定收敛.如果 Hessian 矩阵不是正定(当损失平面具有平面区域或者一些轴上具有向下的曲率时,特征值为 0 或者为负数),那么 Newton 方法将会发散,所以 Hessian 矩阵必须是正定阵.自然,多层网络的 Hessian 矩阵不能保证每处就是正定阵.所以,原始形态的 Newton 方法不适用于一般的神经网络训练.但是 Newton 方法为后面发展的其他快速收敛的方法提供了思路.
+
+-----
+#+NAME: figure-15
+#+CAPTION: Newton 算法的白化性质描述
+[[file:assets/efficient-backprop/figure-15.png]]
+-----
+
+** Conjugate Gradient
+共轭梯度(/Conjugate Gradient/)具有几个非常重要的特性:(1) O(N)的方法;(2) 不直接使用 Hessian 矩阵;(3) 试图找到的梯度下降方向,最小化破坏前几次迭代的结果;(4) 使用线性搜索; (5) 只能在 Batch 模式使用.
+
+第三个性质如[[figure-16]]所示.假设选择了一个下降方向,例如梯度方向,然后沿着下降方向通过线性搜索找寻最小化长度.随后,需要找到的更新权值向量,不会更改下降方向,而仅仅找到下降长度(共轭方向),因为沿着这个方向下降不会破化前几次迭代下降的结果.在 k 次迭代中的下降方向计算如下:
+\begin{equation}
+\rho_{k}=-\nabla E(w_{k})+\beta_{k}\rho_{k-1},
+\end{equation}
+
+-----
+#+NAME: figure-16
+#+CAPTION: 2D 损失平面,共轭梯度方向
+[[file:assets/efficient-backprop/figure-16.png]]
+-----
+
+其中, $\rho_{k}$ 选择可以依赖 Fletcher 和 Reeves[fn:9]
+\begin{equation}
+\beta_{k}=\frac{\Delta E(w_{k})^{T}\Delta E(w_{k})}{\Delta E(w_{k-1})^{T}\Delta E(w_{k-1})}
+\end{equation}
+或者 Polak 和 Ribiere:
+\begin{equation}
+\beta_{k}=\frac{(\Delta E(w_{k})-\Delta E(w_{k-1}))^{T}\Delta E(w_{k})}{\Delta E(w_{k-1})^{T}\Detal E(w_{k-1})}
+\end{equation}
+两个方向 $\rho_{k}$ 和 $\rho_{k-1}$ 是共轭,如果满足如下关系:
+\begin{equation}
+  \rho_{k}^{T}H\rho_{k-1}=0.
+\end{equation}
+共轭方向是在 Hessian 矩阵空间内为正交的(如[[figure-17]]所示).对于上述两种选择,收敛的最重要因素是好的线性选择方法.
+
+-----
+#+NAME: figure-17
+#+CAPTION: 2D 错误平面,共轭梯度方向
+[[file:assets/efficient-backprop/figure-17.png]]
+-----
+
+对于一个二次函数,具有 N 个输入变量.N 步模型收敛是可以证明的.对于非二次函数 Polak 和 Ribiere 的选择看起来更为健壮.共轭梯度可以看作神经网络中使用的更为明智设计的动能更新项.面对基本不冗余的数据集时,多层神经网络中具有很好的应用.对于大量和冗余的问题时,随机梯度下降表现更快.并且共轭梯度下降需要在 batch 模式下才能使用.
+
+** Quasi-Newton(BFGS)
+Quasi-Newton(BFGS)方法:(1) 迭代计算模拟 Hessian 矩阵的逆矩阵;(2) $O(N^{2})$ 计算量;(3) 需要线性搜索;(4) 只适合 batch 模型训练.
+* Footnotes
+
+[fn:9] W. H. Press, B. P. Flannery, S. A. Teukolsky, and W. T. Vetterling. Numerical Recipies in C: art of Scientific Programming.
+
+[fn:8] Jacobs, R.A.: Increased rates of convergence through learning rate adaptation. 
+
+[fn:7] Murata, N., Müller, K.-R., Ziehe, A., Amari, S.: Adaptive on-line learning in changing environments
+
+[fn:6] Sutton, R.S.: Adapting bias by gradient descent: An incremental version of delta-bar-delta
+
+[fn:5] Darken, C., Moody, J.E.: Note on learning rate schedules for stochastic optimization
+
+[fn:4] Sompolinsky, H., Barkai, N., Seung, H.S.: On-line learning of dichotomies: algorithms and learning curves
+
+[fn:3] Y.LeCun. Generalization and network design strategies
+
+[fn:2] Hessian 矩阵是一个多元函数的二阶偏导数构成.具有如下形式:
+\begin{equation}
+  \left[
+    \begin{matrix}
+      \frac{\partial^{2}{f}}{\partial{x_{1}^{2}}} & \cdots & \frac{\partial^{2}{f}}{\partial{x_{1}}\partial{x_{n}}} \\
+      \vdots                                     & \ddots & \vdots \\
+      \frac{\partial^{2}{f}}{\partial{x_{n}}\partial{x_{1}}} & \cdots & \frac{\partial^{2}{f}}{\partial{x_{n}^{2}}}
+    \end{matrix}
+  \right] \notag
+\end{equation}
+
+[fn:1] Jacobian 矩阵是函数的一阶偏导数以一定方式排列成的矩阵.假设函数为 $\mathcal{R}^{n} \to \mathcal{R}^{n}$ ,那么对应的雅克比矩阵如下:
+\begin{equation}
+\frac{\partial{(y_{1},...,y_{n})}}{\partial{x_{1},...,x_{n}}} =
+  \left[
+  \begin{matrix}
+    \frac{y_{1}}{x_{1}} & \cdots & \frac{y_{1}}{x_{n}} \\
+    \vdots             & \ddots & \vdots \\
+    \frac{y_{n}}{x_{1}} & \cdots & \frac{y_{n}}{x_{n}} 
+  \end{matrix}
+  \right] \notag
+\end{equation}

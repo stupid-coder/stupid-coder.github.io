@@ -1,0 +1,1097 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN" xml:lang="zh-CN">
+<head>
+<title>Visualizing and Understanding Convolutional Networks</title>
+<!-- 2018-10-23 Tue 15:14 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="stupid-coder" />
+<link rel="stylesheet" title="Standard" href="/assets/worg.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Zenburn" href="/assets/worg-zenburn.css" type="text/css" />
+           <link rel="alternate stylesheet" title="Classic" href="/assets/worg-classic.css" type="text/css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="/assets/MathJax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Visualizing and Understanding Convolutional Networks</h1>
+<div id="table-of-contents">
+<h2>&#30446;&#24405;</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Introduction</a></li>
+<li><a href="#sec-2">Approach</a>
+<ul>
+<li><a href="#sec-2-1">Visualization with a Deconvnet</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">Training Details</a></li>
+<li><a href="#sec-4">Convnet Visualization</a>
+<ul>
+<li><a href="#sec-4-1">Architecture Selection</a></li>
+<li><a href="#sec-4-2">Occlusion Sensitivity</a></li>
+<li><a href="#sec-4-3">Correspondence Analysis</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">Experiments</a>
+<ul>
+<li><a href="#sec-5-1">ImageNet 2012</a></li>
+<li><a href="#sec-5-2">Feature Generalization:</a></li>
+<li><a href="#sec-5-3">Feature Analysis</a></li>
+</ul>
+</li>
+<li><a href="#sec-6">Discussion</a></li>
+</ul>
+</div>
+</div>
+<p>
+论文: <a href="http://arxiv.org/abs/1311.2901">Visualizing and Understanding Convolutional Networks</a>
+</p>
+
+<blockquote>
+<p>
+<b>Abstract</b>
+</p>
+
+<p>
+卷积神经网络最近在 ImageNet 测试集上获得了非常好的效果.但是,却没有解释卷积神经网络工作原理和如果提升.本文,将主要讨论这两个方面.通过引入一个简单的可视化技术,来解释中间特征层的作用和分类器的操作.用于诊断后,可视化技术帮助找到了比 AlexNet 效果更好的网络结构.并且提出了部分遮挡(<i>ablation</i>)方法,用来发现不同网络层对模型分类效果的贡献.并且发现 ZFNet 在其他数据集上具有较较好的泛化能力:只需要重新训练 softmax 分类器,就可以在数据集上表现最好.
+</p>
+</blockquote>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+自 1990's(LeCun et al.1989),卷积神经网络(convnets)在诸如手写体识别和人脸识别上都有非常好的表现.2012 年,多篇论文显示卷积神经网络在很多更为具有挑战的视觉问题上表现卓越.AlexNet 在 ImageNet 2012 分类认为有上以 convnet 模型达到了 16.4% 错误率,第二名为 26.1%.有多种原因使得卷积伸进网络又重新让人感到兴奋:(i) 更大的训练集,1M+标记样本;(ii) 基于 GPU 强大运算能力,使得训练大规模模型成了可能;(iii) 更多更好的模型正则化技巧,例如 dropout(Hinton el. al.2012)<sup><a id="fnr.1" name="fnr.1" class="footref" href="#fn.1">1</a></sup>.
+</p>
+
+<p>
+尽管有这些令人兴奋的进展,这些复杂模型背后的内部计算和行为却没很好的解释,或者解释为什么这些模型可以达到这么好的效果.从一个科学的角度来看,这是不可接受的.如果对于模型是如何工作没有清晰的任何,那么后续去研究更好的模型时,就只能去试错了.本文中,介绍了一个可视化技术,用来
+揭示输入数据是如何影响和激活网络层中的特征矩阵(<i>feature map</i>).使得可以观察特征在训练中是如何进化的,从而发现模型潜在的一些的问题.提出了基于多层逆卷积网络(<i>multi-layer Deconvolutional Network - devconvnet</i>)<sup><a id="fnr.2" name="fnr.2" class="footref" href="#fn.2">2</a></sup>可视化方案,用来将网络层中的特征激活矩阵映射到输入像素空间.同时通过在输入图像上执行一个局部遮挡(<i>occluding portions</i>),来揭示输入图像中哪些局部像素对分类器影响最大.
+</p>
+
+<p>
+使用上述这些方法,以 AlexNet 作为网络结构作为骨干网络,然后探索不同的网络结构,从而实现比 AlexNet 在 ImageNet 上表现更好的网络结构.然后通过只对 softmax 分类进行训练,研究模型在其他数据集上的泛化能力.相对应无监督的预训练(<i>unsupervised pre-training</i>)方法<sup><a id="fnr.3" name="fnr.3" class="footref" href="#fn.3">3</a></sup><sup>, </sup><sup><a id="fnr.4" name="fnr.4" class="footref" href="#fn.4">4</a></sup><sup>, </sup><sup><a id="fnr.5" name="fnr.5" class="footref" href="#fn.5">5</a></sup>,这是一种有监督的预训练(<i>pretraining</i>).卷积神经网络的泛化能力在最近的论文中也有论述<sup><a id="fnr.6" name="fnr.6" class="footref" href="#fn.6">6</a></sup>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2">Approach</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+本文采用标准的有监督卷积神经网络,如 LeNet 和 AlexNet 类似.这些网络模型将一个彩色的 2D 图像 \(x_{i}\) 经过一系列网络层映射到一个概率向量 \(\hat{y}_{i}\),对应 C 个不同类别.每个网络层由如下模块组成:(i) 采用可学习的卷积核对前一层的输出执行卷积操作;(ii) 卷积后的结果执行逐元素的 \(relu(x)=\max{(x,0)}\);(iii) [可选] 执行最大值采样;(iv) [可选] 特征图的局部归一化.卷积层之后为全链接层,最后一层是 softmax 分类器.<a href="#figure-3">figure-3</a>显示了本文采用的网络结构.
+</p>
+
+<p>
+本文使用具有 N 个类别标记的图像数据集 \({x,y}\).多分类场景下采用交叉熵损失函数(<i>cross-entropy loss function</i>).网络的参数(卷积层的卷积核,全链接层权重和偏置)可以通过标准的反向传播算法和随机梯度下降算法进行训练.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1">Visualization with a Deconvnet</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+为了理解卷积神经网络的操作,需要先能解释网络中间层的特征是如何激活的.本文展示了一种方法将这些激活值映射会输入像素空间,从而显示原始图像中哪些像素会引起特征图的激活,这种映射为逆卷积网络(<i>deconvolutional network</i>).逆卷积网络可以看作是卷积网络中操作的逆执行过程.
+</p>
+
+<p>
+逆积网络和卷积网络中网络层一一对应,提供了从特征值映射到图像像素方法(如<a href="#figure-1">figure-1(top)</a>).开始,图像输入到卷积网络,网络层中计算出对应的特征图.为了检查某个卷积层的激活值,现将卷积层中的其他激活值设置为 0,然后将特征图输入到对应的逆卷积网络层.然后执行(i)unpool;(ii)rectify;和(iii)重建下层的输入,从而能够激活当前的激活值.知道输入图像重建完成.
+</p>
+
+<hr  />
+<p>
+<b>Unpooling</b>: 卷积网络中的最大值采样操作是不可逆的,但是如果同时记住最大值采样来源的实际位置就可以实现最大值采样近似逆操作.在逆卷积网络,逆采样操作可以使用这些位置信息,将激活值放到对应位置上,从而近似保留激活值的结构.如<a href="#figure-1">figure-1(bottom)</a>所示.
+</p>
+
+<hr  />
+<p>
+<b>Rectification</b>: 卷积神经网络采用 relu 作为非线性激活函数,只有正值可以通过.所以 relu 自己就是 relu 的逆操作.
+</p>
+
+<hr  />
+<p>
+<b>Filtering</b>: 卷积神经网络采用卷积核对上一层输入数据进行卷积操作.为了逆操作卷积,逆卷积网络采用相同的卷积核执行转置版本.不需要采用卷积矩阵逆矩阵,这里只是为了可视化哪些输入会最影响当前激活值.
+</p>
+
+<p>
+采用记录的采样位置信息(<i>max location switches</i>),从高层网络层映射到低层.这些采样位置信息和输入图像有关,从单个激活值重构的像素只是原图的局部区域,对应的权值为对应像素对激活值的贡献程度.
+</p>
+
+<hr  />
+
+<div id="figure-1" class="figure">
+<p><img src="assets/zfnet/figure-1.png" alt="figure-1.png" />
+</p>
+<p><span class="figure-number">&#22270;1&nbsp;</span> <b>Top</b>: 逆卷积层(左)和推应的卷积层(右).逆卷积网络会近似重构出的对应的特征图. <b>Bottom</b>: 逆卷积网络中的逆采样操作说明.</p>
+</div>
+<hr  />
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Training Details</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+现在讨论本文描述的卷积神经网络.网络结构如<a href="#figure-3">figure-3</a>所示,和 AlexNet 非常相似.一个不同在于 AlexNet 将卷积层 3,4,5 分成两部分(模型被分割在两个 GPU 上),本模型采用稠密链接.layer1 和 layer2 也根据可视化结果<a href="#figure-6">figure-6</a>所示进行了相应的修改,具体细节在<a href="#sec-4-1">Architecture Selection</a>描述.
+</p>
+
+<p>
+网络使用 ImageNet 2012 训练集进行训练(1.3M 图像,1000 个类别).每个 RGB 图像将最小边缩放到 256,然后从图中心切取一个 256*256 区域,然后减去逐像素均值(所有图像),在截取 10 个 224*224 的子图(四个角+中间*水平反转).采用 batch 为 128 的随机梯度优化来更新权重,开始的学习率为 \(10^{-2}\),动能系数为 0.9.当验证集错误不再下降,手动减低学习率.Dropout 在全链接层 6,7 使用,dropout 比例为 0.5.所有的权重值初始化为 \(10^-2\),偏置都设置为 0.
+</p>
+
+<p>
+在训练过程中可视化第一层中的卷积核,有一些卷积核的值比较大,如图<a href="#figure-6">figure-6(a)</a>所示.为了减轻这些占主导的卷积核的影响,将 RMS 值超过阈值 10<sup>-1</sup> 的卷积核进行归一化.这个方法在模型的第一层更为关键,因为输入的图像范围在[-128,128]之间.和 AlexNet 一样,对输入图像进行了一些剪切和反转,用来增强训练数据集.训练了 70 轮,在单个 GTX590 GPU 上训练了 12 天.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Convnet Visualization</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+用逆卷积对<a href="#sec-3">Training Details</a>中描述模型的特征激活值进行可视化.
+</p>
+
+<hr  />
+<p>
+<b>特征可视化(Feature Visualization)</b>: <a href="#figure-2">figure-2</a>显示了模型训练完成后的特征可视化结果.结果可视化某个特征图中的 9 个最大的激活值进行可视化.将每个激活值分别逆卷积到像素空间,显示了激活该特征图的像素结构,不同输入在特征图中具有一定的不变性.除了可视化激活值在像素空间结果,右侧展示了对应的输入图像块.由于特征激活值描述不同的输入图像中的一些共同特性,所以这些输入图像块比特征可视化的像素结构具有更多的变化.例如:卷积层 5 行 1 列 1,对应的输入图像块之间不怎么相似,其实可视化可以发现这个特征图主要用来特征化背景中的草地,而非前景对象.
+</p>
+
+<p>
+网络中的不同特征图中提取的特征具有层次性.卷积层 2 主要提取角和边/颜色的联合.卷积层 3 具有更复杂的不变性,主要提取相同的纹理(<i>texture</i>),例如:网状(R1,C1);文本(R2,C4).卷积层 4 提取的特征更具有变化性,也和分类目标更相关:狗脸(R1,C1);鸟腿(R4,C2).卷积层 5 显示了具有各种外形的整个分类目标:键盘(R1,C1)和狗(R4).
+</p>
+
+
+<div class="center">
+
+<div id="figure-2" class="figure">
+<p><img src="assets/zfnet/figure-2.png" alt="figure-2.png" />
+</p>
+<p><span class="figure-number">&#22270;2&nbsp;</span> 网络模型中的特征可视化结果.卷积层 2-5 显示验证集中的某个随机选择特征图中的最大 9 个激活值,从特征空间逆卷积映射到像素空间的结果.重构结果不是模型见过的样本:而是从验证集中选取特征图中的高激活值重构结果.对于任意的特征图,右侧同时显示了对应的输入图像块.可以注意到:(i) 每个特征图中的特征具有强相关;(ii) 高卷积层具有更高的不变性;(iii) 图像中局部区域特征化,例如狗的眼睛和鼻子(卷积层 4,行 1 列 1).</p>
+</div>
+</div>
+
+
+<hr  />
+<p>
+<b>训练中特征的进化(Feature Eolution during Training)</b>: <a href="#figure-4">figure-4</a>显示了某个特征图中最大激活值(整个训练样本)映射到像素空间的可视化结果变化.激活值可视化图中像素突然的跳动,是因为特征图中的最大激活值的突然改变引起的.更低的卷积层只需要几轮训练就收敛了.高层卷积层需要相当多轮训练才能收敛.
+</p>
+
+<div class="center">
+
+<div id="figure-4" class="figure">
+<p><img src="assets/zfnet/figure-4.png" alt="figure-4.png" />
+</p>
+<p><span class="figure-number">&#22270;3&nbsp;</span> 训练过程中随机选取的特征图中最大激活值的提取结构像素的演进.每个卷积层特征在不同的块中显示.在单独一个块中,显示了从训练[1,2,5,10,20,30,40,64]轮中随机选取的特征图的可视化结果.可视化结果显示了对应特征图中最大激活值(训练集样本)在像素空间的结构.</p>
+</div>
+</div>
+
+<hr  />
+<p>
+<b>特征不变性(Feature Invariance)</b>: <a href="#figure-5">figure-5</a>显示了 5 个简单的图像,经过移动,旋转和缩放后,模型各个卷积层计算的特征图向量和原始图像对应的特征图向量的变化.可以看到很小的变化对模型的第一层具有较大的影响,但是对高层卷积层具有较小的影响,对于平移和缩放具有近似线性的影响.网络结构对平移和缩放具有一定的稳定性.一般对旋转无法保持不变性,除了目标本身具有一定的旋转对称性(<i>rotational symmetry</i>).
+</p>
+
+<div class="center">
+
+<div id="figure-5" class="figure">
+<p><img src="assets/zfnet/figure-5.png" alt="figure-5.png" />
+</p>
+<p><span class="figure-number">&#22270;4&nbsp;</span> 网络模型对水平移动,缩放和旋转的不变性(Rows a-c).Col 1:5 显示了不同样本.Col 2&amp;3 分别显示了网络层 1 和 7 的变换后的特征向量和原图的特征向量的欧几里德距离.Col 4: 显示了不同变换图像的真标签的概率.</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1">Architecture Selection</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+可视化结果显示了网络模型中操作的一些原理,可以帮助选择更好的网络结构.通过对 AlexNet 网络的第一,二层可视化(如<a href="#figure-6">figure-6 (b)&amp;(d)</a>),可以发现有很多问题.第一层的卷积核提取的都是高平和低频信息,中频特征较少.此外,第二层可视化结果显示由于第一层卷积核采用较大的步长 4,引起了一些混叠效应(<i>aliasing artifacts</i>).为了克服上述的这些问题,(i) 减少第一层的卷积核从 11*11 到 7*7,用来提取更多的中频信息; (ii) 将卷积层的步长缩减到 2.这个新的网络结构保留了更多信息,结果如<a href="#figure-6">figure-6 (c)&amp;(e)</a>所示.更为重要的,该网络结构提高的分类精度,如<a href="#sec-5-1">ImageNet 2012</a>所示.
+</p>
+
+<hr  />
+<div class="center">
+
+<div id="figure-3" class="figure">
+<p><img src="assets/zfnet/figure-3.png" alt="figure-3.png" />
+</p>
+<p><span class="figure-number">&#22270;5&nbsp;</span> 8 层卷积网路结构.224*224 的切减子图作为输入.第一层具有 96 个 7*7 卷积核,步长为 2.输入的特征图: (i) 输入到 ReLU 激活函数;(ii) 采样(3*3 最大值采样,步长为 2);(iii) 对比归一化操作(<i>contract normalized</i>).输出 96 个 55*55 特征图.类似的操作在卷积层 2,3,4,5 执行.最后两层为全链接层,从最后一层卷积层获取输入(6*6*256=9216 维).最后一层为 C-路 softmax 函数,C 为分类类别的数量.所有的卷积核和特征图都是正方形的.</p>
+</div>
+</div>
+<hr  />
+<div class="center">
+
+<div id="figure-6" class="figure">
+<p><img src="assets/zfnet/figure-6.png" alt="figure-6.png" />
+</p>
+<p><span class="figure-number">&#22270;6&nbsp;</span> (a): 1st 卷积层特征,没有进行缩放剪切.可以看到有一个卷积核非常大.(b): AlexNet 1st 网络层卷积核.(c): 本文的网路结构提取的 1st 卷积核.采取更小的步长(2 vs 4)和卷积核尺寸(7*7 vs 11*11),结果显示产生了更多种卷积核和更少的假死卷积核.(d): AlexNet 2nd 网络层特征可视化.(e): 本文的网络结构的 2nd 网络层特征可视化.这些特征更为干净,并具有没有(d)中显示混合谍影问题.</p>
+</div>
+</div>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2">Occlusion Sensitivity</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+在图像分类方法中,一个常见的问题是判断分类模型是否真的使用了对应分类目标的信息进行分类,还是只是使用了外围信息.<a href="#figure-7">figure-7</a>通过系统性遮挡图像不同区域,然后通过监控分类器输出,试图来回答这个问题.样例显示模型确实定位到了对应的对象,当遮挡住分类对象,对应类别的得分迅速减少.<a href="#figure-7">figure-7</a>同时显示了最高网络层最大特征图中激活值(所有空间上激活值的和)和遮挡位置函数的可视化结果.当遮挡住主要的对象,可以看到特征图的特征值迅速下降.
+</p>
+<hr  />
+<div class="center">
+
+<div id="figure-7" class="figure">
+<p><img src="assets/zfnet/figure-7.png" alt="figure-7.png" />
+</p>
+<p><span class="figure-number">&#22270;7&nbsp;</span> 采用灰色方块(1st 列)系统性遮挡的三个样例,并且相应(网络层 5)的最大特征图((b)&amp;(c))和分类结果((d)&amp;(e))的改变.(b): 对于每一个遮挡位置,记录网络层 5 中一个特征图(在非遮挡图中具有最大激活值的特征图)的总激活值.(c): 该特征图映射到输入图像的可视化结果(黑框),和其他图像在该特征图的可视化结果.第一行显示最强的特征为狗脸.当这狗脸遮挡,该特征图激活值下降(蓝色区域在图(b)中).(d): 遮挡位置有关的正确类别的概率函数可视化结果.例如:当狗脸被遮挡,博美概率下降严重.(e): 和遮挡位置有关的最大分类类别函数可视化结果.例如: 在一行,绝大数位置都是博美分类,当狗脸被遮挡,当球没有没有被遮挡时,模型会预测网球分类.在第二个样例,汽车上的文字为网络层 5 的最大激活特征,但是分类器对车轮更关注.第三个样例,网络层 5 的最大激活特征为人脸,由于分类器采用了很多特征图,所以可以看到分类器对狗更关注(蓝色区域在图(d)中).</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-4-3" class="outline-3">
+<h3 id="sec-4-3">Correspondence Analysis</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+深度模型和很多识别方法的不同之处在于,深度模型没有明确的机制来建立不同图像中特定对象的相似特征提取机制(例如:人脸中眼睛和鼻子具有特定的空间关系).然而,一个令人兴奋的可能是深度模型可能内部隐式的构建了这些特征提取机制.为了探寻这种可能,随机选取了 5 张狗狗正面的图像,系统性的遮挡脸部相同的区域(例如:所有左眼睛,<a href="#figure-8">figure-8</a>).对于每一张图 \(i\),计算: \(\epsilon_{i}^{l}=\mathcal{x}_{i}^{l}-\tilde{\mathcal{x}}_{i}^{l}\),\(\mathcal{x}_{i}^{l}\) 和 \(\tilde{\mathcal{x}}_{i}^{l}\) 为原始图像和遮挡图像在网络层 l 的特征向量.然后通过汉明距离(<i>Hamming distance</i>)来度量任意图像对的这种错误向量: \(\Delta_{l}=\sum_{i,j=1,,i \ne j}\mathcal{H}(sign(\epsilon_{i}^{l},\epsilon_{j}^{l}))\), \(\mathcal{H}\) 为汉明距离函数.更低的值表示遮挡操作具有一致的作用,因此表示在不同图像中相同目标更为一致性(遮挡左眼,对图像特征的影响保持一致).在<a href="#table-1">table-1</a>,对比了遮挡脸部三个部分(左眼,右眼和鼻子)和遮挡其他随机选择部分在网络层 \(l=5\) 和 \(l=7\).的 \(\Delta\) 分数.在网络层 5 和遮挡随机选择比,相对得分更低,显示网络模型构建了一定程度的特征一致性.
+</p>
+
+<hr  />
+<div class="center">
+
+<div id="figure-8" class="figure">
+<p><img src="assets/zfnet/figure-8.png" alt="figure-8.png" />
+</p>
+<p><span class="figure-number">&#22270;8&nbsp;</span> 一致性(<i>correspondence</i>)实验使用的图像. Col 1: 原图. Col 2,3,4: 分别遮挡右眼,左眼和鼻子.其他列显示了随机遮挡的例子.</p>
+</div>
+</div>
+
+<table id="table-1" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;1&nbsp;</span> 在 5 个不同的狗狗图像中,针对不同部位的一致性度量结果.在网络层 5 中,眼睛和鼻子具有更低的得分,表示网络模型隐式的构建提取一致性特征的机制.在网络层 7,得分更为相似,有可能是由于更高层需要区分不同种类的狗狗,所以利用了其他的特征图提取的特征.</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Occlusion Location</th>
+<th scope="col" class="left">Mean Feature Sign Change Layer 5</th>
+<th scope="col" class="left">Mean Feature Sign Change Layer 7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">Right Eye</td>
+<td class="left">0.067 \(\pm\) 0.007</td>
+<td class="left">0.069 \(\pm\) 0.015</td>
+</tr>
+
+<tr>
+<td class="left">Left Eye</td>
+<td class="left">0.069 \(\pm\) 0.007</td>
+<td class="left">0.068 \(\pm\) 0.013</td>
+</tr>
+
+<tr>
+<td class="left">Nose</td>
+<td class="left">0.079 \(\pm\) 0.017</td>
+<td class="left">0.069 \(\pm\) 0.011</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">Random</td>
+<td class="left">0.107 \(\pm\) 0.017</td>
+<td class="left">0.073 \(\pm\) 0.014</td>
+</tr>
+</tbody>
+</table>
+<hr  />
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Experiments</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1">ImageNet 2012</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+数据集由 1.3M/50K/100K 训练/验证/测试样本组成,属于 1000 的类别.<a href="#table-2">table-2</a>展示本文提出的模型在该数据机上的评估结果.
+</p>
+
+<p>
+本文尝试复现 AlexNet 结果.最终达到的错误率和 AlexNet 报告的错误率在 0.1% 差值范围内.
+</p>
+
+<p>
+接着分析了本文提出的模型(7*7 第一层卷积层和第一层,二层卷积核采用步长 2),如<a href="#figure-3">5</a>所示的模型,比 AlexNet 模型好了 1.7% (test top-5).当我们集成多个模型,测试集上错误率为 14.8%,在 ImageNet 数据集上最好的发布模型(只使用 ImageNet 2012 数据集).这个错误率为非卷积神经网络的错误率的一半,该非卷积神经网络获取的错误率为 26.2%.
+</p>
+
+<table id="table-2" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;2&nbsp;</span> ImageNet 2012 分类错误率.带 * 的模型,是使用了 ImageNet 2011 和 ImageNet 2012 的训练样本.</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="right" />
+
+<col  class="right" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Error %</th>
+<th scope="col" class="right">Val Top-1</th>
+<th scope="col" class="right">Val Top-5</th>
+<th scope="col" class="left">Test Top-5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(Gunji et al., 2012)<sup><a id="fnr.7" name="fnr.7" class="footref" href="#fn.7">7</a></sup></td>
+<td class="right">-</td>
+<td class="right">-</td>
+<td class="left">26.2</td>
+</tr>
+
+<tr>
+<td class="left">AlexNet, 1 convnet</td>
+<td class="right">40.7</td>
+<td class="right">18.2</td>
+<td class="left">--</td>
+</tr>
+
+<tr>
+<td class="left">AlexNet, 5 convnets</td>
+<td class="right">38.1</td>
+<td class="right">16.4</td>
+<td class="left">16.4</td>
+</tr>
+
+<tr>
+<td class="left">AlexNet*, 1 convnet</td>
+<td class="right">39.0</td>
+<td class="right">16.6</td>
+<td class="left">--</td>
+</tr>
+
+<tr>
+<td class="left">AlexNet*, 7 convnets</td>
+<td class="right">36.7</td>
+<td class="right">15.4</td>
+<td class="left">15.3</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">Our replication of AlexNet, 1 convnet</td>
+<td class="right">40.5</td>
+<td class="right">18.1</td>
+<td class="left">--</td>
+</tr>
+
+<tr>
+<td class="left">1 convnet as per Fig.3</td>
+<td class="right">38.4</td>
+<td class="right">16.5</td>
+<td class="left">--</td>
+</tr>
+
+<tr>
+<td class="left">5 convnets as per Fig.3 - (a)</td>
+<td class="right">36.7</td>
+<td class="right">15.3</td>
+<td class="left">15.3</td>
+</tr>
+
+<tr>
+<td class="left">1 convnet as per Fig.3 but with layers 3,4,5: 512,1024,512 maps - (b)</td>
+<td class="right">37.5</td>
+<td class="right">16.0</td>
+<td class="left">16.1</td>
+</tr>
+
+<tr>
+<td class="left">6 convnets, (a) &amp; (b) combined</td>
+<td class="right"><b>36.0</b></td>
+<td class="right"><b>14.7</b></td>
+<td class="left"><b>14.8</b></td>
+</tr>
+</tbody>
+</table>
+
+<hr  />
+<p>
+<b>Varying ImageNet Model Sizes</b>: 在<a href="#table-3">table-3</a>中,先对 AlexNet 网络结构调整了卷积层数,或者移除所有的卷积层.模型都是从头训练.移除全链接层(6,7),错误率只有一点升高.这很让人惊讶,因为模型的主要参数都在全链接层,但是全链接层对模型影响却不大.移除 2 个中间卷积层对错误率的影响也较小.然而同时移除中间卷积层和最后全链接层,真个模型如果只有 4 层,整个模型的表现就非常差了.也就是说网络模型的整体深度较大影响模型的表现.在<a href="#table-3">table-3</a>中,本文也修改了<a href="#figure-3">figure-3</a>显示的模型.修改全链接层的大小对模型的影响非常小(AlexNet 也是).然而,通过增加中间卷积层的卷积核数量,对模型的变现提升较大.但是增加卷积核数量,同时会增大全链接层大小,从而会引起过拟合.
+</p>
+
+<table id="table-3" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;3&nbsp;</span> 采用不同网络结构在 ImageNet 2012 分类错误率.</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="right" />
+
+<col  class="right" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Error %</th>
+<th scope="col" class="right">Train Top-1</th>
+<th scope="col" class="right">Val Top-1</th>
+<th scope="col" class="right">Val Top-5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">Our replication of AlexNet,1 convnet</td>
+<td class="right">35.1</td>
+<td class="right">40.5</td>
+<td class="right">18.1</td>
+</tr>
+
+<tr>
+<td class="left">Removed layers 3,4</td>
+<td class="right">41.8</td>
+<td class="right">46.4</td>
+<td class="right">22.1</td>
+</tr>
+
+<tr>
+<td class="left">Removed layer 7</td>
+<td class="right">27.4</td>
+<td class="right">40.0</td>
+<td class="right">18.4</td>
+</tr>
+
+<tr>
+<td class="left">Removed layers 6,7</td>
+<td class="right">27.4</td>
+<td class="right">44.8</td>
+<td class="right">22.4</td>
+</tr>
+
+<tr>
+<td class="left">Removed layer 3,4,6,7</td>
+<td class="right">71.1</td>
+<td class="right">71.3</td>
+<td class="right">50.1</td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 6,7:2048 units</td>
+<td class="right">40.3</td>
+<td class="right">41.7</td>
+<td class="right">18.8</td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 6.7: 8192 units</td>
+<td class="right">26.8</td>
+<td class="right">40.0</td>
+<td class="right">18.1</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">Our Model (as per Fig. 3)</td>
+<td class="right">33.1</td>
+<td class="right">38.4</td>
+<td class="right">16.5</td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 6,7: 2048 units</td>
+<td class="right">38.2</td>
+<td class="right">40.2</td>
+<td class="right">17.6</td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 6,7: 8192 units</td>
+<td class="right">22.0</td>
+<td class="right">38.8</td>
+<td class="right">17.0</td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 3,4,6: 512,1024,512 maps</td>
+<td class="right">18.8</td>
+<td class="right"><b>37.5</b></td>
+<td class="right"><b>16.0</b></td>
+</tr>
+
+<tr>
+<td class="left">Adjust layers 6,7: 8192 units and Layers 3,4,5: 512,1024,512 maps</td>
+<td class="right"><b>10.0</b></td>
+<td class="right">38.3</td>
+<td class="right">16.9</td>
+</tr>
+</tbody>
+</table>
+<hr  />
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2">Feature Generalization:</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+上述实验证明了卷积层对模型分类性能的重要性.<a href="#figure-2">figure-2</a>可视化结果显示卷积层学习到的特征不变性,证明了卷积层的作用.现在探讨卷积层特征提取在其他数据集(Caltech-101<sup><a id="fnr.8" name="fnr.8" class="footref" href="#fn.8">8</a></sup>,Caltech-256<sup><a id="fnr.9" name="fnr.9" class="footref" href="#fn.9">9</a></sup>,PASCAL VOC 2012)上的泛化能力.为了证明泛化能力,保留了本文提出的在 ImageNet 训练的模型的 1-7 网络层,然后在此之上训练了 softmax 分类器(适配新数据上的类别数量),然后采用新的数据集训练模型.由于 softmax 分类器具有较少的参数,所以训练速度较快.
+</p>
+
+<p>
+采用 softmax 和其他方法(线性 SVM)复杂度相似,所以实验主要用来比较本文的模型中的卷积特征提取器和其他手工特征提取器进行比较.需要特别注意的是不光本文中的卷积特征提取器和其他手工特征提取器都是在非 Caltech 和 PASCAL 训练集以外的图像上设计和训练的.例如,HOG 描述符的超参是在一个行人检测数据集<sup><a id="fnr.10" name="fnr.10" class="footref" href="#fn.10">10</a></sup>上系统实验决定的.本文同时从头在对应训练集上训练所有网络层.
+</p>
+
+<p>
+一个较为复杂的情况是,Caltech 数据集中有一些图像也在 ImageNet 训练集里.采用归一化协方差方法,将这些重合的图像去除掉,然后再训练本文提出的模型,从而避免训练集和测试集出现污染.
+</p>
+
+<hr  />
+<p>
+<b>Caltech-101</b>: 同样采用<sup><a id="fnr.8.100" name="fnr.8.100" class="footref" href="#fn.8">8</a></sup>中的方法,在每个类别随机选择 15 或者 30 个图像用来训练和在每个类别使用 50 个图像作测试.采用 5 训练/测试折(5-folds),<a href="#table-4">table-4</a>中显示了类别中的平均准确性.训练过程花费了 17 分钟来训练 30 图像/类别.预训练模型要比在该数据集上最好的模型要好 2.2%<sup><a id="fnr.11" name="fnr.11" class="footref" href="#fn.11">11</a></sup>. 从头训练的卷积模型表现非常差,只有 46.5%.
+</p>
+
+<table id="table-4" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;4&nbsp;</span> Caltech-101 分类精度</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left"># Train</th>
+<th scope="col" class="left">Acc % 15/class</th>
+<th scope="col" class="left">Acc % 30/clsss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(Bo et al., 2013)<sup><a id="fnr.11.100" name="fnr.11.100" class="footref" href="#fn.11">11</a></sup></td>
+<td class="left">-</td>
+<td class="left">81.4 \(\pm\) 0.33</td>
+</tr>
+
+<tr>
+<td class="left">(Jianchao et al., 2009)<sup><a id="fnr.12" name="fnr.12" class="footref" href="#fn.12">12</a></sup></td>
+<td class="left">73.2</td>
+<td class="left">84.3</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">Non-pretrained convnet</td>
+<td class="left">22.8 \(\pm\) 1.5</td>
+<td class="left">46.5 \(\pm\) 1.7</td>
+</tr>
+
+<tr>
+<td class="left">ImageNet-pretrained convnet</td>
+<td class="left"><b>83.8 \(\pm\) 0.5</b></td>
+<td class="left"><b>86.5 \(\pm\) 0.5</b></td>
+</tr>
+</tbody>
+</table>
+
+<hr  />
+<p>
+<b>Caltech-256</b>: 采用<sup><a id="fnr.9.100" name="fnr.9.100" class="footref" href="#fn.9">9</a></sup>一直的方法,每个类别选取 15,30,45 和 60 图像作为训练数据,然后在<a href="#table-5">table-5</a>中显示了模型分类准确性.基于本文提出的预训练网络获取在 60 个图像作为训练数据上最好成绩,74.5% 对 55.2%.然而,和 Caltech-101 上的实验一样,从头训练的卷积网络模型表现非常差.在<a href="#figure-9">figure-9</a>显示预训练的模型只需要 6 张图作为训练数据就可以达到最好的方法,最好的方法需要 60 张图像进行训练.这显示了 ImageNet 卷积网络特征提取器的能力
+</p>
+
+<hr  />
+<table id="table-5" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;5&nbsp;</span> Caltech 256 分类精度</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left"># Train</th>
+<th scope="col" class="left">Acc % 15/class</th>
+<th scope="col" class="left">Acc % 30/class</th>
+<th scope="col" class="left">Acc % 45/class</th>
+<th scope="col" class="left">Acc % 60/class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(Sohn et al., 2011)</td>
+<td class="left">35.1</td>
+<td class="left">42.1</td>
+<td class="left">45.7</td>
+<td class="left">47.9</td>
+</tr>
+
+<tr>
+<td class="left">(Bo et al., 2013</td>
+<td class="left">40.5 \(\pm\) 0.4</td>
+<td class="left">48.0 \(\pm\) 0.2</td>
+<td class="left">51.9 \(\pm\) 0.2</td>
+<td class="left">55.2 \(\pm\) 0.3</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">non-pretrained.</td>
+<td class="left">9.0 \(\pm\) 1.4</td>
+<td class="left">22.5 \(\pm\) 0.7</td>
+<td class="left">31.2 \(\pm\) 0.5</td>
+<td class="left">38.8 \(\pm\) 1.4</td>
+</tr>
+
+<tr>
+<td class="left">ImageNet-pretrained.</td>
+<td class="left"><b>65.7 \(\pm\) 0.2</b></td>
+<td class="left"><b>70.6 \(\pm\) 0.2</b></td>
+<td class="left"><b>72.7 \(\pm\) 0.4</b></td>
+<td class="left"><b>74.2 \(pm\) 0.3</b></td>
+</tr>
+</tbody>
+</table>
+
+<div class="center">
+
+<div id="figure-9" class="figure">
+<p><img src="assets/zfnet/figure-9.png" alt="figure-9.png" />
+</p>
+<p><span class="figure-number">&#22270;9&nbsp;</span> Caltech-256 分类精度对应于类别中采用的图像数量作为训练.可以看到预训练模型只需要 6 个训练样本就可以达到现在最好的模型分类<sup><a id="fnr.11.100" name="fnr.11.100" class="footref" href="#fn.11">11</a></sup>.</p>
+</div>
+</div>
+
+<hr  />
+<p>
+<b>PASCAL 2012</b>: 在 ImageNet 预训练的模型上采用标准的训练和验证集数据训练 20 路的 softmax 分类器.可以看到结果不是特别好,主要原因是 PASCAL 中的图像包含多种对象,但是本文提出的模型对图像只分一类.<a href="#table-6">table-6</a>显示了模型在测试集上的性能.PASCAL 和 ImageNet 数据集非常不一样,前一个数据集图像更为自然场景.这解释了本文提出的模型为什么比在 PASCAL 数据集上表现最好的模型分类精度上要低 3.2%<sup><a id="fnr.13" name="fnr.13" class="footref" href="#fn.13">13</a></sup>.然而,本文提出的模型在 5 个类别上表现的却要比<sup><a id="fnr.13.100" name="fnr.13.100" class="footref" href="#fn.13">13</a></sup>好很多.
+</p>
+
+<p>
+classification)).
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+</colgroup>
+
+<colgroup>
+<col  class="right" />
+
+<col  class="left" />
+
+<col  class="right" />
+</colgroup>
+
+<colgroup>
+<col  class="left" />
+</colgroup>
+
+<colgroup>
+<col  class="right" />
+
+<col  class="left" />
+
+<col  class="right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Acc %</th>
+<th scope="col" class="right">[A]</th>
+<th scope="col" class="left">[B]</th>
+<th scope="col" class="right">Ours</th>
+<th scope="col" class="left">Acc %</th>
+<th scope="col" class="right">[A]</th>
+<th scope="col" class="left">[B]</th>
+<th scope="col" class="right">Ours</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">Airplane</td>
+<td class="right">92.0</td>
+<td class="left"><b>97.3</b></td>
+<td class="right">96.0</td>
+<td class="left">Dining tab</td>
+<td class="right">63.2</td>
+<td class="left"><b>77.8</b></td>
+<td class="right">67.7</td>
+</tr>
+
+<tr>
+<td class="left">Bicycle</td>
+<td class="right">74.2</td>
+<td class="left"><b>84.2</b></td>
+<td class="right">77.1</td>
+<td class="left">Dog</td>
+<td class="right">68.9</td>
+<td class="left">83.0</td>
+<td class="right">87.8</td>
+</tr>
+
+<tr>
+<td class="left">Bird</td>
+<td class="right">73.0</td>
+<td class="left">80.8</td>
+<td class="right"><b>88.4</b></td>
+<td class="left">Horse</td>
+<td class="right">78.2</td>
+<td class="left"><b>87.5</b></td>
+<td class="right">86.0</td>
+</tr>
+
+<tr>
+<td class="left">Boat</td>
+<td class="right">77.5</td>
+<td class="left">85.3</td>
+<td class="right"><b>85.5</b></td>
+<td class="left">Motorbike</td>
+<td class="right">81.0</td>
+<td class="left"><b>90.1</b></td>
+<td class="right">85.1</td>
+</tr>
+
+<tr>
+<td class="left">Bottle</td>
+<td class="right">54.3</td>
+<td class="left"><b>60.8</b></td>
+<td class="right">55.8</td>
+<td class="left">Person</td>
+<td class="right">91.6</td>
+<td class="left"><b>95.0</b></td>
+<td class="right">90.9</td>
+</tr>
+
+<tr>
+<td class="left">Bus</td>
+<td class="right">85.2</td>
+<td class="left"><b>89.9</b></td>
+<td class="right">85.8</td>
+<td class="left">Petted pl</td>
+<td class="right">55.9</td>
+<td class="left"><b>57.8</b></td>
+<td class="right">52.2</td>
+</tr>
+
+<tr>
+<td class="left">Car</td>
+<td class="right">81.9</td>
+<td class="left"><b>86.8</b></td>
+<td class="right">78.6</td>
+<td class="left">Sheep</td>
+<td class="right">69.4</td>
+<td class="left">79.2</td>
+<td class="right"><b>83.6</b></td>
+</tr>
+
+<tr>
+<td class="left">Cat</td>
+<td class="right">76.4</td>
+<td class="left">89.3</td>
+<td class="right"><b>91.2</b></td>
+<td class="left">Sofa</td>
+<td class="right">65.4</td>
+<td class="left"><b>73.4</b></td>
+<td class="right">61.1</td>
+</tr>
+
+<tr>
+<td class="left">Chair</td>
+<td class="right">65.2</td>
+<td class="left"><b>75.4</b></td>
+<td class="right">65.0</td>
+<td class="left">Train</td>
+<td class="right">86.7</td>
+<td class="left"><b>94.5</b></td>
+<td class="right">91.8</td>
+</tr>
+
+<tr>
+<td class="left">Cow</td>
+<td class="right">63.2</td>
+<td class="left"><b>77.8</b></td>
+<td class="right">74.4</td>
+<td class="left">Tv</td>
+<td class="right">77.4</td>
+<td class="left"><b>90.7</b></td>
+<td class="right">76.1</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="left">Mean</td>
+<td class="right">74.3</td>
+<td class="left"><b>82.2</b></td>
+<td class="right">79.0</td>
+<td class="left"># won</td>
+<td class="right">0</td>
+<td class="left">15</td>
+<td class="right">5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3">Feature Analysis</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+为了研究不同网络层的特征的差异,从不同网络层抽取对应特征,然后在此之上训练一个线性 SVM 或者 softmax 分类器.<a href="#table-7">table-7</a>显示了在 Caltech-101 和 Caltech-256 上的结果,可以看到随着网络层提升,模型分类精度具有稳定的提升.这也说明了越深的特征,学习到的特征也越有效.
+</p>
+
+<table id="table-7" border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">&#34920;6&nbsp;</span> 采用不同网络层的特征来训练分类器的精度.可以看到更高的网络层学习到的特征具有更强的分类性能.</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">&#xa0;</th>
+<th scope="col" class="left">Cal-101 (30/class)</th>
+<th scope="col" class="left">Cal-256 (60/class)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">SVM (1)</td>
+<td class="left">44.8 \(\pm\) 0.7</td>
+<td class="left">24.6 \(\pm\) 0.4</td>
+</tr>
+
+<tr>
+<td class="left">SVM (2)</td>
+<td class="left">66.2 \(\pm\) 0.5</td>
+<td class="left">39.6 \(\pm\) 0.3</td>
+</tr>
+
+<tr>
+<td class="left">SVM (3)</td>
+<td class="left">72.3 \(\pm\) 0.4</td>
+<td class="left">46.0 \(\pm\) 0.3</td>
+</tr>
+
+<tr>
+<td class="left">SVM (4)</td>
+<td class="left">76.6 \(\pm\) 0.4</td>
+<td class="left">51.3 \(\pm\) 0.1</td>
+</tr>
+
+<tr>
+<td class="left">SVM (5)</td>
+<td class="left"><b>86.2 \(\pm\) 0.8</b></td>
+<td class="left">65.6 \(\pm\) 0.3</td>
+</tr>
+
+<tr>
+<td class="left">SVM (7)</td>
+<td class="left"><b>85.5 \(\pm\) 0.4</b></td>
+<td class="left"><b>71.7 \(\pm\) 0.2</b></td>
+</tr>
+
+<tr>
+<td class="left">Softmax (5)</td>
+<td class="left">82.9 \(\pm\) 0.4</td>
+<td class="left">65.7 \(\pm\) 0.5</td>
+</tr>
+
+<tr>
+<td class="left">Softmax (7)</td>
+<td class="left"><b>85.4 \(\pm\) 0.4</b></td>
+<td class="left"><b>72.6 \(\pm\) 0.1</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Discussion</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+本文探索了大规模卷积神经网络模型在图像分类上多个方面的表现.首先,展示了一个新的方法可视化模型中的激活值.解释了学习到的特征并不是随机,不可解释的.相反,特征具有很多直观上的属性,例如:图像语义提取,并且随着网络递增,学习到的特征具有不变性和类别区分性.同时展示了这些可视化结果如何来调试网络结构获取更好的分类效果,例如在 AlexNet 网络上提升到更好的分类结果.然后说明了经过一些列遮挡实验,分类模型对分类目标更为敏感,并不是以仅仅使用了周边场景信息.并且通过去除网络层实验,发现并不是某个网络层非常重要,而是整体网络结构的深度对分类效果影响较大.
+</p>
+
+<p>
+最后,展示了在 ImageNet 上训练的模型,在其他的数据集上也有很多的泛化能力.例如: 在 Caltech-101 和 Caltech-256 数据集,由于数据集和 ImageNet 较为相似,所以本文提出的网络模型表现要比现在发表的任何方法都要好.本文提出的卷积神经网络在 PASCAL 数据集上泛化并不是特别好,可能是因为数据集具有一定的偏置.并且模型没有在该数据集上作微调,和最好的发表结果比精度差了 3.2%.例如:可以采用不同的损失函数,从而允许在一张图像上预估多个类别,从而可以使网络学习跟踪不同对象的检测,最后提升整个网络性能.
+</p>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">&#33050;&#27880;: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" name="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+Improving neural networks by preventing co-adaptation of feature detectors.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.2" name="fn.2" class="footnum" href="#fnr.2">2</a></sup> <p class="footpara">
+Adaptive deconvolutional networks for mid and high level feature learning
+</p></div>
+
+<div class="footdef"><sup><a id="fn.3" name="fn.3" class="footnum" href="#fnr.3">3</a></sup> <p class="footpara">
+Greedy layer-wise training of deep networks
+</p></div>
+
+<div class="footdef"><sup><a id="fn.4" name="fn.4" class="footnum" href="#fnr.4">4</a></sup> <p class="footpara">
+Extracting and composing robust features with denoising autoencoders
+</p></div>
+
+<div class="footdef"><sup><a id="fn.5" name="fn.5" class="footnum" href="#fnr.5">5</a></sup> <p class="footpara">
+A fast learning algorithm for deep belief nets.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.6" name="fn.6" class="footnum" href="#fnr.6">6</a></sup> <p class="footpara">
+DeCAF: A deep convolutional activation feature for generic visual recognition.
+</p></div>
+
+<div class="footdef"><sup><a id="fn.7" name="fn.7" class="footnum" href="#fnr.7">7</a></sup> <p class="footpara">
+Classification entry
+</p></div>
+
+<div class="footdef"><sup><a id="fn.8" name="fn.8" class="footnum" href="#fnr.8">8</a></sup> <p class="footpara">
+One-shot learning of object categories
+</p></div>
+
+<div class="footdef"><sup><a id="fn.9" name="fn.9" class="footnum" href="#fnr.9">9</a></sup> <p class="footpara">
+The caltech 256
+</p></div>
+
+<div class="footdef"><sup><a id="fn.10" name="fn.10" class="footnum" href="#fnr.10">10</a></sup> <p class="footpara">
+Histograms of oriented gradients for pedestrian detection
+</p></div>
+
+<div class="footdef"><sup><a id="fn.11" name="fn.11" class="footnum" href="#fnr.11">11</a></sup> <p class="footpara">
+Multipath sparse coding using hierarchical matching pursuit
+</p></div>
+
+<div class="footdef"><sup><a id="fn.12" name="fn.12" class="footnum" href="#fnr.12">12</a></sup> <p class="footpara">
+Linear spatial pyramid matching using sparse coding for image classification
+</p></div>
+
+<div class="footdef"><sup><a id="fn.13" name="fn.13" class="footnum" href="#fnr.13">13</a></sup> <p class="footpara">
+Generalized hierarchical matching for sub-category aware object classification
+</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>
