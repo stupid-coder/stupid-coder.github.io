@@ -1,0 +1,1994 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-12-13 Thu 10:44 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Introduction to Applied Linear Algebra</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Introduction to Applied Linear Algebra</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org3ac50b5">向量(Vectors)</a>
+<ul>
+<li><a href="#org672685d">内积(inner dot)</a></li>
+</ul>
+</li>
+<li><a href="#orge825cf1">线性函数(Linear Functions)</a>
+<ul>
+<li><a href="#orga397323">泰勒近似(Taylor approximation)</a></li>
+</ul>
+</li>
+<li><a href="#orga081597">范式和距离(Norm and distance)</a>
+<ul>
+<li><a href="#org982743b">范式(Norm)</a></li>
+<li><a href="#orgf7f6b94">距离(Distance)</a></li>
+<li><a href="#org6312be6">标准差(Standard deviation)</a></li>
+<li><a href="#org6006609">角度(Angle)</a></li>
+</ul>
+</li>
+<li><a href="#org76b858f">线性无关(Linear independence)</a>
+<ul>
+<li><a href="#org8dc589a">线性有关</a></li>
+<li><a href="#org6a481e0">基</a></li>
+<li><a href="#orga98c9f5">正交向量</a></li>
+<li><a href="#orgdff6e2b">施密特正交算法(Gram-Schmidt algorithm)</a></li>
+</ul>
+</li>
+<li><a href="#orga54dd2f">矩阵</a>
+<ul>
+<li><a href="#org5ca36cc">零值矩阵和单位矩阵</a></li>
+<li><a href="#org2e67e50">转置,加法和范式</a></li>
+<li><a href="#org6163706">卷积</a></li>
+</ul>
+</li>
+<li><a href="#orgb7f4989">线性等式</a>
+<ul>
+<li><a href="#org51e538c">线性和仿射函数</a></li>
+<li><a href="#orgb915fa9">线性等式集合</a></li>
+</ul>
+</li>
+<li><a href="#org1848750">矩阵相乘</a>
+<ul>
+<li><a href="#org48b3608">矩阵-矩阵 相乘</a></li>
+<li><a href="#orgfc27e47">线性函数合成</a></li>
+<li><a href="#org1d549d2">QR 分解</a></li>
+</ul>
+</li>
+<li><a href="#org7a729f5">矩阵逆</a>
+<ul>
+<li><a href="#org83c03e8">左逆,右逆</a></li>
+<li><a href="#orgdbaf28e">矩阵逆</a></li>
+<li><a href="#orgff473e0">求解线性等式</a></li>
+<li><a href="#org49f05c5">矩阵伪逆</a></li>
+</ul>
+</li>
+<li><a href="#org868eb19">最小方差(Least squares)</a>
+<ul>
+<li><a href="#org3d0701e">最小方差问题</a></li>
+<li><a href="#org4f6a1e3">求解</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<blockquote>
+<p>
+从事机器学习相关工作中,发现线性代数较为重要,所以花一些时间学习一下相关知识非常有必要.怕读完后无法记住,所以整理一下知识要点,留待后续复习.
+</p>
+
+<p>
+&lt;Introduction to Applied Linear Algebra&gt; 知识要点.
+</p>
+</blockquote>
+
+<hr />
+<div id="outline-container-org3ac50b5" class="outline-2">
+<h2 id="org3ac50b5">向量(Vectors)</h2>
+<div class="outline-text-2" id="text-org3ac50b5">
+<p>
+<b>线性组合</b> : 当 \(a_{1},...,a_{m}\) 为 n 维向量,且 \(\beta_{1},...,\beta_{m}\) 为标量,那么 n 维向量
+</p>
+\begin{equation}
+\beta_{1}a_{1}+...+\beta_{m}a_{m}
+\tag{1.1}
+\end{equation}
+<p>
+叫做向量 \(a_{1},...,a_{m}\) 的线性组合(<i>linear combination</i>). 标量 \(\beta_{1},...,\beta_{m}\) 成为线性组合的系数(<i>coefficients</i>).
+</p>
+</div>
+
+<div id="outline-container-org672685d" class="outline-3">
+<h3 id="org672685d">内积(inner dot)</h3>
+<div class="outline-text-3" id="text-org672685d">
+<p>
+向量内积定义为:
+</p>
+\begin{equation}
+a^{T}b=\alpha_{1}\beta_{1}+\alpha_{2}\beta_{2}+...+\alpha_{n}\beta_{n}.
+\tag{1.2}
+\end{equation}
+</div>
+
+<ul class="org-ul">
+<li><a id="org23f2e7a"></a>内积性质<br />
+<div class="outline-text-4" id="text-org23f2e7a">
+<ul class="org-ul">
+<li>交换率(<i>commutativity</i>). \(a^{T}b=b^{T}a\)</li>
+<li>标量结合率(<i>associativity with scalar multiplication</i>). \((\gamma a)^{T}b=\gamma (a^{T}b)\)</li>
+<li>向量加法的分布率(<i>distributivity with vector addition</i>). \((a+b)^{T}c=a^{T}c+b^{T}c\)</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orge825cf1" class="outline-2">
+<h2 id="orge825cf1">线性函数(Linear Functions)</h2>
+<div class="outline-text-2" id="text-orge825cf1">
+<p>
+<b>函数定义</b>. \(\mathcal{f}: R^{n}->R\) 表示 \(\mathcal{f}\) 为输入为 n 维向量,输出为标量的函数映射.
+</p>
+
+<hr />
+<p>
+<b>向量内积函数</b>. 假设 \(a\) 为 n 维向量,定义标量函数:
+</p>
+\begin{equation}
+\mathcal{f}(x)=a^{T}x=\alpha_{1}x_{1}+\alpha_{2}x_{2}+...+\alpha_{n}x_{n}
+\tag{2.1}
+\end{equation}
+
+<p>
+<b>叠加性(<i>Superposition</i>)和线性(<i>linearity</i>)</b>. 内积函数(<a href="#orgf6bc75e">2.1</a>)满足如下性质:
+</p>
+\begin{aligned}
+  \mathcal{f}(\alpha{x}+\beta{y}) &= a^{T}(\alpha{x}+\beta{y}) \\
+  &= a^{T}(\alpha{x})+a^{T}(\beta{y}) \\
+  &= \alpha{(a^{T}x)}+\beta{(a^{T}y)} \\
+  &= \alpha{\mathcal{f}(x)}+\beta{\mathcal{f}(y)} 
+  \notag
+\end{aligned}
+
+<p>
+上述性质叫做叠加性.满足叠加性的函数叫做线性函数.
+</p>
+
+<p>
+叠加性定义为:
+</p>
+\begin{equation}
+  \mathcal{f}(\alpha{x}+\beta{y})=\alpha{\mathcal{f}(x)}+\beta{\mathcal{f}(y)}
+\tag{2.2}
+\end{equation}
+
+<blockquote>
+<p>
+叠加性表示参数之间的放缩和叠加可以直接在函数输出之后进行放缩和叠加.
+</p>
+</blockquote>
+
+<p>
+叠加性公式(<a href="#org290f190">2.2</a>)有时候分解成两个属性,一个是进行标量放缩,一个是向量叠加.如果函数 \(\mathcal{f}: R^{n}->R\) 为线性函数,那么满足如下两个性质:
+</p>
+<dl class="org-dl">
+<dt>同质性(<i>homogeneity</i>)</dt><dd>对于任意向量 x 和标量 \(\alpha\),满足 \(\mathcal{f}(\alpha{x})=\alpha{(\mathcal{f}(x))}\)</dd>
+<dt>叠加性(<i>additivity</i>)</dt><dd>对于任意向量 x 和 y,满足 \(\mathcal{f}(x+y)=\mathcal{f}(x)+\mathcal{f}(y)\)</dd>
+</dl>
+
+<hr />
+<p>
+<b>向量内积表示的线性函数</b>. 内积表示的形式的函数满足线性函数的性质.反证也是正确的,如果函数为线性函数,那么就可以表示为向量内积的形式.
+</p>
+
+<p>
+假设函数 \(\mathcal{f}\) 为线性函数.那么存在一个向量 \(a\) ,对于任意 x 满足 \(\mathcal{f}(x)=a^{T}x\), \(a^{T}x\) 为函数的内积表示.
+</p>
+
+<p>
+通过单位向量 \(e\) 可以表示任意的向量 \(x=x_{1}e_{1}+...+x_{n}e_{n}\).如果 \(\mathcal{f}\) 为线性函数,那么通过叠加性可以表示:
+</p>
+\begin{aligned}
+  \mathcal{f}(x) &= \mathcal{f}(x_{1}e_{1}+...+x_{n}e_{n}) \\
+  &= x_{1}\mathcal{f}(e_{1})+....+x_{n}\mathcal{f}(e_{n})
+  &= a^{T}x
+\end{aligned}
+
+<p>
+则 \(a=(\mathcal{f}(e_{1}),\mathcal{f}(e_{2}),...,\mathcal{f}(e_{n}))\). 任意线性函数可以采用单位向量表示:
+</p>
+\begin{equation}
+  \mathcal{f}(x)=x_{1}\mathcal{f}(e_{1})+x_{2}\mathcal{f}(e_{2})+...+x_{n}\mathcal{f}(e_{n})
+  \tag{2.3}
+\end{equation}
+
+<hr />
+<p>
+<b>仿射函数(<i>affine functions</i>)</b>. 线性函数加上一个常量叫做仿射函数.函数 \(\mathcal{f}: R^{n}->R\) 为仿射函数,那么就可以表示为 \(\mathcal{f}=a^{T}x+b\).
+</p>
+
+<p>
+当 \(\alpha+\beta=1\) 时候,对于任意输入向量 x,y 和标量 \(\alpha, \beta\) 仿射函数 \(\mathcal{f}\) 满足叠加性质:
+\[
+\mathcal{f}(\alpha{x}+\beta{y})=\alpha\mathcal{f}(x)+\beta\mathcal{f}(y)
+\]
+</p>
+
+<p>
+假设仿射函数 $\mathcal{f}=a<sup>T</sup>x+b$满足上述受限的叠加属性,对于任意的向量 x,y 和满足 \(\alpha+\beta=1\) 的标量:
+</p>
+\begin{aligned}
+  \mathcal{f}(\alpha{x}+\beta{y}) &= a^{T}(\alpha{x}+\beta{y})+b \\
+  &= \alpha{a^{T}x}+\beta{a^{T}y} + (\alpha+\beta)b \\
+  &= \alpha{(a^{T}x+b)} + \beta{(a^{T}y+b)} \\
+  &= \alpha{\mathcal{f}(x)} + \beta{\mathcal{f}(y)}
+\notag
+\end{aligned}
+
+<p>
+对于任意仿射函数,类似(<a href="#orge82b839">2.3</a>)的公式如下:
+</p>
+\begin{equation}
+\mathcal{f(x)}=\mathcal{f(0)}+x_{1}(\mathcal{f(e_{1})-f(0)})+...+x_{n}(\mathcal{f(e_{n})-f(0)})
+\tag{2.4}
+\end{equation}
+
+<p>
+上述公式表示对于仿射函数 \(\mathcal{f(a^{x}+b)}\) 满足: \(a_{i}=\mathcal{f(e_{i})-f(0)}, b=\mathcal{f(0)}\)
+</p>
+</div>
+
+<div id="outline-container-orga397323" class="outline-3">
+<h3 id="orga397323">泰勒近似(Taylor approximation)</h3>
+<div class="outline-text-3" id="text-orga397323">
+<p>
+在很多应用中,n 个变量的标量函数可以通过线性函数或者仿射函数近似.
+</p>
+
+<p>
+微分计算提供了统一的近似方法.假设函数 \(\mathcal{f}: R^{n}->R\) 是可微分,表示函数存在偏导数.假设 z 为 n 维向量.在 z 点的一阶泰勒近似可以表示为:
+</p>
+\begin{equation}
+\hat{f}(x)=f(z)+\frac{\partial{f}}{\partial{x_{1}}}(z)(x_{1}-z_{1})+...+\frac{\partial{f}}{\partial{x_{n}}}(z)(x_{n}-z_{n})
+\notag
+\end{equation}
+
+<p>
+其中 \(\frac{\partial{f}}{\partial{x_{i}}}(z)\) 表示为函数 \(f\) 对第 i 个参数的偏导数,在 z 点的取值.
+</p>
+
+<p>
+一阶泰勒近似可以看作为内积表达的仿射函数:
+</p>
+\begin{equation}
+  \hat{f(x)}=f(z)+\nabla{f(z)}^{T}(x-z).
+\tag{2.5}
+\end{equation}
+
+<p>
+其中 \(\nabla{f(z)}\) 为 n 维向量,表示为 f 在 z 点的梯度:
+</p>
+\begin{equation}
+  \nabla{f(z)} = \begin{bmatrix}
+    \frac{\partial{f}}{\partial{x_{1}}(z)} \\
+    \frac{\partial{f}}{\partial{x_{2}}(z)} \\
+    \vdots \\
+    \frac{\partial{f}}{\partial{x_{n}}(z)}
+    \end{bmatrix}
+\tag{2.6}
+\end{equation}
+
+<p>
+可以将一阶泰勒近似表示成线性函数,加上一个常量的形式:
+</p>
+\begin{equation}
+  \hat{f(x)}=\nabla{f(z)}^{T}x-(f(z)-\nabla{f(z)}^{T}z)
+\notag
+\end{equation}
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga081597" class="outline-2">
+<h2 id="orga081597">范式和距离(Norm and distance)</h2>
+<div class="outline-text-2" id="text-orga081597">
+</div>
+<div id="outline-container-org982743b" class="outline-3">
+<h3 id="org982743b">范式(Norm)</h3>
+<div class="outline-text-3" id="text-org982743b">
+<p>
+欧几里德范式(<i>Euclidean norm</i>)表示为向量的元素的平方之和再开放,记为 \(\lVert x \rVert\):
+</p>
+\begin{equation}
+  \lVert x \rVert = \sqrt{x_{1}^{2}+x_{2}^{2}+...+x_{n}^{2}}
+\notag
+\end{equation}
+
+<p>
+欧几里德范式也可以表示为向量内积形式: \(\lVert x \rVert=\sqrt{x^{T}x}\).欧几里德范式有时候也写作 \(\lVert x \rVert^{2}\).
+</p>
+
+<p>
+<b>范式性质</b>:
+</p>
+<ul class="org-ul">
+<li><b>非负同质性(<i>nonnegative homogeneity</i>)</b>. \(\lVert \beta \rVert = \left| \beta \right| \left \| x \right \|\)</li>
+<li><b>三角不等式(<i>triangle inequality</i>)</b>. \(\left \| x+y \right \| \leq \left \| x \right \| + \left \| y \right \|\)</li>
+<li><b>非负性(<i>nonnegativity</i>)</b>. \(\left \| x \right \| \ge 0\)</li>
+<li><b>确定性(<i>definiteness</i>)</b>. \(\left \| x \right \|=0\),当且仅当 \(x=0\).</li>
+</ul>
+
+
+<p>
+最后两个性质保证了向量的范式具有正定性质(<i>positive definiteness</i>).
+</p>
+
+
+<hr />
+<p>
+<b>均值方根(<i>root-mean-square</i>)</b>:
+</p>
+
+\begin{equation}
+  rms(x) = \sqrt{\frac{x_{1}^{2}+...+x_{n}^{2}}{n}} = \frac{\left \| x \right \|}{\sqrt{n}}
+\notag
+\end{equation}
+
+<p>
+中间开放操作包括的公式叫做 x 的均方值,记为 <b>\(ms(x)\)</b>.
+</p>
+
+<hr />
+<p>
+<b>向量加的范式(<i>norm of a sum</i>)</b>.两个向量的加法的范式具有如下等式:
+</p>
+\begin{equation}
+  \left \| x + y \right \| = \sqrt{\left \| x \right \|^{2}+2x^{T}y+\left \| y \right \|^{2}}.
+\tag{3.1}
+\end{equation}
+
+<hr />
+<p>
+<b>契比雪夫不等式(<i>Chebyshev inequality</i>)</b>.假设 \(x\) 为 n 维向量,k 为满足 \(\left| x_{i} \right| \ge a\) 的元素个数,即 k 个元素满足 \(x_{i}^{2} \ge a_{2}\),所以:
+</p>
+\begin{equation}
+  \left \| x \right \| = x_{i}^{2}+...+x_{n}^{2} \ge k a^{2}.
+\notag
+\end{equation}
+
+<p>
+所以 \(k \leq \frac{\left \| x \right \|^{2}}{a^{2}}\),叫做契比雪夫不等式.当 \(\left \| x \right \|^{2}/a^{2} \le n\),由于 \(k \leq n\),所以该不等式并没有任何意义.但是该不等式显示了向量中元素大于一定值的数量,例如当 \(a > \left \| x \right \|\) 时,不等式 $k &le; \left \| x \right \|<sup>2</sup>/a<sup>2</sup> &lt; 1 $,可以认为 k=0(因为 k 为正数).换句话说,向量中的元素没有一个可以大于向量的范式值.
+</p>
+
+<p>
+契比雪夫不等式更容易利用 RMS 值来解释:
+</p>
+\begin{equation}
+  \frac{k}{n} \leq \left( \frac{rms(x)}{a} \right)^{2}
+\tag{3.2}
+\end{equation}
+
+<p>
+左侧表示大于 a 的元素占向量所有元素数量的比例.右则表示 a 和 rms(x) 的比例的反数.即是说,没有大于 1/25=4% 的元素能够大于 5 倍的 RMS 值.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf7f6b94" class="outline-3">
+<h3 id="orgf7f6b94">距离(Distance)</h3>
+<div class="outline-text-3" id="text-orgf7f6b94">
+<p>
+<b>欧几里德距离(<i>Euclidean distance</i>)</b>. 可以采用向量差值范式来表示两个向量间的距离:
+</p>
+\begin{equation}
+  dist(a, b) = \left \| a - b \right \|
+\notag
+\end{equation}
+
+<hr />
+<p>
+<b>三角不等式(<i>Triangle inequality</i>)</b>. 解析几何表示,三角形中任意一条边的长度不会大于其他两条边长度之和.则:
+</p>
+\begin{equation}
+  \left\| a - c \right\| \leq \left\|a-b\right\| + \left\|b-c\right\|
+\tag{3.3}
+\end{equation}
+
+<p>
+运用三角不等式证明: \(\left\|a-c\right\|=\left\|(a-b)+(b-c)\right\|\leq\left\|a-b\right\|+\left\|b-c\right\|\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6312be6" class="outline-3">
+<h3 id="org6312be6">标准差(Standard deviation)</h3>
+<div class="outline-text-3" id="text-org6312be6">
+<p>
+<b>标准差</b>.为去中心值的向量的 RMS:
+</p>
+\begin{equation}
+  std(x) = \sqrt{\frac{(x_{1}-avg(x))^2+...+(x_{n}-avg(x))^2}{n}}
+\notag
+\end{equation}
+
+<hr />
+<p>
+<b>均值,RMS 值和标准差</b>. 三者之间的关系:
+</p>
+\begin{equation}
+  rms(x)^{2}=avg(x)^{2}+std(x)^{2}
+\tag{3.5}
+\end{equation}
+
+<p>
+\(rms(x)^{2}\) 为向量 x 的元素平方之和的均值,可以用元素均值平方加上方差均值平方来表示.推导:
+</p>
+\begin{aligned}
+  std(x)^{2} &= (1/n)\sum_{i}^{n}{\left\|x_{i}-avg(x)\right\|^{2}} \\
+  &= (1/n)\sum_{i}^{n}{(x_{i}^{2}-2avg(x)x_{i}+avg(x)^{2})} \\
+  &= (1/n)\sum_{i}^{n}{x_{i}^{2}}-2avg(x)(1/n)\sum_{i}^{n}{(x_{i})}+avg(x)^{2} \\
+  &= rms(x)^{2}-2avg(x)^{2}+avg(x)^{2} \\
+  &= rms(x)^{2}-avg(x)^{2}
+\notag
+\end{aligned}
+
+<hr />
+<p>
+<b>关于标准差的契比雪夫不等式</b>. 契比雪夫不等式(<a href="#org3816b95">3.2</a>)可以转化为采用均值和方差表示的不等式:记 k 为向量中元素满足 \(\left|x_{i}-avg(x)\right| \ge a\) 的元素个数,则 \(k/n \leq (std(x)/a)^{2}\).那么上述等式可以解释为:和均值 avg(x) 在 a 个标准差范围内的元素比例为 \(1-1/a^{2}\).
+</p>
+
+<hr />
+<p>
+<b>标准差性质</b>.
+</p>
+<ul class="org-ul">
+<li><code>加上常量标量</code>. \(std(x+a)=std(x)\)</li>
+<li><code>乘以一个标量</code>. \(std(ax)=\left|a\right|std(x)\)</li>
+</ul>
+
+<hr />
+<p>
+<b>标准化(<i>standardization</i>)</b>.用来将向量变换成均值为 0,标准方差为 1 的向量.
+</p>
+\begin{equation}
+  z = \frac{1}{std(x)}\left(x-avg(x)\right).
+\notag
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-org6006609" class="outline-3">
+<h3 id="org6006609">角度(Angle)</h3>
+<div class="outline-text-3" id="text-org6006609">
+<p>
+<b>Cauchy-Schwarz inequality</b>. 表示两个向量的内积小于两个向量范式的乘积.
+</p>
+\begin{equation}
+  \left|a^{T}b\right| \leq \left\|a\right\|\left\|b\right\|
+\notag
+\end{equation}
+
+<p>
+上述不等式在 a=0 或者 b=0 时候,满足.假设 a!=0,b!=0,设 \(\alpha=\left\|a\right\|, \beta=\left\|b\right\|\).可以观察到:
+</p>
+\begin{aligned}
+  0 & \leq \left\|\beta{a} - \alpha{b}\right\|^{2} \\
+  &= \left\|\beta{a}\right\|^{2}-2(\beta{a})^{T}(\alpha{b})+\left\|\alpha{b}\right\| \\
+  &= \beta^{2}\left\|a\right\|^{2}-2\beta\alpha{(a^{T}b)}+\alpha^{2}\left\|b\right\|^{2} \\
+  &= \left\|b\right\|^{2}\left\|a\right\|^{2} - 2 \left\|b\right\|^{2}\left\|a\right\|^{2}(a^{T}b)+\left\|a\right\|^{2}\left\|b\right\|^{2} \\
+  &= 2\left\|a\right\|^{2}\left\|b\right\|^{2} - 2 \left\|a\right\|^{2}\left\|b\right\|^{2}(a^{T}b)
+\notag
+\end{aligned}
+
+<p>
+两边除以 \(2\left\|a\right\|\left\|b\right\|\),获得 \(a^{T}b \leq \left\|a\right\|\left\|b\right\|\).如果设 a 为-a,那么上述公式可以获得 \(-a^{T}b \leq \left\|a\right\|\left\|b\right\|\).两个情况联立,证明 \(\left|a^{T}b\right| \leq \left\|a\right\|\left\|b\right\|\).
+</p>
+
+<p>
+上述的证明过程同时揭示了等号成立的情况,只有当 \(\left\|\beta{a} - \alpha{b}\right\|=0\) 时满足,即 \(\beta{a}=\alpha{b}\),两个向量成倍数关系.
+</p>
+
+<hr />
+<p>
+<b>向量角度</b>. 两个非零向量的角度定义如下:
+</p>
+\begin{equation}
+  \theta = arccos\left(\frac{a^{T}b}{\left\|a\right\|\left\|b\right\|}\right)
+\notag
+\end{equation}
+
+<p>
+进行三角函数变换后,得到:
+</p>
+\begin{equation}
+  a^{T}b = \left\|a\right\|\left\|b\right\|\cos{\theta}
+\notag
+\end{equation}
+
+<ul class="org-ul">
+<li>角度为 \(\pi/2=90^{\circ}\),那么 \(a^{T}b=0\),两个向量正交(<i>orthogonal</i>).零向量和任意向量正交.</li>
+<li>角度为 0,那么表示 \(a^{T}b=\left\|a\right\|\left\|b\right\|\),两个向量在同一个方向上.</li>
+<li>角度为 \(180^{\circ}\),表示 \(a^{T}b=-\left\|a\right\|\left\|b\right\|\),两个向量在相反方向.</li>
+</ul>
+
+
+<hr />
+<p>
+<b>通过向量角度计算两个向量和的范式</b>.
+</p>
+\begin{equation}
+  \left\|x+y\right\|^{2}=\left\|x\right\|^{2}+2x^{T}y+\left\|y\right\|^{2}=\left\|x\right\|^{2}+2\left\|x\right\|\left\|y\right\|\cos\theta+\left\|y\right\|^{2}
+\tag{3.6}
+\end{equation}
+
+<ul class="org-ul">
+<li>如果两个向量在同一个方向上(\(\theta=0\)),\(\left\|x+y\right\|=\left\|x\right\|+\left\|y\right\|\),直接等于两个向量范式之和.</li>
+<li>如果两个向量正交(\(\theta=90^{\circ}\)),\(\left\|x+y\right\|^{2}=\left\|x\right\|^{2}+\left\|y\right\|^{2}\).</li>
+</ul>
+
+
+<hr />
+<p>
+<b>相关性系数(<i>correlation coefficient</i>)</b>.设 a 和 b 为 n 维向量,计算去中心值向量:
+</p>
+\begin{equation}
+  \tilde{a} = a - avg(a),\ \ \tilde{b} = b - avg(b)
+\notag
+\end{equation}
+
+<p>
+定义相关性系数为:
+</p>
+\begin{equation}
+  \rho = \frac{\tilde{a}^{T}\tilde{b}}{\left\|\tilde{a}\right\|\left\|\tilde{b}\right\|}
+\tag{3.7}
+\end{equation}
+
+<p>
+因此, \(\rho=\cos\theta\), \(\theta\) 为向量 \(\tilde{a}\) 和 \(\tilde{b}\) 的角度.
+</p>
+
+<hr />
+<p>
+<b>向量和的标准差</b>. 
+</p>
+\begin{equation}
+  std(a+b) = \sqrt{std(a)^{2}+2\rho{std(a)std(b)}+std(b)^{2}}
+\tag{3.9}
+\end{equation}
+
+<p>
+记 \(\tilde{a}, \tilde{b}\) 为对应向量的去中心后的向量,所以 \(std(a+b)^{2}=\left\|\tilde{a}+\tilde{b}\right\|^{2}/n\):
+</p>
+\begin{aligned}
+  n std(a+b)^{2} &= \left\| \tilde{a} + \tilde{b} \right\|^{2} \\
+  &= \left\| \tilde{a} \right\|^{2} + 2\rho\left\| \tilde{a} \right\| \left\| \tilde{b} \right\| + \left\| \tilde{b} \right\|^{2} \\
+  &= n std(a)^{2} + 2\rho n std(a) std(b) + n std(b)^{2}
+\notag
+\end{aligned}
+
+<p>
+如果 \(\rho=1\),那么向量和的标准差等于两个向量标准差之和.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org76b858f" class="outline-2">
+<h2 id="org76b858f">线性无关(Linear independence)</h2>
+<div class="outline-text-2" id="text-org76b858f">
+</div>
+<div id="outline-container-org8dc589a" class="outline-3">
+<h3 id="org8dc589a">线性有关</h3>
+<div class="outline-text-3" id="text-org8dc589a">
+<p>
+n 维向量集合如果满足如下等式,且其中的系数 \(\beta_{1}, ..., \beta_{k}\) 并不是全为 0,则叫做线性相关:
+</p>
+\begin{equation}
+  \beta_{1}a_{1}+....+\beta_{k}a_{k}=0
+\notag
+\end{equation}
+
+<p>
+也就是说,向量集合中的向量可以采用不全是 0 的系数进行线性组合,并获得零向量.
+</p>
+
+<p>
+当向量集合为线性相关,那么就是说集合中的向量可以用其他向量线性组合构成:设 \(\beta_{i} \ne 0\),\(a_{i}\) 可以使用其他向量进行表示:
+</p>
+\begin{equation}
+  a_{i} = (-\beta_{1}/\beta_{i})a_{1}+...+(-\beta_{i-1}/\beta_{i})a_{i-1}+(-\beta_{i+1}/\beta_{i})a_{i+1}+...+(-\beta_{k}/\beta_{i})/a_{k}
+\notag
+\end{equation}
+
+<hr />
+<p>
+<b>线性无关(<i>Linearly independent</i>)</b>. 向量集合只有在系数都为 0 的情况下,才能满足上述公式,则叫做线性无关.
+</p>
+
+<hr />
+<p>
+<b>线性无关向量的线性组合</b>. 假设 x 为 k 个向量的线性组合:
+</p>
+\begin{equation}
+  x = \beta_{1}a_{1}+...+\beta_{k}a_{k}
+\notag
+\end{equation}
+
+<p>
+当向量集合 \(a_{1},...,a_{k}\) 为线性无关时,组成向量 x 的系数唯一:如果 x 能够用另外一个系数组合表示
+</p>
+\begin{equation}
+  x = \gamma_{1}a_{1}+...+\gamma_{k}a_{k}
+\notag
+\end{equation}
+
+<p>
+则 \(\beta_{i}=\gamma_{i} for i = 1,...,k\).
+</p>
+
+<p>
+证明,将两个向量组合相减,\(0 = (\beta_{1}-\gamma_{i})a_{1}+...+(\beta_{k}-\gamma_{k})a_{k}\),由于向量 \(a_{i},...,a_{k}\) 为线性无关,则只有所有系数都为 0 的时候,上述公式才成立,即 \(\beta_{i}-\gamma_{i}\) 全部为 0.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6a481e0" class="outline-3">
+<h3 id="org6a481e0">基</h3>
+<div class="outline-text-3" id="text-org6a481e0">
+<hr />
+<p>
+<b>线性无关的向量维度不等式</b>. 
+</p>
+<blockquote>
+<p>
+n 维向量集合如果要满足线性无关,集合中的向量最多只有 n 个.
+</p>
+</blockquote>
+
+
+<hr />
+<p>
+<b>基(<i>Basis</i>)</b>. n 个 n 维向量组成的线性无关集合叫做基(也就是说线性无关集合的最大向量数量).假设 n 维向量集合 \(a_{1},a_{2},...,a_{n}\) 为基,那么任意的 n 维向量 b 都可以用上述向量线性表示.假设 n+1 个向量组成的集合 \(a_{1},...a_{n},b\),通过 <b>线性无关向量维度不等式</b> 可知该集合为线性有关,所以可以找到一组不全是 0 的系数 \(\beta_{1},...\beta_{n+1}\) ,使得:
+</p>
+\begin{equation}
+  \beta_{1}a_{1}+...+\beta_{n}a_{n}+\beta_{n+1}b=0
+\notag
+\end{equation}
+
+<p>
+如果 \(\beta_{n+1}=0\),那么 \(\beta_{1}a_{1}+...+\beta_{n}a_{n}=0\),由于 \(a_{1},...,a_{n}\) 为线性无关向量,那么 \(\beta_{1}=...=\beta_{n}=0\).那么所有系数全部为 0,矛盾.所以 \(\beta_{n+1} \ne 0\).那么向量 b 可以表示为:
+</p>
+\begin{equation}
+  b = (-\beta_{1}/\beta_{n+1})a_{1}+...+(-\beta_{n}/\beta_{n+1})a_{n}
+\notag
+\end{equation}
+
+<p>
+即 b 为向量集合 \(a_{1},...a_{n}\) 的线性组合.
+</p>
+
+<p>
+那么和线性无关集合线性组合的系数唯一结合,可以得到如下结论:
+</p>
+<blockquote>
+<p>
+任意的 n 维向量 b 可以唯一采用一组基线性组合表达.
+</p>
+</blockquote>
+
+
+<hr />
+<p>
+<b>基坐标</b> 可以将任意的一个向量采用基向量线性组合形成:
+</p>
+\begin{equation}
+  b = \alpha_{1}a_{1}+...+\alpha_{n}a_{n}
+\notag
+\end{equation}
+
+<p>
+可以看作是向量 b 在基 \(a_{1},...,a_{n}\) 上的展开,展开系数 \(\alpha_{1},...,\alpha_{n}\) 可以看作是向量 b 在基上的坐标系数.
+</p>
+</div>
+</div>
+<div id="outline-container-orga98c9f5" class="outline-3">
+<h3 id="orga98c9f5">正交向量</h3>
+<div class="outline-text-3" id="text-orga98c9f5">
+<p>
+一组向量集合,当对于任意向量,两两正交,该集合叫做正交集合.如果集合为正交集合,并且任意向量的范式为 1,那么该集合叫做标准正交集合.标准正交集可以采用如下公式描述:
+</p>
+\begin{equation}
+  a_{i}^{T}a_{j} =
+  \begin{cases}
+    1 & i=j \\
+    0 & i \ne j
+  \end{cases}
+\notag
+\end{equation}
+
+<hr />
+<p>
+<b>标准正交集合具有线性无关性</b>. 假设 \(a_{1},...,a_{k}\) 为标准正交集合,
+</p>
+\begin{equation}
+\beta_{1}a_{1}+...+\beta_{k}a_{k} = 0
+\notag
+\end{equation}
+
+<p>
+对上述等式内积一个向量 \(a_{i}\):
+</p>
+\begin{aligned}
+  0 &= a_{i}^{T}(\beta_{1}a_{1}+...+\beta_{k}a_{k}) \\
+  &= \beta_{1}(a_{i}^{T}a_{1})+...+\beta_{k}(a_{i}^{T}a_{k}) \\
+  &= \beta_{i}
+\notag
+\end{aligned}
+
+<p>
+由于标准正交集中向量两两正交,且范式为 1,所以可以证明标准正交集是线性无关.
+</p>
+
+<hr />
+<p>
+<b>标准正交集的线性组合</b>. 记 x 为标准正交集 \(a_{1},...,a_{k}\) 的线性组合:
+</p>
+\begin{equation}
+  x = \beta_{1}a_{1}+...+\beta_{k}a_{k}
+\notag
+\end{equation}
+
+<p>
+等式两边乘以 \(a_{i}\):
+</p>
+\begin{equation}
+  a_{i}^{T}=a_{i}^{T}(\beta_{1}a_{1}+...+\beta_{k}a_{k})=\beta_{i}
+\notag
+\end{equation}
+
+<p>
+所以正交集线性组合的向量,可以通过内积正交向量来获得对应线性组合系数.
+</p>
+
+<p>
+所以对于正交集合线性组成的任意向量 x,可以直接求得对应组合:
+</p>
+\begin{equation}
+  x = (a_{1}^{T}x)a_{1}+...+(a_{k}^{T}x)a_{k}
+\tag{5.4}
+\end{equation}
+
+
+<hr />
+<p>
+<b>标准正交基</b> 如果 n 个 n 维向量集合 \(a_{1},...,a_{n}\) 为标准正交集合,那么该集合为线性无关集合,所以也就是一组基,叫做标准正交基.
+</p>
+
+<p>
+那么对于任意 n 维向量,都可以采用如下公式表达成标准正交基的线性组合形式:
+</p>
+\begin{equation}
+  x = (a_{1}^{T}x)a_{1}+...+(a_{n}^{T}x)a_{n}
+\notag
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-orgdff6e2b" class="outline-3">
+<h3 id="orgdff6e2b">施密特正交算法(Gram-Schmidt algorithm)</h3>
+<div class="outline-text-3" id="text-orgdff6e2b">
+<p>
+<b>施密特正交算法</b> 可以用来检测向量集合 \(a_{1},...,a_{k}\) 是否线性无关,如果向量集合是线性无关的,那么 <b>施密特正交算法</b> 可以产生出对应的正交向量 \(q_{1},...,q_{k}\),并且可以保证对于任意的向量 \(a_{i}\),,可以表示为 \(q_{1},...,q_{k}\) 的线性组合;并且 \(q_{i}\) 也可以采用 \(a_{1},...,a_{i}\) 线性表示.如果 \(a_{1},...,a_{j-1}\) 是线性无关,并且 \(a_{1},...,a_{j}\) 是线性有关,那么 <b>施密特正交算法</b> 可以立刻检测出来.换句话说, <b>施密特正交算法</b> 可以找到第一个线性有关向量 \(a_{j}\),并且与前 j-1 个向量线性有关.
+</p>
+
+<hr />
+<blockquote id="algorithm-5.1">
+<p>
+<b>施密特正交算法</b>
+</p>
+
+<p>
+输入为 n 维向量 \(a_{1},...,a_{k}\) 集合.
+</p>
+
+<p>
+for i = 1,&#x2026;,k
+</p>
+
+<ol class="org-ol">
+<li>正交化. \(\tilde{q}_{i}=a_{i}-(q_{1}^{T}a_{i})q_{1}-...-(q_{i-1}^{T}a_{i})q_{i-1}\).</li>
+<li>检测是否是线性有关. 如果 \(\tilde{q}_{i}=0\),则是线性有关,退出算法.</li>
+<li>归一化. \(q_{i}=\tilde{q}_{i}/\left\|\tilde{q}_{i}\right\|\)</li>
+</ol>
+</blockquote>
+<hr />
+
+<p>
+对于 \(i=1\) 时,\(\tilde{q}_{1}=a_{1}\).如果算法没有中间退出,即\(\tilde{q}_{1},...,\tilde{q}_{k}\) 不为零,那么可以表示原始向量集合是线性无关的.
+</p>
+
+<hr />
+<p>
+<b>施密特正交算法分析</b>. 如果原始向量集合 \(a_{1},...,a_{k}\) 是线性无关的,那么如下条件都将满足:
+</p>
+<ol class="org-ol">
+<li>\(\tilde{q}_{i} \ne 0\),即第二步线性有关检测不通过,那么第三步也不会出现除零错误.</li>
+<li>\(q_{1},...,q_{i}\) 是正交矩阵</li>
+<li>\(a_{i}\) 为 \(q_{1},...,q_{i}\) 的线性组合</li>
+<li>\(q_{i}\) 为 \(a_{1},...,a_{i}\) 的线性组合</li>
+</ol>
+
+<p>
+可以通过归纳证明法,证明上述结论.在 i=1 时, \(\tilde{q}_{1}=a_{1}\).由于 \(a_{1},...,a_{k}\) 实线性无关的,所以可以知道 \(a_{1} \ne 0\),因此 \(\tilde{q}_{1} \ne 0\),所以条件 1 满足.由单个单位向量 \(q_{1}\) 组成的集合本身就是标准正交集合,所以条件 2 满足.并且 \(a_{1}=\left\|\tilde{q}_{1}\right\|q_{1},q_{1}=(1/\left\|\tilde{q}_{1}\right\|)a_{1}\),所以条件 3 和 4 满足.
+</p>
+
+<p>
+那么假设上述条件在 i-1 时满足,并且 i&lt;k;只需要证明在 i 时满足就可以了.如果 \(\tilde{q}_{i}=0\),那么 \(a_{i}\) 就是 \(q_{1},...,q_{i-1}\) 的线性表达(算法第一步);由于 \(q_1,...,q_{i-1}\) 向量都是 \(a_{1},...,a_{i-1}\) 的线性组合,所以 \(a_{i}\) 可以用 \(a_{1},...,a_{i-1}\) 线性组合表达,这和线性无关假设矛盾.所以对于 i,条件 1 满足.
+</p>
+
+<p>
+算法第 3 步保证 \(q_{1},...,q_{i}\) 归一化;只需要证明 \(q_{i}\) 和 \(q_{j}\) 正交即可 $j=1,&#x2026;,i-1(条件 2 保证了在 j&lt;i 的时候,任意两个向量正交).对于 \(j=1,...,i-1\):
+</p>
+\begin{aligned}
+  q_{j}^{T}\tilde{q}_{i} &= q_{j}^{T}a_{i} - (q_{1}^{T}a_{i})(q_{j}^{T}q_{1}) - ... - (q_{i-1}^{T}a_{i})(q_{j}^{T}q_{i-1}) \\
+  &= q_{j}^{T}a_{i} - q_{j}^{T}a_{i} = 0
+\notag
+\end{aligned}
+
+<p>
+当 $j &ne; k$时,\(q_{j}^{T}q_{k}=0\),并且 \(q_{j}^{T}q_{j}=1\).这一步也解释了为什么算法第一步叫做正交化: \(a_{i}\) 减去 \(q_{1},...,q_{i-1}\) 的线性组合,从而保证 \(\tilde{q}_{i} \perp q_{j} for j < i\).
+</p>
+
+<p>
+很显然, \(a_{i}\) 可以用 \(q_{i},...,q_{i}\) 的线性表达:
+</p>
+\begin{aligned}
+  a_{i} &= \tilde{q}_{i} + (q_{1}^{T}a_{i})q_{1} + ... + (q_{i-1}^{T}a_{i})q_{i-1}
+  &= (q_{1}^{T}a_{i})q_{1} + ... + (q_{i-1}^{T}a_{i})q_{i-1} + \left\|\tilde{q}_{i}\right\|q_{i}
+\notag
+\end{aligned}
+
+<p>
+算法第一步表示 \(\tilde{q}_{i}\) 为 \(a_{i},q_{1},...,q_{i-1}\) 的线性组合.并且 \(q_{1},...,q_{i-1}\) 都是 \(a_{1},...,a_{i-1}\) 的线性组合,所以 \(\tilde{q}_{i}\) 为 \(a_{1},...,a_{i}\) 的线性组合,同理 \(q_{i}\) 也满足.
+</p>
+
+<hr />
+<p>
+<b>施密特正交算法表示原始向量集合为线性无关</b>. 从上述满足的 1-4 条件,可以证明如下等式:
+</p>
+\begin{equation}
+  \beta_{1}a_{1}+...+\beta_{k}a_{k} = 0
+\tag{5.6}
+\end{equation}
+
+<p>
+满足的时候, \(\beta_{1}=...=\beta_{k}=0\).
+</p>
+
+<p>
+首先注意到, \(q_{k}\) 和任意的 \(q_{1},...,q_{k-1}\) 的线性组合正交,并且任意的向量 \(a_{1},...,a_{k-1}\) 都是 \(q_{1},...,q_{k}\) 的线性组合,所以 \(q_{k}^{T}a_{1}=...=q_{k}^{T}a_{k-1}=0\).对公式(<a href="#org9a20fe1">5.6</a>)的左右两边和 \(q_{k}\) 内积:
+</p>
+\begin{aligned}
+  0 &= q_{k}^{T}(\beta_{1}a_{1}+...+\beta_{k}a_{k}) \\
+  &= \beta_{1}q_{k}^{T}a_{1}+...+\beta_{k-1}q_{k}^{T}a_{k-1}+\beta_{k}q_{k}^{T}a_{k} \\
+  &= \beta_{k}\left\|\tilde{q}_{k}\right\|.
+\notag
+\end{aligned}
+
+<p>
+可以证明 \(\beta_{k}=0\).
+</p>
+
+<p>
+递归证明 \(\beta_{k-1}=0\),所以表示线性组合系数全为 0.从而表示 \(a_{1},...,a_{k}\) 向量集合为线性无关.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga54dd2f" class="outline-2">
+<h2 id="orga54dd2f">矩阵</h2>
+<div class="outline-text-2" id="text-orga54dd2f">
+</div>
+<div id="outline-container-org5ca36cc" class="outline-3">
+<h3 id="org5ca36cc">零值矩阵和单位矩阵</h3>
+<div class="outline-text-3" id="text-org5ca36cc">
+<hr />
+<p>
+<b>零值矩阵</b>. 矩阵里所有的元素都为 0.
+</p>
+
+<hr />
+<p>
+<b>单位矩阵(<i>Identity matrix</i>)</b>. 单位矩阵都是方阵,并且对角元素都是 1,其他元素都为 0.单位矩阵记为 \(I\).则 n*n 单位矩阵可以表示为:
+</p>
+\begin{equation}
+  I_{i,j} = \begin{cases}
+    1 & i = j \\
+    0 & i \ne j
+    \end{cases}
+\notag
+\end{equation}
+
+<p>
+使用单位向量表示为: \(I = \left[ e_{1}\ e_{2}\ ... e_{n} \right]\).
+</p>
+
+<hr />
+<p>
+<b>对角矩阵(<i>Diagonal matrices</i>)</b>. 对角矩阵表示对角线上的元素不为 0,其他元素都为 0.对角矩阵可以记作 \(diag(a_{1},...,a_{n})\),只使用对角元素就可以标记对角矩阵.
+</p>
+
+<hr />
+<p>
+<b>三角矩阵(<i>Triangular matrices</i>)</b>. 如果 n*n 方阵中元素满足 \(A_{ij}=0 for i>j\),则叫做上三角矩阵;满足 \(A_{ij}=0 for i<j\),则叫做下三角矩阵.所以对角矩阵即是上三角矩阵,也是下三角矩阵.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2e67e50" class="outline-3">
+<h3 id="org2e67e50">转置,加法和范式</h3>
+<div class="outline-text-3" id="text-org2e67e50">
+</div>
+<ul class="org-ul">
+<li><a id="orgbb5520f"></a>矩阵转置<br />
+<div class="outline-text-4" id="text-orgbb5520f">
+<p>
+如果 A 为 m*n 的矩阵,转置记为 \(A^{T}\),转置矩阵为 n*m,转置矩阵元素 \((A^{T})_{i,j}=A_{j,i}\),即矩阵元素下标进行交换.
+</p>
+</div>
+</li>
+
+<li><a id="org870fcff"></a>矩阵加法<br />
+<div class="outline-text-4" id="text-org870fcff">
+<p>
+只有具有相同维度的矩阵才能执行矩阵加法,结果矩阵中的每个元素都等于两个相加矩阵对应元素的和.
+</p>
+
+<hr />
+<p>
+<b>矩阵加法性质(<i>Properties of matrix addition</i>)</b>. 
+</p>
+<ul class="org-ul">
+<li><b>交换</b>. \(A+B=B+A\)</li>
+<li><b>结合</b>. \((A+B)+C=A+(B+C)\)</li>
+<li><b>零值加</b>. \(A+0=0+A=A\)</li>
+<li><b>矩阵之和转置</b>. \((A+B)^{T}=A^{T}+B^{T}\)</li>
+</ul>
+</div>
+</li>
+
+<li><a id="orgf10ad96"></a>矩阵范式<br />
+<div class="outline-text-4" id="text-orgf10ad96">
+<p>
+m*n 的矩阵范式,记为 \(\left\|A\right\|\),等于矩阵元素平方之和的开根方:
+</p>
+\begin{equation}
+  \left\|A\right\| = \sqrt{\sum_{i=1}^{m}\sum_{j=1}^{n}A_{i,j}^{2}}
+\tag{6.3}
+\end{equation}
+
+<p>
+矩阵范式(<a href="#orgf48d550">6.3</a>)满足向量范式的性质,对于任意的 m*n 矩阵 A,\(\left\|A\right\| \ge 0\); \(\left\|A\right\|=0 only if A=0\).同样满足三角不等式 \(\left\|A+B\right\| \leq \left\|A\right\|+\left\|B\right\|\).
+</p>
+</div>
+</li>
+
+<li><a id="org20b43cf"></a>矩阵-向量乘<br />
+<div class="outline-text-4" id="text-org20b43cf">
+<p>
+如果 A 为 m*n 的矩阵,x 为 n 为向量,则矩阵向量相乘 \(y=Ax\) ,结果为如下定义元素值的 m 维向量:
+</p>
+\begin{equation}
+  y_{i} = \sum_{k=1}^{n}A_{ik}x_{k}=A_{i1}x_{1}+...+A_{in}x_{n}, i = 1,...,m
+\tag{6.4}
+\end{equation}
+
+<hr />
+<p>
+<b>矩阵列向量的线性有关</b>. 可以采用矩阵乘法来表示向量有关和无关性.矩阵的列向量线性有关,只需要满足 \(Ax=0 for some\),且 \(x \ne 0\).矩阵的列向量线性无关,只需要满足 \(Ax=0 => x = 0\).
+</p>
+
+<hr />
+<p>
+<b>基展开</b>. 如果 A 的列向量为基,也就是表示 A 是一个方正,并且列向量线性无关.那么对于任意向量 b,存在唯一的向量 x 满足 \(Ax=b\),x 表示为 b 向量在 A 的列向量组成的基下的坐标系数.
+</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="outline-container-org6163706" class="outline-3">
+<h3 id="org6163706">卷积</h3>
+<div class="outline-text-3" id="text-org6163706">
+<p>
+n 维向量 a 和 m 维向量 b 的卷积(<i>convolution</i>)结果为(n+m-1)维向量,记为 \(c=Conv(a,b)\),对应元素的值:
+</p>
+\begin{equation}
+  c_{k} = \sum_{i+j=k+1}a_{i}b_{j},k=1,...,n+m-1
+\tag{7.2}
+\end{equation}
+
+<p>
+下标表示需要将 \(i in 1,..,n\) 和 <b>j in 1,&#x2026;,m</b> 满足 \(i+j=k+1\) 的元素都加和.
+</p>
+
+<p>
+在 \(n=m=1\),卷积退化成标量相乘,在 \(n=1 or m=1\) 的时候,退化为标量和向量的相乘.
+</p>
+
+<hr />
+<p>
+<b>卷积性质</b>. 卷积操作是对称的, \(Conv(a,b)=Conv(b,a)\)
+</p>
+
+<p>
+如果将 a 看作是固定的,那么 a 和 b 的卷积操作可以看作是 b 的线性函数,如果固定 b,那么卷积操作可以看作是 a 的线性函数.那么卷积可以表示为:
+</p>
+\begin{equation}
+Conv(a,b) = T(b)a = T(a)b
+\notag
+\end{equation}
+
+<p>
+其中,T(b) 为 (n+m-1)*n 的矩阵,对应元素满足:
+</p>
+\begin{equation}
+  T(b)_{ij} = \begin{cases}
+    b_{i-j+1} & 1 \leq i-j+1 \leq m \\
+    0 & otherwise
+    \end{cases}
+\tag{7.3}
+\end{equation}
+</div>
+</div>
+</div>
+<div id="outline-container-orgb7f4989" class="outline-2">
+<h2 id="orgb7f4989">线性等式</h2>
+<div class="outline-text-2" id="text-orgb7f4989">
+</div>
+<div id="outline-container-org51e538c" class="outline-3">
+<h3 id="org51e538c">线性和仿射函数</h3>
+<div class="outline-text-3" id="text-org51e538c">
+<p>
+<b>输入为向量,输出为向量的函数</b>. 记号 \(\mathcal{f}: R^{n}->R^{m}\) 表示,函数 f 的输入为 n 维向量,输出为 m 维向量.
+</p>
+
+<p>
+假设 A 为 m*n 的矩阵,那么可以定义函数 \(\mathcal{f}: R^{n} -> R^{m}\) 为 \(f(x) = Ax\).
+</p>
+
+<hr />
+<p>
+<b>叠加和线性</b>. 定义为 \(\mathcal{f}(x)=Ax\) 的函数具有线性性质,即满足如下:
+</p>
+\begin{equation}
+  f(\alpha{x}+\beta{y}) = \alpha{f(x)} + \beta{f(y)}
+\tag{8.1}
+\end{equation}
+
+<p>
+相反,如果函数是线性函数,那么一定存在一个矩阵 A,满足 \(f(x)=Ax\):
+</p>
+\begin{equation}
+f(x) = x_{1}f(e_{1})+x_{2}f(e_{2})+...+x_{n}f(e_{n}).
+\tag{8.2}
+\end{equation}
+
+<p>
+右侧可以写成 \(Ax\),则 \(A=\left[f(e_{1})\f(e_{2})\ ...\ f(e_{n})\right]\).
+</p>
+
+<hr />
+<p>
+<b>仿射函数</b>.仿射函数可以表示线性函数加上一个常量即:\(f(x)=Ax+b\),其中 A 为 m*n 的矩阵,b 为 m 维的向量.如果是仿射函数,那么需要满足在 \(\alpha+\beta=1\) 时满足线性:
+</p>
+\begin{equation}
+  f(\alpha{x}+\beta{y}) = \alpha{f(x)} + \beta{f(y)}
+\notag
+\end{equation}
+</div>
+
+<ul class="org-ul">
+<li><a id="org66d41d7"></a>泰勒近似<br />
+<div class="outline-text-4" id="text-org66d41d7">
+<p>
+假设 \(f: R^{n}->R^{m}\) 可导,一阶泰勒近似如下:
+</p>
+\begin{aligned}
+  \hat{f(x)}_{i} &= f_{i}(z) + \frac{\partial{f_{i}}}{\partial{x_{1}}}(z)(x_{1}-z_{1}) + ... + \frac{\partial{f_{i}}}{\partial{x_{n}}}(z)(x_{n}-z_{n})
+  &= f_{i}(z) + \nabla{f_{i}(z)}^{T}(x-z).
+\notag
+\end{aligned}
+
+<p>
+\(i=1,...,m\). 上述公式为标量函数 \(f_{i}\) 的一阶泰勒近似.可以采用矩阵向量乘法来表示更为紧凑的方式:
+</p>
+\begin{equation}
+  \hat{f(x)} = f(z) + \nabla{f(z)}(x-z)
+\tag{8.3}
+\end{equation}
+
+<p>
+\(\nabla{f(z)}\) 为函数 f 在 z 点的梯度,叫做雅克比矩阵.
+</p>
+\begin{equation}
+  \nabla{f(z)}_{i,j} = \frac{\partial{f_{i}}}{\partial{x_{j}}}(z), i = 1,...,mm, \ \ j = 1,...,n,
+\notag
+\end{equation}
+</div>
+</li>
+</ul>
+</div>
+<div id="outline-container-orgb915fa9" class="outline-3">
+<h3 id="orgb915fa9">线性等式集合</h3>
+<div class="outline-text-3" id="text-orgb915fa9">
+<p>
+考虑 m 个线性等式组成的等式集合,每个等式具有 n 个输入变量 \(x_{1},...,x_{n}\):
+</p>
+\begin{equation}
+  A_{11}x_{1}+A_{12}x_{2}+...+A_{1n}x_{n} = b_{1} \\
+  A_{21}x_{1}+A_{22}x_{2}+...+A_{2n}x_{n} = b_{2} \\
+
+  \vdots \\
+
+  A_{m1}x_{1}+A_{m2}x_{2}+...+A_{mn}x_{n} = b_{m} \\
+\notag
+\end{equation}
+
+<p>
+可以改写成矩阵向量相乘:
+</p>
+\begin{equation}
+  Ax=b.
+\tag{8.5}
+\end{equation}
+
+<p>
+A 为 m*n 的矩阵,叫做等式系数矩阵,m 维向量 b 叫做右值,n 维向量 x 叫做该等式的解.上述等式集合可以无解,一个解,或者多个解.
+</p>
+</div>
+
+<ul class="org-ul">
+<li><a id="orgc035920"></a>超定和欠定等式集合<br />
+<div class="outline-text-4" id="text-orgc035920">
+<p>
+线性等式集合如果等式数量大于变量数量(m&gt;n)时,叫做超定(<i>over-determined</i>);如果等式数量小于变量数量(m&lt;n)时,叫做欠定(<i>under-determined</i>);如果相等,叫做方阵.如果右值 b 为 0 时,线性等式集合叫做齐次等式(<i>homogeneous</i>),至少有一个 x=0 的解.
+</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org1848750" class="outline-2">
+<h2 id="org1848750">矩阵相乘</h2>
+<div class="outline-text-2" id="text-org1848750">
+</div>
+<div id="outline-container-org48b3608" class="outline-3">
+<h3 id="org48b3608">矩阵-矩阵 相乘</h3>
+<div class="outline-text-3" id="text-org48b3608">
+<p>
+如果两个矩阵 A 和 B 的维度兼容,即 A 矩阵的列向量数和 B 矩阵的行向量数相等.假设 A 为 m*p 矩阵,B 为 p*n 矩阵.则矩阵相乘 C=AB 的结果为 m*n 矩阵,元素计算公式:
+</p>
+\begin{equation}
+  C_{ij}=\sum_{k=1}^{p}A_{ik}B_{kj}=A_{i1}B_{1j}+A_{i2}B_{2j}+...+A_{ip}B_{pj}, i=1,...,m,\ j=1,...,n
+\tag{10.1}
+\end{equation}
+
+<hr />
+<p>
+<b>矩阵乘法性质</b>. 
+</p>
+<ul class="org-ul">
+<li><b>交换</b>. \((AB)C=A(BC)\)</li>
+<li><b>加法分配率</b>. \(A(B+C)=AB+AC, (A+B)C=AC+BC\)</li>
+<li><b>乘法转置</b>. \((AB)^{T}=B^{T}A^{T}\)</li>
+</ul>
+
+
+<hr />
+<p>
+<b>格拉姆矩阵(<i>Gram Matrix</i>)</b>. 对于 m*n 矩阵 A,可以看作为列向量组成的 \((a_{1},...,a_{n})\),则矩阵相乘 \(G=A^{T}A\) 结果叫做格拉姆矩阵:
+</p>
+\begin{equation}
+  G = A^{T}A = \begin{bmatrix}
+    a_{1}^{T}a_{1} & a_{1}^{T}a_{2} & \cdots & a_{1}^{T}a_{n} \\
+    a_{2}^{T}a_{1} & a_{2}^{T}a_{2} & \cdots & a_{2}^{T}a_{n} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    a_{n}^{T}a_{1} & a_{n}^{T}a_{2} & \cdots & a_{n}^{T}a_{n} \\
+    \end{bmatrix}
+\notag
+\end{equation}
+
+<p>
+上述元素为 A 矩阵的列向量互相之间的内积,可以知道 Gram 矩阵为对称矩阵: \(G^{T}=(A^{T}A)^{T}=(A^{T})(A^{T})^{T}=A^{T}A=G\).
+</p>
+</div>
+</div>
+<div id="outline-container-orgfc27e47" class="outline-3">
+<h3 id="orgfc27e47">线性函数合成</h3>
+<div class="outline-text-3" id="text-orgfc27e47">
+<p>
+假设 A 为 m*p 矩阵,B 为 p*n 矩阵.可以将这两个矩阵看作是两个线性函数: \(f: R^{p}->R^{m}, g: R^{n}->R^{p}\),对应为 \(f(x)=Ax, g(x)=Bx\).两个线性函数组合为 \(h: R^{n} -> R^{m}\): 
+</p>
+\begin{equation}
+  h(x) = f(g(x)) = A(Bx) = (AB)x
+\notag
+\end{equation}
+
+
+<hr />
+<p>
+<b>仿射函数组合(<i>Composition of affine functions</i>)</b>. 仿射函数组合结果也为仿射函数.设 \(f: R^{p}->R^{m}\) 为仿射函数 \(f(x)=Ax+b\), \(g: R^{n}->R^{p}\) 也是仿射函数 \(g(x)=Cx+d\).组合函数 h 为:
+</p>
+\begin{equation}
+  h(x) = f(g(x)) = A(Cx+d)+b = (AC)x + (Ad+b) = \hat{A}x + \hat{b}
+\notag
+\end{equation}
+
+<p>
+其中 \(\hat{A}=AC, \hat{b}=Ad+b\).
+</p>
+
+
+<hr />
+<p>
+<b>链式法则(<i>Chain rule of differentiation</i>)</b>. 设 \(f: R^{p}->R^{m}\) 和 \(g: R^{n}->R^{p}\) 为可导函数.则组合函数 \(h: R^{n}->R^{m}\) 定义为:
+</p>
+\begin{equation}
+  h(x) = f(g(x)) = f(g_{1}(x),...,g_{p}(x))
+\notag
+\end{equation}
+
+<p>
+函数 h 是可导的,导数由链式法则,对 f 和 g 进行求导:
+</p>
+\begin{equation}
+  \frac{\partial{h_{i}}}{\partial{x_{j}}}(x) = \frac{\partial{f_{i}}}{\partial{g_{1}}}(g(x))\frac{\partial{g_{1}}}{\partial{x_{j}}}(x) + ... + \frac{\partial{f_{i}}}{\partial{g_{p}}}(g(x))\frac{\partial{g_{p}}}{\partial{x_{j}}}(x)
+\notag
+\end{equation}
+
+<p>
+\(i = 1,..,m 和 j = 1,...,n\).链式法则可以直接采用矩阵相乘表达:
+</p>
+\begin{equation}
+  Dh(x) = Df(g(x))Dg(x)
+\notag
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-org1d549d2" class="outline-3">
+<h3 id="org1d549d2">QR 分解</h3>
+<div class="outline-text-3" id="text-org1d549d2">
+<p>
+列向量为标准正交的矩阵,对应的 Gram 矩阵可以直接表示为: \(A^{T}A = I\).如果是一个方阵,列向量是标准正交的化,那么该矩阵叫做标准正交矩阵.
+</p>
+
+<hr />
+<p>
+<b>列向量正交的矩阵性质</b>. 假设 A 为 m*n 的矩阵,且列向量标准正交.并且该矩阵表示的函数为 \(f: R^{n}->R{m}\),具有如下性质:
+</p>
+<ul class="org-ul">
+<li>\(\left\|Ax\right\|=\left\|x\right\|\). 函数 f 保留参数的范式.</li>
+<li>\((Ax)^{T}(Ay)=x^{T}y\). 函数 f 保留向量的内积.</li>
+<li>\(\angle{(Ax,Ay)}=\angle{(x,y)}\). 函数 f 保留向量的夹角.</li>
+</ul>
+
+<hr />
+<p>
+<b>QP 分解</b>. 可以采用基于矩阵相乘的方法来表示<a href="#orgdff6e2b">施密特正交算法(Gram-Schmidt algorithm)</a>.记 A 为 n*k 矩阵,并且具有列向量线性无关.Q 为 n*k 的矩阵,列向量(\(q_{i} for i=1,..,k\))为在 A 矩阵列向量(\(a_{i} for i=1,..,k\))上执行施密特正交算法后得到的正交向量.列向量正交用矩阵乘法表示为: \(Q^{T}Q=I\), \(a_{i}\) 和 \(q_{i}\) 可以表示为线性组合形式:
+</p>
+\begin{equation}
+  a_{i} = (q_{1}^{T}a_{i})q_{1}+...+(q_{i-1}^{T}a_{i})q_{i-1}+\left\|\tilde{q}_{i}\right\|q_{i}.
+\notag
+\end{equation}
+
+<p>
+所以 \(a_{i}\) 可以表示为: \(a_{i}=R_{1i}q_{1}+...+R_{ii}q_{i}\). \(R_{ij}=q_{i}^{T}a_{j} for i < j\) 和 \(R_{ii}=\left\|\tilde{q}_{i}\right\|\),  \(R_{ij}=0 for i > j\).则上述等式可以表示为:
+</p>
+\begin{equation}
+  A = QR
+\notag
+\end{equation}
+
+<p>
+上述叫做矩阵的 QR 分解.即将矩阵 A(n*k) 分解为列向量正交的 Q 矩阵(n*k)和上三角矩阵 Q(k*k),并且对角元素为正数.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7a729f5" class="outline-2">
+<h2 id="org7a729f5">矩阵逆</h2>
+<div class="outline-text-2" id="text-org7a729f5">
+</div>
+<div id="outline-container-org83c03e8" class="outline-3">
+<h3 id="org83c03e8">左逆,右逆</h3>
+<div class="outline-text-3" id="text-org83c03e8">
+<hr />
+<p>
+<b>左逆</b>. X 矩阵满足:
+</p>
+\begin{equation}
+  XA=I
+\notag
+\end{equation}
+
+<p>
+X 矩阵叫做 A 矩阵的左逆矩阵(<i>left inversse</i>).如果矩阵存在左逆矩阵,该矩阵叫做可左逆矩阵.如果 A 矩阵为 m*n,那么逆矩阵 X 具有 n*m,和 \(A^{T}\) 的维度一致.
+</p>
+
+<hr />
+<p>
+<b>左逆和列向量线性无关性</b>. 如果 A 矩阵具有左逆矩阵 C,则表示 A 矩阵的列向量线性无关.假设 \(Ax=0\):
+</p>
+\begin{equation}
+  0 = C(Ax) = (CA)x = Ix = x
+\notag
+\end{equation}
+
+<p>
+相反也是真的;如果矩阵的列向量线性无关,当且仅当矩阵具有左逆矩阵.
+</p>
+
+<hr />
+<p>
+<b>左逆矩阵的维度问题</b>. 假设 A 矩阵为 m*n,那么当 m&lt;n 的时候,根据线性无关维度不等式可以知道,列向量是线性相关的,则该中矩阵不可左逆.只有方阵和高矩阵才可能具有左逆矩阵.
+</p>
+
+<hr />
+<p>
+<b>采用左逆求解线性等式</b>. 假设 \(Ax=b\),其中 A 为 m*n 矩阵,x 为 n 维向量.A 的左逆矩阵为 C:
+</p>
+\begin{equation}
+  Cb = C(Ax) = (CA)x = Ix = x
+\notag
+\end{equation}
+
+<p>
+表示 \(x=Cb\) 为线性等式的解.因为 A 矩阵的列向量线性无关(具有左逆矩阵),所以只有一个解 \(x=Cb\).
+</p>
+
+<p>
+如果 A 具有左逆矩阵 C,那么设 \(x=Cb\),带入等式,可以检测 \(Ax=b\) 是否相等.如果等式不成立,那么表示没有解.
+</p>
+
+<hr />
+<p>
+<b>右逆</b>. 如果矩阵 X 满足: \(AX=I\),则矩阵 X 叫做矩阵 A 的右逆矩阵.右逆矩阵和 \(A^{T}\) 具有相同的维度.
+</p>
+
+<hr />
+<p>
+<b>左右可逆矩阵转置</b>. 如果矩阵 A 有右逆矩阵 B,那么 \(B^{T}\) 为 \(A^{T}\) 的左逆矩阵.如果矩阵 A 有左逆矩阵 C,则 \(C^{T}\) 为矩阵 \(A^{T}\) 的右逆矩阵.这样允许所有左逆矩阵具有的性质都可以对称的应用到右逆矩阵上.
+</p>
+<ul class="org-ul">
+<li>如果矩阵具有右逆性,表示该矩阵的行向量为线性无关的.</li>
+<li>高矩阵肯定不具有右逆性,只有方阵和矮矩阵才可能具有右逆性.</li>
+</ul>
+
+<hr />
+<p>
+<b>采用右逆求解线性等式</b>. \(Ax=b\),假设 A 为右逆性,具有右逆矩阵 B.表示 A 为方阵或者矮矩阵.则对于任意向量 b,\(x=Bb\) 满足等式 \(Ax=b\).
+</p>
+\begin{equation}
+  Ax =A(Bb) = (AB)b = Ib = b
+\notag
+\end{equation}
+</div>
+</div>
+<div id="outline-container-orgdbaf28e" class="outline-3">
+<h3 id="orgdbaf28e">矩阵逆</h3>
+<div class="outline-text-3" id="text-orgdbaf28e">
+<p>
+如果一个矩阵既是左逆,又是右逆矩阵,那么左右逆矩阵唯一,并且相同. \(AX=I, YA=I\).则 \(X=(YA)X=Y(AX)=Y\).当一个方阵没有可逆矩阵,叫做奇异(<i>singular</i>)矩阵.
+</p>
+
+<hr />
+<p>
+<b>可逆矩阵维度</b>. 可逆矩阵肯定是方阵.因为高矩阵(m&gt;n)的行向量肯定不是线性无关的,所以没有右逆矩阵.矮矩阵(m&lt;n)的列向量肯定不是线性无关的,所以没有左逆矩阵.
+</p>
+
+<hr />
+<p>
+<b>采用可逆解决线性等式</b>. 考虑方线性等式 \(Ax=b\).如果 A 为可逆矩阵,则:
+</p>
+\begin{equation}
+  $x=A^{-1}b
+\tag{11.1}
+\end{equation}
+
+<p>
+可以得到一个结论:
+</p>
+<blockquote>
+<p>
+方线性等式集合 Ax=b,如果 A 为可逆矩阵,则有唯一结果 x=A<sup>-1</sup>b.
+</p>
+</blockquote>
+
+<hr />
+<p>
+<b>可逆条件</b>. 对于方阵,左逆性,右逆性和可逆性都是相等的:如果矩阵是方阵,具有左逆性,则表示该矩阵具有右逆性和可逆性.
+</p>
+
+<p>
+假设 A 为 n*n 矩阵,且具有左逆性,则表示该方阵的列向量是线性无关的.因此这些列向量构建了一个基,所以任何的 n 维向量都可以表示用 A 的列向量线性表达.特别的 n 维单位向量 \(e_{i}\) 可以表示为 \(e_{i}=Ab_{i}\).则 \(B=\left[b_{1}\ b_{2}\ ...\ b_{n}\right]\) 满足:
+</p>
+\begin{equation}
+  AB = \left[ Ab_{1}\ Ab_{2}\ ...\ Ab_{n} \right] = \left[ e_{1}\ e_{2}\ ...\ e_{n}\right] = I
+\notag
+\end{equation}
+
+<p>
+B 为 A 的右逆矩阵.对于一个方阵 A:
+</p>
+<blockquote>
+<p>
+左逆性 -&gt; 列向量线性无关 -&gt; 右逆性
+</p>
+</blockquote>
+
+<p>
+所以如下的六个性质都是相等的,一旦其中一个性质满足,其他五个性质也满足:
+</p>
+<ul class="org-ul">
+<li>A 为具有可逆性</li>
+<li>A 的列向量线性无关</li>
+<li>A 的行向量线性无关</li>
+<li>A 具有左逆性</li>
+<li>A 具有右逆性</li>
+</ul>
+
+
+<hr />
+<p>
+<b>矩阵转置的逆</b>. 如果 A 可逆,则转置矩阵 \(A^{T}\) 也是可逆的,可逆矩阵 \((A^{-1})^{T}\).
+</p>
+
+<hr />
+<p>
+<b>矩阵乘积的逆</b>. 如果 A 和 B 都可逆,则 AB 也可逆,且 \((AB)^{-1}=B^{-1}A^{-1}\).
+</p>
+
+<hr />
+<p>
+<b>对偶基</b>. 假设 A 为可逆,且 \(B=A^{-1}\).设 \(a_{1},...,a_{n}\) 为矩阵的列向量, \(b_{1}^{T},...,b_{n}^{T}\) 为 B 的行向量.
+</p>
+\begin{equation}
+  A = \begin{bmatrix}
+    a_{1} & \cdots & a_{n}
+  \end{bmatrix},
+  B = \begin{bmatrix}
+    b_{1}^{T} \\
+    \vdots \\
+    b_{n}^{T}
+  \end{bmatrix}
+\notag
+\end{equation}
+
+<p>
+因为 A 的列向量为线性无关,所以 \(a_{1},...,a_{n}\) 为基.因为 B 的行向量线性无关,所以 \(b_{1}^{T},...,b_{n}^{T}\) 也为基,为  \(a_{1},...,a_{n}\) 基的对偶基.
+</p>
+
+<p>
+假设 x 为 n 为向量,则可以表示为 \(a_{i},...,a_{n}\) 的线性组合:
+</p>
+\begin{equation}
+  x = \beta_{1}a_{1}+...+\beta_{n}a_{n}
+\notag
+\end{equation}
+
+<p>
+对偶基提供了一个简单的方法来求系数 \(\beta_{1},...,\beta_{n}\).
+</p>
+
+<p>
+用 AB=I 乘以 x:
+</p>
+\begin{equation}
+  x= ABx = [a_{1}\ ... \ a_{n}] \begin{bmatrix}
+    b_{1}^{T} \\
+    \vdots \\
+    b_{n}^{T}
+  \end{bmatrix} x = (b_{1}^{T}x)a_{1} + ... + (b_{n}^{T}x)a_{n}
+\notag
+\end{equation}
+
+<p>
+上述等式表示(因为 \(a_{1},...,a_{n}\) 线性无关) \(\beta_{i}=b_{i}^{T}x\).就是说系数可以用向量和对偶基相乘获得.\(\beta=Bx=A^{-1}x\).
+</p>
+
+
+<hr />
+<p>
+<b>QR 分解求解逆矩阵</b>. QR 分解提供了一个简单求解矩阵逆的方法.如果 A 为方阵,且可逆,也就是说列向量线性无关,所以 A 具有 QR 分解,A=QR.其中 Q 矩阵为标准正交矩阵,R 为上三角阵,并且对角元素为正数.所以 Q 和 R 都可逆,则 A 的逆矩阵为:
+</p>
+\begin{equation}
+  A^{-1} = (QR)^{-1} = R^{-1}Q^{-1} = R^{-1}Q^{T}.
+\tag{11.3}
+\end{equation}
+
+<p>
+只需要求解 R<sup>-1</sup> 即可求出原始矩阵 A 的逆矩阵.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgff473e0" class="outline-3">
+<h3 id="orgff473e0">求解线性等式</h3>
+<div class="outline-text-3" id="text-orgff473e0">
+<p>
+<b>回替法</b>. 设 Rx=b,且 R 为 n*n 上三角方阵,且对角元素都不为 0(即可逆).
+</p>
+\begin{aligned}
+  R_{11}x_{1} + R_{12}x_{2} + \cdots + R_{1,n-1}x_{n-1}+R_{1n}x_{n} &= b_{1} \\
+  \vdots \\
+  R_{n-2,n-2}x_{n-2} + R_{n-2,n-1}x_{n-1}+R_{n-2,n}x_{n} &= b_{n-2} \\
+  R_{n-1,n-1}x_{n-1} + R_{n-1,n}x_{n} &= b_{n-1} \\
+  R_{nn}x_{n} &= b_{n}.
+\end{aligned}
+
+<p>
+从最后一个等式,可以得到 \(x_{n} = b_{n}/R_{nn}\).将之回填第二个等式,可得到:
+</p>
+\begin{equation}
+  x_{n-1} = (b_{n-1}-R_{n-1,n}x_{n})/R_{n-1,n-1}.
+  \notag
+\end{equation}
+
+<p>
+可以计算出 \(x_{n-1}\),同理可以依此计算出 \(x_{n-2},x_{n-3},...,x_{1}\).这个计算过程叫做回填算法.
+</p>
+
+<hr />
+<blockquote id="algorithm 11.1">
+<p>
+输入 n*n 对角元素都非零的上三角矩阵 R 和 n 维向量 b. 
+</p>
+
+<p>
+for i = n,&#x2026;,1,
+</p>
+
+<p>
+x<sub>i</sub> = (b<sub>i</sub>-R<sub>i,i+1</sub>x<sub>i+1</sub> - &#x2026; - R<sub>i,n</sub>x<sub>n</sub>)/R<sub>ii</sub>
+</p>
+</blockquote>
+<hr />
+
+<p>
+最终求解出 \(x=R^{-1}b\).
+</p>
+
+<hr />
+<p>
+<b>采用 QR 分解求解线性等式</b>. 公式(<a href="#org7a1460c">11.3</a>)给出采用 QR 分解求解矩阵逆的方法,同时对于求解等式 Ax=b 给出了采用逆矩阵求解的方法.
+</p>
+\begin{equation}
+  x = A^{-1}b = R^{-1}Q^{T}b
+  \tag{11.4}
+\end{equation}
+
+<p>
+可以通过先求解 y=Q<sup>T</sup>b,然后求解三角矩阵 Rx=y.
+</p>
+
+
+<hr />
+<p>
+<b>计算矩阵逆矩阵</b>. 对于求解矩阵 A 的逆矩阵 \(B=A^{-1}\),同样可以现计算 A 矩阵的 QR 分解, 逆矩阵为 \(A^{-1}=R^{-1}Q^{T}\).
+</p>
+\begin{equation}
+I = AA^{-1} = AB = QRB => RB = Q^{T}
+\notag
+\end{equation}
+
+<p>
+通过求解: \(Rb_{i}=\tilde{q}_{i} for i = 1,..,n\) 计算 B 矩阵. \(\tilde{q}_{i}\) 为 Q 矩阵的第 ith 行向量.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org49f05c5" class="outline-3">
+<h3 id="org49f05c5">矩阵伪逆</h3>
+<div class="outline-text-3" id="text-org49f05c5">
+<hr />
+<p>
+<b>线性无关列和 Gram 可逆</b>. m*n 矩阵 A 具有线性无关列向量的充分必要条件是其 n*n 的 Gram 矩阵 \(A^{T}A\) 为可逆矩阵.
+</p>
+
+<p>
+假设 A 的列向量线性无关,设 x 为满足 \((A^{T}A)x=0\) 的向量.乘以 \(x^{T}\):
+</p>
+\begin{equation}
+  0 = x^{T}0= x^{T}(A^{T}Ax)=x^{T}A^{T}Ax = \left\|Ax\right\|^{2}
+  \notag
+\end{equation}
+
+<p>
+即 \(Ax=0\).由于 A 的列向量线性无关,则 x=0.所以等式 \((A^{T}A)x=0\) 的唯一解为 x=0,可以推到出 \(A^{T}A\) 的列向量线性无关,又由于 Gram 矩阵为方阵,所以可以推到出 \(A^{T}A\) 为可逆矩阵.
+</p>
+
+<hr />
+<p>
+<b>矩阵的伪逆</b>. 矩阵 A 的列向量线性无关,则 \(A^{T}A\) 为可逆矩阵.则知道 \((A^{T}A)^{-1}A^{T}\) 为 A 的左逆矩阵:
+</p>
+\begin{equation}
+  ((A^{T}A)^{-1}A^{T})A = (A^{T}A)^{-1}(A^{T}A)= I.
+\notag
+\end{equation}
+
+<p>
+上述的逆矩阵形式叫做矩阵 A 的伪逆矩阵(<i>pseudo-inverse</i>).记为 \(A^{\dagger}\), \(A^{\dagger}=(A^{T}A)^{-1}A^{T}\).
+</p>
+
+<p>
+当矩阵 A 为方阵,则退化为常规逆矩阵 \(A^{\dagger}=(A^{T}A)^{-1}A^{T}=A^{-1}A^{-T}A^{T}=A^{-1}I=A^{-1}\).
+</p>
+
+<hr />
+<p>
+<b>采用 QR 分解的伪逆矩阵</b>.QR 分解对于伪逆矩阵给更简单的形式.如果 A 为左逆矩阵,则列向量为线性无关,则 A=QR 分解存在.
+</p>
+\begin{equation}
+  A^{T}A = (QR)^{T}(QR) = R^{T}Q^{T}QR = R^{T}R.
+\notag
+\end{equation}
+
+<p>
+所以: \(A^{\dagger}=(A^{T}A)^{-1}A^{T}=(R^{T}R)^{-1}(QR)^{T} = R^{-1}R^{-T}R^{T}Q^{T}=R^{-1}Q^{T}\).
+</p>
+
+<p>
+对于 A 为右逆矩阵,则 A<sup>T</sup>=QR. \(AA^{T}=(QR)^{T}(QR)=R^{T}Q^{T}QR=R^{T}R\),则右伪逆矩阵 \(A^{\dagger}=A^{T}(AA^{T})^{-1}=QR(R^{T}R)^{-1}=QRR^{-1}R^{-T}=QR^{-T}\).
+</p>
+
+<p>
+推导出 \((A^{T})^{\dagger}=(A^{\dagger})^{T}\).
+</p>
+
+<hr />
+<p>
+<b>对于过定,欠定的线性等式求解</b>. 通过计算矩阵的伪逆矩阵,提供了解决过定和欠定线性等式的方法.如果 A 的列向量是线性无关的,则过定等式 \(Ax=b\) 的解为 \(x=A^{\dagger}b\), \(A^{\dagger}=R^{-1}Q^{T}\).如果 A 的行向量是线性无关的,则欠定等式 \(Ax=b\) 的解为 \(x=A^{\dagger}b\),其中 \(A^{\dagger}=QR^{-T}\).
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org868eb19" class="outline-2">
+<h2 id="org868eb19">最小方差(Least squares)</h2>
+<div class="outline-text-2" id="text-org868eb19">
+<p>
+<b>最小方差</b> 通过最小化等式差值均值来近似求解过定线性等式的解.
+</p>
+</div>
+
+<div id="outline-container-org3d0701e" class="outline-3">
+<h3 id="org3d0701e">最小方差问题</h3>
+<div class="outline-text-3" id="text-org3d0701e">
+<p>
+假设矩阵 A 为 m*n,则线性等式 \(Ax=b\),在 m&gt;n 的时候为过定等式.等式的数量 m 大于变量的数量 n.这个等式有解的时候,需要 b 是 A 的列向量的线性表达.
+</p>
+
+<p>
+大多数的向量 b,都不是 A 的列向量线性组合;这时没有向量 x 可以满足 Ax=b.通过最小化残差(<i>residual</i>) \(r=Ax-b\),即最小化 \(\left\|Ax-b\right\|\) 来近似求解 \(Ax \approx b\).
+</p>
+
+<p>
+最小化残差向量的范式和最小化残差向量的平方是一样的:
+</p>
+\begin{equation}
+  \left\|Ax-b\right\|^{2} = \left\|r\right|\^{2} = r_{1}^{2}+...+r_{n}^{2}
+  \notag
+\end{equation}
+
+<p>
+在所有可能的 x 向量空间下,求解最小化 \(\left\|Ax-b\right\|^{2}\) 的 \(\hat{x}\),叫做最小化方差问题.记为:
+</p>
+\begin{equation}
+  \min_{x} \left\|Ax-b\right\|^{2}
+\tag{12.1}
+\end{equation}
+
+<p>
+A 和 b 为最小方差问题的数据,最小化对象值 \(\left\|Ax-b\right\|^{2}\) 为最小方差问题的目标函数(<i>object function</i>).
+</p>
+
+<hr />
+<p>
+<b>列向量解释</b>. A 的矩阵具有 n 个 m 维列向量 \(a_{1},...,a_{n}\),则最小化方差问题就是求解最小化残差向量的列向量线性组合:
+</p>
+\begin{equation}
+  \left\|Ax-b\right\|^{2}=\left\|(x_{1}a_{1}+...+x_{n}a_{n})-b\right\|^{2}
+  \notag
+\end{equation}
+
+<p>
+\(\hat{x}\) 为最小化方差问题的解,则: \(A\hat{x}=\hat{x_{1}}a_{1}+...+\hat{x_{n}}a_{n}\).
+</p>
+
+<hr />
+<p>
+<b>行向量解释</b>. A 的矩阵具有 m 个 n 维行向量 \(a_{1}^{T},...,a_{m}^{T}\),则残差向量中的元素:
+</p>
+\begin{equation}
+  r_{i} = a_{i}^{T}x - b_{i},\ \ \ i=1,...,m.
+\notag
+\end{equation}
+
+<p>
+则最下化方差的目标函数可以写成残差向量元素的平方和: \(\left\|Ax-b\right\|^{2}=(a_{1}^{T}x-b_{1})^{2}+...+(a_{m}^{T}x-b_{m})^{2}\).可以看作是 m 个单独等式的最小化残差的和.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4f6a1e3" class="outline-3">
+<h3 id="org4f6a1e3">求解</h3>
+<div class="outline-text-3" id="text-org4f6a1e3">
+<p>
+本小节介绍几个对于最小化方差问题(<a href="#orgb1d5f0e">12.1</a>)的求解方法,这些方法都依赖一个假设:
+</p>
+\begin{equation}
+  A 的列向量线性无关.
+  \tag{12.2}
+\end{equation}
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-12-13 Thu 10:44</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+#+TITLE: 深度学习知识点
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: ^:nil H:2
+#+STARTUP: indent
+
+* 深度学习
+  本文用来总结关于深度学习知识点的方方面面.简单说就是用来记录无关具体任务的深度学习中涉及的通用知识点.包括但是不限于:
+  + =网络结构= :: LeNet,AlexNet,ZFNet,GoogLeNet 等
+  + =权值初始化= :: 
+  + =学习率调整= ::
+  + =正则化= :: dropout 等
+  + =优化算法= :: SGD,Adam 等
+
+
+* 权值初始化
+  权值初始化策略影响着深度网络的训练速度和训练效果.
+
+
+
+** Xavier 初始化
+   论文: <Understanding the diffculty of training deep feedforward neural networks> by Xavier Glorot, Yoshua Bengio.
+
+   *论文知识点*: 通过假设 tanh 激活函数在权值 0-均值均匀采样时,激活函数梯度接近 1 的特征,推导数据正向传播和反向传播的方差,为了保证数据传播方差保持不变和反向传播梯度反差保持不变,提出了一个权值均匀采样方法.
+
+   -----
+   #+BEGIN_QUOTE
+   *Xavier 初始化*: 
+   \begin{equation}
+      W \sim U\left[ -\frac{\sqrt{6}}{\sqrt{n_{j}+n_{j+1}}}, \frac{\sqrt{6}}{\sqrt{n_{j}+n_{j+1}}} \right]
+   \end{equation}
+   其中, $n_{j}$ 表示第 jth 层的输入单元数量. 该初始化策略采用时需要保证网络采用 0 均值激活函数,并且保证在 0 值左右时,激活函数梯度近似 1.例如 tanh/softplus 函数.
+   #+END_QUOTE
+   -----

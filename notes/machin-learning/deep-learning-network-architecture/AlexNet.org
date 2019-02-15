@@ -86,20 +86,16 @@ GPUs 结构允许 GPU 读取和写入其他 GPU 内存,并不需要借用机器�
 在特殊几层才做数据交互,减少数据交互对训练的影响.
 
 ** Local Response Normalization
-ReLUs 作为激活函数并不需要对输入数据进行归一化操作来防止饱和.但是本文发现采取如下
-局部响应归一化策略(/local normalization scheme/)会增加网络的泛化能力.记
-$a_{x,y}^{i}$ 为卷积核 i 在 (x,y) 神经元经过 ReLU 的激活值,最终归一化
-激活值 $b_{x,y}^i$ 定义如下:
+ReLUs 作为激活函数并不需要对输入数据进行归一化操作来防止饱和.但是本文发现采取如下局部响应归一化策略(/local normalization scheme/)会增加网络的泛化能力.记 $a_{x,y}^{i}$ 为卷积核 i 在 (x,y) 神经元经过 ReLU 的激活值,最终归一化激活值 $b_{x,y}^i$ 定义如下: 
 $$b_{x,y}^{i}=a_{x,y}^{i}/\left(k+\alpha\sum_{j=max(0,i-n/2)}^{min(N-1,i+n/2)}(a_{x,y}^{j})^2\right)^\beta$$
 
-在相同空间位置(x,y)上对相邻的 n 个激活值进行加和归一化.常量 $k,n,\alpha,\beta$ 为
-超参,使用验证集来进行超参选择.本文采用 $k=2,n=5,\alpha=10^{-4},\beta=0.75$. 该归
-一化操作只在一些采用 ReLU 激活的网络层.
+
+在相同空间位置(x,y)上对相邻的 n 个激活值进行加和归一化.常量 $k,n,\alpha,\beta$ 为超参,使用验证集来进行超参选择.本文采用 $k=2,n=5,\alpha=10^{-4},\beta=0.75$. 该归一化操作只在一些采用 ReLU 激活的网络层.
 
 上述的归一化操作使得模型的 top-1 和 top-5 错误率减少了 1.4%和 1.2%.
 
 ** Overlapping Pooling
-常规的卷积神经网络中的采样层采样的神经元不重叠.本文采取 stride=2,kernel_size=3 的
+常规的卷积神经网络中的采样层采样的神经元不重叠.本文采取 stride=2,kernel\_size=3 的
 重叠采样.该方法使得模型 top-1 和 top-5 错误率分别减少 0.4%和 0.3%.
 
 ** Overall Architecture

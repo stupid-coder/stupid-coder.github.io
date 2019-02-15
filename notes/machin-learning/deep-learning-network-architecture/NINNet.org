@@ -1,0 +1,163 @@
+#+TTILE: Network In Network
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: num:nil H:2
+#+STARTUP: indent
+
+#+BEGIN_QUOTE
+本文提出了一个新的网络结构叫做 *Network In Network*(NIN),增强模型对感受野的局部子块分辨能力.常规的卷积层使用线性卷积核后跟着非线性激活函数.本文对应的构建一个具有更复杂结构的微网络来对感受野内的数据进行计算.微网络使用多层感知机实现,从而实现更有效的函数近似.微网络和常规的卷积网络的卷积核一样在输入图像上移动计算,从而获得特征图.由于通过微网络增强了局部分辨能力,可以在分类层上使用特征图全局均值采样,从而具有更好的解释性,并且不像传统的全链接层容易过拟合.
+#+END_QUOTE
+
+* Introduction
+卷积神经网络由卷积层和采样层交替组合构成.卷积层在输入数据的每个有效的局部区域内执行和线性卷积核的内积,并随后执行一个非线性激活函数.输入的结果为特征图(/feature maps/).
+
+卷积神经网络中的卷积核对于卷积数据块可以看作是一般线性模型(/generalized linear model(GLM)/),GLM 对数据的抽象能力较差.将 GLM 替换成更有效的非线性拟合函数可以增强局部模型的(/local model/)的抽象能力.抽象是指特征对于相同的概念(/concept/)具有不变性[fn:3].当潜在概念中的样本具有线性可分性时,GLM 可以获取一个比较好的抽象效果,例如相同概念的样本都在 GLM 定义的分类平面的一边.因此,常规卷积神经网络一般都假设潜在概念是具有线性可分性的.然而一般相同概念下的数据常常分布在一个不可线性可分的球面,因此数据的抽象表达一般需要高度非线性来捕捉这些概念.在 NIN,GLM 被替换成了一个微网络(/micro network/),从而使得局部模型具有非线性能力.本文中,采用多层感知机来实现微网络,多层感知机可以作为一般的函数近似,并且可以直接通过反向传播进行训练.
+
+最终的结构叫做 *mlpconv* 层,和传统卷积神经网络对比如[[figure-1][图-1]]所示.线性卷积层和多层感知机卷积层都会将局部感受野映射到输入特征向量.多层感知机卷积层使用由多层全链接层和非线性激活函数组成的多层感知机(/multilayer perceptron(MLP)/)作为映射单元.MLP 参数在所有局部感受野共享.将 MLP 在输入数据上进行滑动获得输出的特征图,并输出给下一层网络.整个 NIN 网络结构由多个 *mlpconv* 层堆叠组成.
+
+#+BEGIN_CENTER
+#+NAME: figure-1
+#+CAPTION: 线性卷积层和多层感知机卷积层对比.线性卷积层由线性卷积核组成.多层感知机卷积层由微网络组成.
+[[file:assets/nin-net/figure-1.png]]
+#+END_CENTER
+
+常规卷积神经网络采用全链接层作为分类器,本文直接采用在最后一层的多层感知机特征图执行全局均值采样作为分类置信值,然后执行 softmax 层,获取分类概率.传统卷积神经网络由于有全链接层作为卷积层和分类输出层之间的映射,所以较难解释分类损失信息如何传递到前面的卷积层.全局均值采样直接将特征图和分类映射到一起,所以比较容易理解和解释两者的关联性.全链接层更容易过拟合,需要依赖正则化技术,但是全局均值采样本身就是结构化正则方法,本身就可以抑制过拟合.
+
+* Convolutional Neural Networks
+常规卷积神经网络交替堆叠卷积层和采样层.卷积层通过执行线性卷积操作和非线性激活函数(例如:rectifier,sigmoid,tanh 等)来获得输出的特征图.使用 linear rectifier 例子,特征图计算公式如下:
+\begin{equation}
+  \mathcal{f}_{i,j,k} = max(\mathcal{w}_{k}^{T}\mathcal{x}_{i,j},0).
+\end{equation}
+
+$(i,j)$ 为特征图中数据的索引, $x_{i,j}$ 表示以 (i,j) 为中心的输入数据块(感受野), k 表示特征图通道的索引.
+
+当数据具有潜在概念线性可分性时,该线性卷积具有非常有效的抽象能力.然而,具有良好表达能力的抽象一般都需要输入数据具有非线性拟合的能力.在常规卷积神经网络,通过能够处理所有潜在概念变化的完备(/over-complete/)卷积核[fn:1]来达到的.即每个单独可学习的线性卷积核用来检测一种概念下的所有数据变化.然而,对于单独一个概念就有很多卷积核会对下一层带来额外的处理难度,使得下一层需要考虑前一层所有情况的组合[fn:2].并且卷积网络中高层网络的感受野更大,通过组合低层生成的低级概念生成更高阶数据概念.因此如果在底层局部数据具有更好的抽象能力,那么组合这些低层概念能够提供更好的高层数据抽象能力.
+
+*maxout*[fn:4] 通过对线性映射特征图执行最大值采用来减少特征图数量.在线性函数上执行最大值操作可以看作是通过分段线性函数,这种分段线性函数可以近似任何凸函数. 所以 *maxout* 网络要比常规的卷积神经网络具有更强的数据抽象能力.
+
+*maxout* 需要数据的潜在概念需要能够分布在同一个凸区域,这种假设一般不满足.当潜在概念的分布更为复杂的时候,那么就需要一个能够近似任何一般函数的方法.本文提出了一个新的 *Network In Network* 网络结构,在每个卷积层引入了微网络来对局部数据提取更为抽象的特征.
+
+将微网络结构在输入数据上进行滑动,这种方法在很多以前的工作中都有提出.例如,结构化多层感知机(/Structured Multilayer Perceptron(SMLP)/)[fn:5]将一个可共享的多层感知机应用在输入图像的不同局部数据块.然而这些工作都是针对特殊问题设计,并且基本结构都只包含一层.NIN 从更为一般的角度提出,微网络引入到卷积网络中,使得对于任何级别的特征都能学习到更好的抽象表示.
+
+* Network In Network
+本部门主要先介绍一下 *Network In Network* 的核心组件.
+
+** MLP Convolutional Layers
+对于潜在概念的分布没有任何假设,所以最好是采用能够拟合全部函数能力的近似器来对局部数据分布进行特征提取.径向网络和多层感知机是两个较为流行的一般函数近似器.本文采用多层感知机作为近似器,主要两个原因:首先,多层感知机和卷积神经网络结构兼容,可以直接采用反向传播算法进行训练.其次,多层感知机本身可以是一个深度模型,和特征二次使用的意思一致.[[figure-1][图-1]]说明了线性卷积层和多层感知机卷积层(/mlpconv/)的区别.多层感知机卷积层执行的计算如下:
+\begin{equation}
+  f_{i,j,k_{1}}^{1} = max({w_{k_{1}}^{1}}^{T}x_{i,j}+b_{k_{1}},0). \\
+  \vdots \\
+  f_{i,j,k_{n}}^{n} = max({w_{k_{n}}^{n}}^{T}f_{i,j}^{n-1}+b_{k_{n}},0).
+\end{equation}
+
+$n$ 为多层感知机的网络层数.ReLU 作为激活函数.
+
+从交叉通道(交叉特征图通道)采样的角度看,公式(2)等同于级联普通卷积层的交叉通道的参数采样.每一个采样层在输入特征图之间执行权重线性组合,然后跟着执行一个整流线性激活函数.这种级联交叉通道参数采样结构允许模型学习非常复杂的交叉通道信息.
+
+这种交叉通道参数采样层等同于采用 1*1 卷积核的卷积层.这种解释使得可以直观的理解 NIN 网络结构.
+
+*Comparison of maxout layers:* maxout 层在多个特征图之间执行最大值采样.maxout 层执行计算如下:
+\begin{equation}
+  f_{i,j,k}=\max_{m}{(w_{k_{m}}^{T}x_{i,j})}.
+\end{equation}
+
+在线性函数上执行 maxout 构造的分段线性函数可以模拟任何的凸函数.对于一个凸函数,低于特定阈值的函数值构建了一个凸集合.因此,通过对于局部数据近似凸函数,maxout 可以构造一个可分类超平面来区分位于凸集合之内的数据.多层感知机层和 maxout 层的区别在于将凸函数近似器替换成了一般函数的近似器,从而具有更强的能力来对多种潜在概念的分布采样.
+
+** Global Average Pooling
+常规卷积神经网络在低网络层执行卷积操作.为了分类,最后一层的卷积层特征图输入到多个全链接层后,执行 softmax 逻辑回归层.全链接层连接了卷积结构和传统的神经网络分类器.卷积层作为特征提取器,提取的特征使用传统分类器进行分类.
+
+全链接层很容易过拟合,从而影响整个网络的泛化能力.Dropout 随机设置全链接层一部分的激活值为 0,从而抑制过拟合.
+
+本文提出了另外一种策略叫做全局均值采样(/global average pooling/)来替换卷积神经网络中的全链接层.思想是在最后一层多层感知机层为每一个对应的分类类别生成一个特征图.不采用全链接层,而是对每一个独立的特征图执行均值,然后将最终的向量直接送到 softmax 分类层.全局均值采样相对于全链接层具有的一个优点是,通过强制映射特征图到分类类别的方法对于卷积结构更自然.因此,特征图可以直接简单的看作是类别的置信度图.另外一个优点是全局均值采样并没有参数需要去优化,所以并不会出现过拟合.更为重要的是,全局均值采样是对空间信息进行加和,所以相对于输入空间变换更为健壮.
+
+可以看到全局均值采样作为一种结构化正则强制特征图变成分类类别(/concept/)置信图.多层感知机层因为具有更为强大的数据抽象能力,使得这一切成为了可能.
+
+** Network In Network Structure
+整个 NIN 网络结构通过堆叠多层多层感知机层,最上面层为全局均值采样层和 softmax 分类层.[[figure-2][图-2]]显示了三层多层感知机层组成的 NIN.每层多层感知机层由三层感知机组成.NIN 的网络层数量和多层感知机层中的微网络层数据量可以针对不同任务进行调整.
+
+#+BEGIN_CENTER
+#+NAME: figure-2
+#+CAPTION: Network In Network 的整体结构.本文的网络结构堆叠三个多层感知机层和一个全局采样层构成.
+[[file:assets/nin-net/figure-2.png]]
+#+END_CENTER
+
+* Experiments
+** Overview
+本文在四个基准样本集上进行测试:CIFAR-10,CIFAR-100,SVHN 和 MNIST.对于这些数据集网络结构都由三个堆叠多层感知机层组成,并且所有的多层感知机层后都跟着一个空间维度最大值采样层,用来对输入图像以因子 2 进行下采样.在除了最后一层的多层感知机层外的所有的多层感知机层应用 dropout 正则化.除了特殊说明,所有的网络都采用全局均值采样来替代全链接层.另外一种正则化方法为 AlexNet 中采用的权值衰减.[[figure-2][图-2]]说明了 NIN 网络的整体结构.
+
+采用的训练过程和 AlexNet 一样.即人工设置合适的权值初始化和学习率.采用批量大小为 128 训练.当训练过程中验证集准确性不再提高,就对学习率衰减 10 倍,最终学习率为初始学习率的 1%.
+
+** CIFAR-10
+CIFAR-10 由 50000 训练图像和 10000 测试图像组成,每个图像为 3 通道 32*32,图像所属 10 类.对于该数据集,采用和 maxout 相同的全局对比度归一化操作和 ZCA 白化.采用最后 10000 张训练图像作为验证集.
+
+本实验中每层多层感知机层的特征图数量设置为和 maxout 一样的数量.两个超参采用验证集进行调参,例如局部感受野大小和权值衰减系数.当超参确定之后,采用训练数据集和验证数据集一起从头训练整个网络.最终的错误率为 10.42%.和以前的方法对比如[[table-1][表-1]]所示.
+
+#+NAME: table-1
+#+CAPTION: CIFAR-10 数据集上不同方法的测试错误率
+| Method                                              | Test Error |
+|-----------------------------------------------------+------------|
+| Stochastic Pooling[fn:6]                            |     15.13% |
+| CNN + Spearmint[fn:7]                               |     14.98% |
+| Conv. maxout + Dropout[fn:8]                        |     11.68% |
+| NIN + Dropout                                       |     10.41% |
+|-----------------------------------------------------+------------|
+| CNN + Spearmint + Data Argumentation                |      9.50% |
+| Conv. maxout + Dropout + Data Augmentations         |      9.38% |
+| DropConnect + 12 networks + Data Augmentation[fn:9] |      9.32% |
+| NIN + Dropout + Data Augmentations                  |      8.81% |
+
+结果显示了在多个 mlpconv 层之间采用 dropout,增加了模型的泛化能力.如[[figure-3][图-3]]所示,在 mlpconv 层之间增加 dropout 层降低了 20% 测试错误率.这个结果和 maxout 观察到的结果一致.
+
+#+BEGIN_CENTER
+#+NAME: figure-3
+#+CAPTION: dropout 正则化方法应用在 mlpconv 层之间的效果.
+[[file:assets/nin-net/figure-3.png]]
+#+END_CENTER
+
+为了和其他方法一致,这里也在 CIFAR-10 上做了数据增强,对数据进行水平反转.最终的结果为 8.81%.
+
+** Global Average Pooling as a Regularizer
+全局均值采样层和全链接层都对特征图执行相似的线性变换.不同在于变换矩阵.对于全局均值采样变换矩阵是固定的.全链接层的变换矩阵通过反向传播算法学习到的.为了研究全局均值采样的正则化作用,将全局均值采样层替换成全全链接层,网络其他部分不变.对这个模型执行没有 dropout 和有 dropout 两种评估,结果如[[table-2][表-2]]所示:
+#+NAME: table-2
+#+CAPTION: 全局均值采样和 dropout 对比
+| Method                           | Testing Error |
+|----------------------------------+---------------|
+| mlpconv + FC                     |        11.59% |
+| mlpconv + FC + Dropout           |        10.88% |
+| mlpconv + Global Average Pooling |        10.41% |
+
+从表中可看到,全链接层没有 dropout 的模型表现最差.由于没有进行正则化,所以可以预计到由于过拟合致使.增加 dropout 降低了测试错误率.全局均值采样的表现最好.
+
+** Visualization of NIN
+通过采用全局均值采样层来强制最后一层 mlpconv 的特征图代表分类类别的置信图,上述这种方法必须通过强局部模型来达到.为了理解这种目标是如何达到的,本文直接可视化了最后一层 mlpconv 的特征图.
+
+[[figure-4][图-4]]显示了一些样本图像和他们对应的特征图.期望是最大的激活值需要对应于真实标记的类别.在对应真实标记类别的特征图中,可以观察到最强的激活值对应于原始图像目标出现的位置.对于结构化目标,例如汽车在[[figure-4][图-4]]的第二行尤其明显.
+
+可视化再次显示了 NIN 的有效性.采用 mlpconv 层可以很好的对目标局部感受野输出强相应值.全局均值采样层强制学习到目标类别特征图.
+
+#+BEGIN_CENTER
+#+NAME: figure-4
+#+CAPTION: 最后一层 mlpconv 的特征图可视化结果.
+[[file:assets/nin-net/figure-4.png]]
+#+END_CENTER
+
+
+* Footnotes
+
+[fn:9] Li Wan, Matthew Zeiler, Sixin Zhang, Yann L Cun, and Rob Fergus. Regularization of neural networks using dropconnect. In Proceedings of the 30th International Conference on Machine Learning (ICML-13), pages 1058–1066, 2013.
+
+[fn:8] Ian J Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville, and Yoshua Bengio. Maxout networks. arXiv preprint arXiv:1302.4389, 2013.
+
+[fn:7] Jasper Snoek, Hugo Larochelle, and Ryan P Adams. Practical bayesian optimization of machine learning algorithms. arXiv preprint arXiv:1206.2944, 2012.
+
+[fn:6] Matthew D Zeiler and Rob Fergus. Stochastic pooling for regularization of deep convolutional neural networks. arXiv preprint arXiv:1301.3557, 2013.
+
+[fn:5] Çağlar Gülçehre and Yoshua Bengio. Knowledge matters: Importance of prior information for optimization. arXiv preprint arXiv:1301.4083, 2013.
+
+[fn:4] Ian J Goodfellow, David Warde-Farley, Mehdi Mirza, Aaron Courville, and Yoshua Bengio. Maxout networks. arXiv preprint arXiv:1302.4389, 2013.
+
+[fn:3] Y Bengio, A Courville, and P Vincent. Representation learning: A review and new perspectives. IEEE transactions on pattern analysis and machine intelligence, 35:1798–1828, 2013.
+
+[fn:2] Ian J Goodfellow. Piecewise linear multilayer perceptrons and dropout. arXiv preprint arXiv:1301.5088, 2013.
+
+[fn:1] Quoc V Le, Alexandre Karpenko, Jiquan Ngiam, and Andrew Ng. Ica with reconstruction cost for efficient overcomplete feature learning. In Advances in Neural Information Processing Systems, pages 1017–1025, 2011.

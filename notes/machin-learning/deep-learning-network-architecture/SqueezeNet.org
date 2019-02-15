@@ -1,4 +1,4 @@
-#+TITLE: SqueezeNet
+#+TITLE: SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size
 #+AUTHOR: stupid-coder
 #+EMAIL: stupid_coder@163.com
 #+STARTUP: indent

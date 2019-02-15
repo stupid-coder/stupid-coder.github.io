@@ -1,0 +1,205 @@
+#+TITLE: 最优化
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2 nil:^
+
+主要资料来自 wiki: https://en.wikipedia.org/wiki/Mathematical_optimization
+
+#+BEGIN_QUOTE
+最优化简单来看就是在受限或者非受限情况下,对一个实值函数求解最大或最小值.
+#+END_QUOTE
+
+
+* 最优化问题
+  最优化问题可以表示为如下形式:
+  #+BEGIN_QUOTE
+  输入: 函数 $f: A -> R$
+
+  寻求解: $x_{0} \in A$ 满足 $f(x_{0}) \leq f(x)\ for\ all\ x \in A$(最小化)或者 $f(x_{0}) \ge f(x)\ for\ all\ x \in A$(最大化).
+  #+END_QUOTE
+
+  A 的值域具有一定的限制条件(不等,相等式)需要满足.A 的可行值域为搜索空间(/search space/)或者选择集(/choice set/),A 中满足受限条件的元素叫做可行解(/feasible solution/).
+
+  函数 $f$ 叫做目标函数(/object function/),损失函数(/loss function/)或者代价函数(/cost function/)(用来最小化);效用函数(/utility function/)或者适用度函数(/fitness function/)(用来最大化);或者在一些特殊领域叫做能量函数(/energy function/).一个最小化(或者最大化)目标函数的可行解叫做最优解(/optimal solution/).
+
+  在数学中,常规最优化问题一般为最小化问题.局部最小 $x^{*}$ 定义为存在 $\delta > 0$ 满足: 
+  \begin{equation}
+  for\ all\ x \in A\ where \left\|x-x^{*}\right\| \leq \delta,the\ expression\ f(x^{*} \leq f(x))\ holds
+  \notag
+  \end{equation}
+
+  局部最小就是说在 $x^{*}$ 点存在一个区域,区域中的值都大于或者等于 $f(x^{*})$.全局最小解表示该点的值至少和所有可行解中元素的值一样小.一般性,只有目标函数和可行解区域都是凸,才存在全局最小解.
+
+* 拉格朗日乘子法
+  拉格朗日乘子法(/Lagrange multiplier/)[fn:1]主要是用来求解满足等式约束的情况下目标函数的最小化或者最大化.
+
+** 单个约束条件
+   考虑两个自变量和一个约束条件的最优化问题:
+   #+BEGIN_QUOTE
+   maximize f(x,y)
+
+   subject to g(x,y) = 0
+   #+END_QUOTE
+
+   假设 f 和 g 都是一阶可导,这里引入一个变量 $\lambda$ 叫做拉格朗日乘子,并且拉格朗日表达式定义为:
+   \begin{equation}
+     \mathcal{L}(x,y,\lambda) = f(x,y) - \lambda * g(x,y)
+   \notag
+   \end{equation}
+
+   假设 $f(x_{0},y_{0})$ 为函数 $f(x,y)$ 在原始约束条件下的最大值,那么存在 $\lambda_{0}$,并且 $(x_{0},y_{0},\lambda_{0})$ 为拉格朗日表达式的驻点(/stationary point/ 驻点为函数一阶偏导数为 0 的点).然而,并不是所有的驻点都是原始约束问题的解,拉格朗日乘子法只是约束优化问题的必备条件(/necessary condition/).充分条件(/sufficient condition/)[fn:2]也是存在,但是即使满足充分条件的可行解,也只能保证是局部最优解.
+
+   拉格朗日乘子方法依赖于在最大值的点上, $f(x)$ 不能在 g=0 的方向上再变大.可以通过可视化函数 f 的等高线 $f(x,y)=d$ 和 g 的等高线 $g(x,y)=0$,如[[figure-1][图-1]]所示.假设沿着 g(x,y)=0 的轮廓线走,目标就是找到一个点,该点上 f 不会有变化,这些点可能是候选的最大值.
+
+   #+BEGIN_CENTER
+   #+NAME: figure-1
+   [[file:assets/optimization/LagrangeMultipliers2D.svg]]
+   #+BEGIN_QUOTE
+   红色曲线显示约束条件 g(x,y)=0.蓝色曲线显示 f(x,y)的等高线.红色曲线切线和蓝色等高线的接触点就是最大值.
+   #+END_QUOTE
+   #+END_CENTER
+
+
+   有两个方法满足上述情况:
+   + 可以沿着 f 的等高线,在等高线上 f 的值不会改变.也就表示 f 的等高线和 g 是平行.
+   + 或者是 f 的驻点,该驻点也满足 g=0 的约束条件.
+
+
+   可以注意到的是函数的梯度和等高线垂直,所以当 f 的等高线和 g 是平行的,仅当 f 的等高线和 g 的梯度平行.因此最优解需要满足 $g(x,y)=0$ 和存在 $\lambda$ 使得:
+   \begin{equation}
+     \nabla_{x,y}f = \lambda\nabla_{x,y}g
+   \notag
+   \end{equation}
+
+   其中: 
+   \begin{equation}
+     \nabla_{x,y}f=\left(\frac{\partial{f}}{\partial{x}},\frac{\partial{f}}{\partial{y}}\right),
+     \nabla_{x,y}g=\left(\frac{\partial{g}}{\partial{x}},\frac{\partial{g}}{\partial{y}}\right)
+   \notag
+   \end{equation}
+
+   $\lambda$ 用来保证不同范式值的梯度向量相等.该常量为拉格朗日乘子.
+
+   可以注意到的是该方法同时解决了第二种情况,当 f 是驻点上时,梯度为 0,只需要设置 $\lambda=0$ 即可.
+
+   为了满足上述两种情况到一个公式上,引入了一个辅助函数:
+   \begin{equation}
+     \mathcal{L}(x,y,\lambda)=f(x,y)-\lambda{g(x,y)}
+   \notag
+   \end{equation}
+
+   并且满足: $\nabla_{x,y,\lambda}\mathcal{L}(x,y,\lambda)=0$.三个等式解决三个未知变量.当 $\nabla_{\lambda}{\mathcal{L}(x,y,\lambda)}=0$ 表示 $g(x,y)=0$.总结:
+   \begin{equation}
+     \nabla_{x,y,\lambda}\mathcal{L}(x,y,\lambda)=0 \iff \begin{cases}
+       \nabla_{x,y}f(x,y) = \lambda\nabla_{x,y}g(x,y) \\
+       g(x,y) = 0
+       \end{cases}
+   \notag
+   \end{equation}
+
+** 多个约束条件
+   拉格朗日乘子法可以很容易的扩展到具有多个约束条件的优化问题.假设一个抛物面,有两个直线约束条件,那么两个直线的交叉点就是唯一的可行解,该点也就是该约束优化问题的解.但是 f 的等高线很显然在交叉点上与任何一条约束直线都不平行,如[[figure-3][图-3]]所示;然而是两个约束直线梯度的线性组合.在多约束条件下,拉格朗日乘子法需要找寻的解是目标函数 f 的梯度为所有约束条件的梯度的线性组合.
+
+   #+BEGIN_CENTER
+   #+NAME: figure-2
+   #+CAPTION: 图-2
+   [[file:assets/optimization/As_wiki_lgm_parab.svg]]
+   #+NAME: figure-3
+   #+CAPTION: 图-3
+   [[file:assets/optimization/As_wiki_lgm_levelsets.svg]]
+   #+END_CENTER
+
+   具体讲,假设有 M 个约束条件,在满足这些约束条件 $g_{i}(x)=0,i=1,...,M$ 线上游走.每个约束条件都使得可行解空间具有一个方向:解空间方向垂直于 $\nabla{g_{i}}(x)$.所有约束条件构成的解空间的方向垂直于所有约束条件的梯度.记可行解空间的方向为 A,记约束条件的梯度为 S.则 $A=S^{\perp}$.
+
+   假设沿着 f 的等高线游走,需要保证 x 的可行方向与 $\nabla{f(x)}$ 垂直,否则可以沿着允许的方向增大目标函数.换句话说 $\nabla{f}(x) \in A^{\perp} = S$. 因此存在 M 个标量:
+   \begin{equation}
+     \nabla{f}(x) = \sum_{k=i}^{M}\lambda_{k}\nabla_{g_{k}}(x) \iff
+     \nabla{f}(x) - \sum_{k=i}^{M}\lambda_{k}\nabla_{g_{k}}(x) = 0.
+   \notag
+   \end{equation}
+
+   这些标量为拉格朗日乘子. 引入辅助函数:
+   \begin{equation}
+     \mathcal{L}(x_{1},..,x_{n},\lambda_{1},...,\lambda_{M}) = f(x_{1},...,x_{n})-\sum_{k=1}^{M}\lambda_{k}g_{k}(x_{1},...,x_{n})
+   \notag
+   \end{equation}
+
+   求解:
+   \begin{equation}
+     \nabla_{x_1,...,x_n,\lambda_1,,...,\lambda_M}\mathcal{L}(x_1,...,x_n,\lambda_1,...,\lambda_M) = 0 \iff
+     \begin{cases}
+       \nabla{f}(x)-\sum_{k=1}^{M}\lambda_{k}\nabla_{g_{k}}(x) = 0 \\
+       g_{1}(x) = ... = g_{M}(x) = 0
+     \end{cases}
+   \notag
+   \end{equation}
+   
+** 不等式约束(KKT[fn:3] 条件)
+   KKT 条件又来优化带有不等式的约束问题.优化问题如下:
+   \begin{equation}
+     x^{*} = argmin_{x}f(x) \\
+     subject\ to\ h_{i}(x) = 0, \forall i = 1,...,m \\
+     subject\ to\ g_{j}(x) \leq 0, \forall j=1,..,n
+   \notag
+   \end{equation}
+
+   类似拉格朗日乘子法:将目标函数和所有的约束条件放到一个统一的最小化函数,对于每个相等约束条件乘以 $\lambda_{i}$ 乘子,不等式约束条件乘以 $\mu_{j}$(KKT 乘子).则拉格朗日表达式如下:
+   \begin{equation}
+     x^{*} = argmin_{x}L(x,\lambda,\mu) = argmin_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}h_{i}(x)+\sum_{j=1}^{n}\mu_{j}g_{j}(x).
+   \notag
+   \end{equation}
+
+   类似于拉格朗日乘子法,对于 x 和 \lambda 求导数.那么如何处理新增加 n 个不等式约束条件就是 KKT 条件需要解决的.
+
+   那么考虑如果原始的解已经满足 $g_{i}(x^{*})<0$,那么这些不等式约束就没有作用了.因此,系数 $\mu_{i}$ 可以设置为 0.但是在另一方面,如果解正好在不等式约束的边界上,$g_{i}(x^{*})=0$.如[[图-1][图-1]]显示.
+
+   #+BEGIN_CENTER
+   #+NAME: 图-1
+   [[file:assets/optimization/Inequality_constraint_diagram.svg]]
+   #+END_CENTER
+
+   两种情况下,都满足等式: $\mu_{i}g_{i}(x)=0$.因此从不等式约束中获得 n 个等式.这些约束项在表达式中需要一直为 0.系数 $\lambda_{i}$ 可以是任何值;系数 $\mu_{j}$ 必须是非负.如[[图-2]]所示,如果最优解 x^{*} 在 g_{j}(x)=0 上,则 \mu_{j} 可以不为 0.
+
+   #+BEGIN_CENTER
+   #+NAME: 图-2
+   #+CAPTION: 对于系数 \mu 的正负号解释图.
+   [[file:assets/optimization/signofkkt.svg]]
+   #+END_CENTER
+   
+   \begin{equation}
+     x^{*}=argmin_{x}f(x)+\mu_{j}g_{j}(x) \\
+     0 = \nabla{f}(x)+\mu_{j}\nabla{g_{j}}(x)
+     \mu_{i} = -\frac{\nabla{f(x)}}{\nabla{g_{i}(x)}}
+   \notag
+   \end{equation}
+
+   在点 $x^{*}$, 目标函数 f 的梯度和 $g_{i}(x)$ 的梯度具有相反方向.所以 u_{i} 需要大于 0.
+
+** KKT 条件
+   + =Stationarity= ::
+                       \begin{equation}
+                         \nabla_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{x}h_{i}(x)+\sum_{j=1}^{n}\mu_{j}\nabla_{x}g_{j}(x) = 0 (minimization) \\
+                         \nabla_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{x}h_{i}(x)-\sum_{j=1}^{n}\mu_{j}\nabla_{x}g_{j}(x) = 0 (maximization)
+                       \notag
+                       \end{equation}
+   + =equality constraints= ::
+        \begin{equation}
+          \nabla_{\lambda}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{\lambda}h_{i}(x) + \sum_{j=1}^{n}\mu_{j}\nabla_{\lambda}g_{j}(x)
+        \notag
+        \end{equation}
+   + =Inequality constraints aka complementary slackness condition= ::
+        \begin{equation}
+          \mu_{j}g_{j}(x) = 0,\forall{j=1,..,n} \\
+          \mu_{j} \ge 0,\forall{j=1,...,n}
+        \notag
+        \end{equation}
+* Footnotes
+
+[fn:3] http://www.onmyphd.com/?p=kkt.karush.kuhn.tucker
+
+
+[fn:2] https://en.wikipedia.org/wiki/Hessian_matrix#Bordered_Hessian
+
+[fn:1] https://en.wikipedia.org/wiki/Lagrange_multiplier
+  

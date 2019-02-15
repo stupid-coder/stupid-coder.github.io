@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-12-18 Tue 15:31 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>最优化</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">最优化</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgdff7124">1. 最优化问题</a></li>
+<li><a href="#orge470bfc">2. 拉格朗日乘子法</a>
+<ul>
+<li><a href="#org44d0906">2.1. 单个约束条件</a></li>
+<li><a href="#orgb6fc279">2.2. 多个约束条件</a></li>
+<li><a href="#orge0f48c1">2.3. 不等式约束(KKT条件)</a></li>
+<li><a href="#org84eab4b">2.4. KKT 条件</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+主要资料来自 wiki: <a href="https://en.wikipedia.org/wiki/Mathematical_optimization">https://en.wikipedia.org/wiki/Mathematical_optimization</a>
+</p>
+
+<blockquote>
+<p>
+最优化简单来看就是在受限或者非受限情况下,对一个实值函数求解最大或最小值.
+</p>
+</blockquote>
+
+
+<div id="outline-container-orgdff7124" class="outline-2">
+<h2 id="orgdff7124"><span class="section-number-2">1</span> 最优化问题</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+最优化问题可以表示为如下形式:
+</p>
+<blockquote>
+<p>
+输入: 函数 \(f: A -> R\)
+</p>
+
+<p>
+寻求解: \(x_{0} \in A\) 满足 \(f(x_{0}) \leq f(x)\ for\ all\ x \in A\)(最小化)或者 \(f(x_{0}) \ge f(x)\ for\ all\ x \in A\)(最大化).
+</p>
+</blockquote>
+
+<p>
+A 的值域具有一定的限制条件(不等,相等式)需要满足.A 的可行值域为搜索空间(<i>search space</i>)或者选择集(<i>choice set</i>),A 中满足受限条件的元素叫做可行解(<i>feasible solution</i>).
+</p>
+
+<p>
+函数 \(f\) 叫做目标函数(<i>object function</i>),损失函数(<i>loss function</i>)或者代价函数(<i>cost function</i>)(用来最小化);效用函数(<i>utility function</i>)或者适用度函数(<i>fitness function</i>)(用来最大化);或者在一些特殊领域叫做能量函数(<i>energy function</i>).一个最小化(或者最大化)目标函数的可行解叫做最优解(<i>optimal solution</i>).
+</p>
+
+<p>
+在数学中,常规最优化问题一般为最小化问题.局部最小 \(x^{*}\) 定义为存在 \(\delta > 0\) 满足: 
+</p>
+\begin{equation}
+for\ all\ x \in A\ where \left\|x-x^{*}\right\| \leq \delta,the\ expression\ f(x^{*} \leq f(x))\ holds
+\notag
+\end{equation}
+
+<p>
+局部最小就是说在 \(x^{*}\) 点存在一个区域,区域中的值都大于或者等于 \(f(x^{*})\).全局最小解表示该点的值至少和所有可行解中元素的值一样小.一般性,只有目标函数和可行解区域都是凸,才存在全局最小解.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orge470bfc" class="outline-2">
+<h2 id="orge470bfc"><span class="section-number-2">2</span> 拉格朗日乘子法</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+拉格朗日乘子法(<i>Lagrange multiplier</i>)<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>主要是用来求解满足等式约束的情况下目标函数的最小化或者最大化.
+</p>
+</div>
+
+<div id="outline-container-org44d0906" class="outline-3">
+<h3 id="org44d0906"><span class="section-number-3">2.1</span> 单个约束条件</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+考虑两个自变量和一个约束条件的最优化问题:
+</p>
+<blockquote>
+<p>
+maximize f(x,y)
+</p>
+
+<p>
+subject to g(x,y) = 0
+</p>
+</blockquote>
+
+<p>
+假设 f 和 g 都是一阶可导,这里引入一个变量 \(\lambda\) 叫做拉格朗日乘子,并且拉格朗日表达式定义为:
+</p>
+\begin{equation}
+  \mathcal{L}(x,y,\lambda) = f(x,y) - \lambda * g(x,y)
+\notag
+\end{equation}
+
+<p>
+假设 \(f(x_{0},y_{0})\) 为函数 \(f(x,y)\) 在原始约束条件下的最大值,那么存在 \(\lambda_{0}\),并且 \((x_{0},y_{0},\lambda_{0})\) 为拉格朗日表达式的驻点(<i>stationary point</i> 驻点为函数一阶偏导数为 0 的点).然而,并不是所有的驻点都是原始约束问题的解,拉格朗日乘子法只是约束优化问题的必备条件(<i>necessary condition</i>).充分条件(<i>sufficient condition</i>)<sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup>也是存在,但是即使满足充分条件的可行解,也只能保证是局部最优解.
+</p>
+
+<p>
+拉格朗日乘子方法依赖于在最大值的点上, \(f(x)\) 不能在 g=0 的方向上再变大.可以通过可视化函数 f 的等高线 \(f(x,y)=d\) 和 g 的等高线 \(g(x,y)=0\),如<a href="#org179efee">图-1</a>所示.假设沿着 g(x,y)=0 的轮廓线走,目标就是找到一个点,该点上 f 不会有变化,这些点可能是候选的最大值.
+</p>
+
+<div class="org-center">
+
+<div id="org179efee" class="figure">
+<p><object type="image/svg+xml" data="assets/optimization/LagrangeMultipliers2D.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+<blockquote>
+<p>
+红色曲线显示约束条件 g(x,y)=0.蓝色曲线显示 f(x,y)的等高线.红色曲线切线和蓝色等高线的接触点就是最大值.
+</p>
+</blockquote>
+</div>
+
+
+<p>
+有两个方法满足上述情况:
+</p>
+<ul class="org-ul">
+<li>可以沿着 f 的等高线,在等高线上 f 的值不会改变.也就表示 f 的等高线和 g 是平行.</li>
+<li>或者是 f 的驻点,该驻点也满足 g=0 的约束条件.</li>
+</ul>
+
+
+<p>
+可以注意到的是函数的梯度和等高线垂直,所以当 f 的等高线和 g 是平行的,仅当 f 的等高线和 g 的梯度平行.因此最优解需要满足 \(g(x,y)=0\) 和存在 \(\lambda\) 使得:
+</p>
+\begin{equation}
+  \nabla_{x,y}f = \lambda\nabla_{x,y}g
+\notag
+\end{equation}
+
+<p>
+其中: 
+</p>
+\begin{equation}
+  \nabla_{x,y}f=\left(\frac{\partial{f}}{\partial{x}},\frac{\partial{f}}{\partial{y}}\right),
+  \nabla_{x,y}g=\left(\frac{\partial{g}}{\partial{x}},\frac{\partial{g}}{\partial{y}}\right)
+\notag
+\end{equation}
+
+<p>
+\(\lambda\) 用来保证不同范式值的梯度向量相等.该常量为拉格朗日乘子.
+</p>
+
+<p>
+可以注意到的是该方法同时解决了第二种情况,当 f 是驻点上时,梯度为 0,只需要设置 \(\lambda=0\) 即可.
+</p>
+
+<p>
+为了满足上述两种情况到一个公式上,引入了一个辅助函数:
+</p>
+\begin{equation}
+  \mathcal{L}(x,y,\lambda)=f(x,y)-\lambda{g(x,y)}
+\notag
+\end{equation}
+
+<p>
+并且满足: \(\nabla_{x,y,\lambda}\mathcal{L}(x,y,\lambda)=0\).三个等式解决三个未知变量.当 \(\nabla_{\lambda}{\mathcal{L}(x,y,\lambda)}=0\) 表示 \(g(x,y)=0\).总结:
+</p>
+\begin{equation}
+  \nabla_{x,y,\lambda}\mathcal{L}(x,y,\lambda)=0 \iff \begin{cases}
+    \nabla_{x,y}f(x,y) = \lambda\nabla_{x,y}g(x,y) \\
+    g(x,y) = 0
+    \end{cases}
+\notag
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-orgb6fc279" class="outline-3">
+<h3 id="orgb6fc279"><span class="section-number-3">2.2</span> 多个约束条件</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+拉格朗日乘子法可以很容易的扩展到具有多个约束条件的优化问题.假设一个抛物面,有两个直线约束条件,那么两个直线的交叉点就是唯一的可行解,该点也就是该约束优化问题的解.但是 f 的等高线很显然在交叉点上与任何一条约束直线都不平行,如<a href="#org30a433b">图-3</a>所示;然而是两个约束直线梯度的线性组合.在多约束条件下,拉格朗日乘子法需要找寻的解是目标函数 f 的梯度为所有约束条件的梯度的线性组合.
+</p>
+
+<div class="org-center">
+
+<div id="org643f1b6" class="figure">
+<p><object type="image/svg+xml" data="assets/optimization/As_wiki_lgm_parab.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+<p><span class="figure-number">Figure 2: </span>图-2</p>
+</div>
+
+<div id="org30a433b" class="figure">
+<p><object type="image/svg+xml" data="assets/optimization/As_wiki_lgm_levelsets.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+<p><span class="figure-number">Figure 3: </span>图-3</p>
+</div>
+</div>
+
+<p>
+具体讲,假设有 M 个约束条件,在满足这些约束条件 \(g_{i}(x)=0,i=1,...,M\) 线上游走.每个约束条件都使得可行解空间具有一个方向:解空间方向垂直于 \(\nabla{g_{i}}(x)\).所有约束条件构成的解空间的方向垂直于所有约束条件的梯度.记可行解空间的方向为 A,记约束条件的梯度为 S.则 \(A=S^{\perp}\).
+</p>
+
+<p>
+假设沿着 f 的等高线游走,需要保证 x 的可行方向与 \(\nabla{f(x)}\) 垂直,否则可以沿着允许的方向增大目标函数.换句话说 \(\nabla{f}(x) \in A^{\perp} = S\). 因此存在 M 个标量:
+</p>
+\begin{equation}
+  \nabla{f}(x) = \sum_{k=i}^{M}\lambda_{k}\nabla_{g_{k}}(x) \iff
+  \nabla{f}(x) - \sum_{k=i}^{M}\lambda_{k}\nabla_{g_{k}}(x) = 0.
+\notag
+\end{equation}
+
+<p>
+这些标量为拉格朗日乘子. 引入辅助函数:
+</p>
+\begin{equation}
+  \mathcal{L}(x_{1},..,x_{n},\lambda_{1},...,\lambda_{M}) = f(x_{1},...,x_{n})-\sum_{k=1}^{M}\lambda_{k}g_{k}(x_{1},...,x_{n})
+\notag
+\end{equation}
+
+<p>
+求解:
+</p>
+\begin{equation}
+  \nabla_{x_1,...,x_n,\lambda_1,,...,\lambda_M}\mathcal{L}(x_1,...,x_n,\lambda_1,...,\lambda_M) = 0 \iff
+  \begin{cases}
+    \nabla{f}(x)-\sum_{k=1}^{M}\lambda_{k}\nabla_{g_{k}}(x) = 0 \\
+    g_{1}(x) = ... = g_{M}(x) = 0
+  \end{cases}
+\notag
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-orge0f48c1" class="outline-3">
+<h3 id="orge0f48c1"><span class="section-number-3">2.3</span> 不等式约束(KKT<sup><a id="fnr.3" class="footref" href="#fn.3">3</a></sup> 条件)</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+KKT 条件又来优化带有不等式的约束问题.优化问题如下:
+</p>
+\begin{equation}
+  x^{*} = argmin_{x}f(x) \\
+  subject\ to\ h_{i}(x) = 0, \forall i = 1,...,m \\
+  subject\ to\ g_{j}(x) \leq 0, \forall j=1,..,n
+\notag
+\end{equation}
+
+<p>
+类似拉格朗日乘子法:将目标函数和所有的约束条件放到一个统一的最小化函数,对于每个相等约束条件乘以 \(\lambda_{i}\) 乘子,不等式约束条件乘以 \(\mu_{j}\)(KKT 乘子).则拉格朗日表达式如下:
+</p>
+\begin{equation}
+  x^{*} = argmin_{x}L(x,\lambda,\mu) = argmin_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}h_{i}(x)+\sum_{j=1}^{n}\mu_{j}g_{j}(x).
+\notag
+\end{equation}
+
+<p>
+类似于拉格朗日乘子法,对于 x 和 &lambda; 求导数.那么如何处理新增加 n 个不等式约束条件就是 KKT 条件需要解决的.
+</p>
+
+<p>
+那么考虑如果原始的解已经满足 \(g_{i}(x^{*})<0\),那么这些不等式约束就没有作用了.因此,系数 \(\mu_{i}\) 可以设置为 0.但是在另一方面,如果解正好在不等式约束的边界上,\(g_{i}(x^{*})=0\).如<a href="#orgcb5d31b">图-1</a>显示.
+</p>
+
+<div class="org-center">
+
+<div id="orgcb5d31b" class="figure">
+<p><object type="image/svg+xml" data="assets/optimization/Inequality_constraint_diagram.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+</div>
+</div>
+
+<p>
+两种情况下,都满足等式: \(\mu_{i}g_{i}(x)=0\).因此从不等式约束中获得 n 个等式.这些约束项在表达式中需要一直为 0.系数 \(\lambda_{i}\) 可以是任何值;系数 \(\mu_{j}\) 必须是非负.如<a href="#org2f0d927">5</a>所示,如果最优解 x<sup>*</sup> 在 g<sub>j</sub>(x)=0 上,则 &mu;<sub>j</sub> 可以不为 0.
+</p>
+
+<div class="org-center">
+
+<div id="org2f0d927" class="figure">
+<p><object type="image/svg+xml" data="assets/optimization/signofkkt.svg" class="org-svg">
+Sorry, your browser does not support SVG.</object>
+</p>
+<p><span class="figure-number">Figure 5: </span>对于系数 &mu; 的正负号解释图.</p>
+</div>
+</div>
+
+\begin{equation}
+  x^{*}=argmin_{x}f(x)+\mu_{j}g_{j}(x) \\
+  0 = \nabla{f}(x)+\mu_{j}\nabla{g_{j}}(x)
+  \mu_{i} = -\frac{\nabla{f(x)}}{\nabla{g_{i}(x)}}
+\notag
+\end{equation}
+
+<p>
+在点 \(x^{*}\), 目标函数 f 的梯度和 \(g_{i}(x)\) 的梯度具有相反方向.所以 u<sub>i</sub> 需要大于 0.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org84eab4b" class="outline-3">
+<h3 id="org84eab4b"><span class="section-number-3">2.4</span> KKT 条件</h3>
+<div class="outline-text-3" id="text-2-4">
+<dl class="org-dl">
+<dt><code>Stationarity</code></dt><dd>\begin{equation}
+  \nabla_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{x}h_{i}(x)+\sum_{j=1}^{n}\mu_{j}\nabla_{x}g_{j}(x) = 0 (minimization) \\
+  \nabla_{x}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{x}h_{i}(x)-\sum_{j=1}^{n}\mu_{j}\nabla_{x}g_{j}(x) = 0 (maximization)
+\notag
+\end{equation}</dd>
+<dt><code>equality constraints</code></dt><dd>\begin{equation}
+  \nabla_{\lambda}f(x)+\sum_{i=1}^{m}\lambda_{i}\nabla_{\lambda}h_{i}(x) + \sum_{j=1}^{n}\mu_{j}\nabla_{\lambda}g_{j}(x)
+\notag
+\end{equation}</dd>
+<dt><code>Inequality constraints aka complementary slackness condition</code></dt><dd>\begin{equation}
+  \mu_{j}g_{j}(x) = 0,\forall{j=1,..,n} \\
+  \mu_{j} \ge 0,\forall{j=1,...,n}
+\notag
+\end{equation}</dd>
+</dl>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://en.wikipedia.org/wiki/Lagrange_multiplier">https://en.wikipedia.org/wiki/Lagrange_multiplier</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://en.wikipedia.org/wiki/Hessian_matrix#Bordered_Hessian">https://en.wikipedia.org/wiki/Hessian_matrix#Bordered_Hessian</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.3" class="footnum" href="#fnr.3">3</a></sup> <div class="footpara"><p class="footpara">
+<a href="http://www.onmyphd.com/?p=kkt.karush.kuhn.tucker">http://www.onmyphd.com/?p=kkt.karush.kuhn.tucker</a>
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-12-18 Tue 15:31</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

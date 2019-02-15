@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-11-09 Fri 11:44 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgdc78e34">Introduction</a>
+<ul>
+<li><a href="#org772efeb">Contributions</a></li>
+</ul>
+</li>
+<li><a href="#org6cbd51a">Related Work</a></li>
+<li><a href="#org60c6803">Connectionist Text Proposal Network</a>
+<ul>
+<li><a href="#org01392e9">Detecting Text in Fine-scale Proposals</a></li>
+<li><a href="#orgb549920">Recurrent Connectionist Text Proposals</a></li>
+<li><a href="#org3f439e2">Side-refinement</a></li>
+<li><a href="#orgd7aa350">Model Outputs and Loss Functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<p>
+论文: <a href="https://arxiv.org/pdf/1609.03605.pdf">Detecting Text in Natural Image with Connectionist Text Proposal Network</a>
+</p>
+
+<blockquote>
+<p>
+本文提出了一个新的基于链接的文本区域建议网络(<i>Connectionist Text Proposal Network - CTPN</i>),用于在自然场景图像上准确检测文字区域.CTPN 网络直接在卷积特征图上执行适配过的建议框检测.建议框为固定宽度,可变高度.并且建议框检测和文本/非本文得分同时预测,从而提高定位准确性.序列的建议框和循环神经网络直接联结,从而实现端到端模型.和以前的自下而上(<i>bottom-up</i>)的方法比,无需一些后处理就可以很好的在多尺度和多语言文本上实现很好的检测效果.在 ICDAR 2013 和 2015 数据集上能够获得 0.88 和 0.61 的 F 得分.并且 CTPN 在使用 VGG16 作为卷积网络的时候,能够获得 0.14s/image 的计算效率.
+</p>
+</blockquote>
+
+<div id="outline-container-orgdc78e34" class="outline-2">
+<h2 id="orgdc78e34">Introduction</h2>
+<div class="outline-text-2" id="text-orgdc78e34">
+<p>
+自然图像上的文字识别近年来在很多领域都有使用场景,例如图像 OCR,多语言翻译,图像检索等.一般文字识别包含两个子任务:文本区域检测和文字识别.文本工作主要是文字区域检测.
+</p>
+
+<p>
+当前的主要文本区域检测方法都是自下而上的流程.一般是从低界别的字符或者笔划检测开始,随后执行一些后续处理方法:非文本模块过滤,文本行构建和文本行识别.这种多步自下而上的方法涉及太多复杂操作,使得检测方法整体不是非常的健壮和可靠.整体算法效果非常依赖字符检测结果和字符连接方法或者滑窗(<i>sliding-window</i>)方法的效果.而且这些方法依赖低层特征(例如:SWT<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup><sup>, </sup><sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup>,MSER<sup><a id="fnr.3" class="footref" href="#fn.3">3</a></sup><sup>, </sup><sup><a id="fnr.4" class="footref" href="#fn.4">4</a></sup><sup>, </sup><sup><a id="fnr.5" class="footref" href="#fn.5">5</a></sup>,或者 HoG<sup><a id="fnr.6" class="footref" href="#fn.6">6</a></sup>)将候选文本筛选出来.然而,这些方法无法在没有上下文信息的情况下有效的识别单个笔画和字符.例如:对于人类来说识别一系列字符要比识别一个单独的字符,尤其是字符具有一定的歧义性.这些限制会在字符检测阶段就引入很多非文本元素,为后续的处理带来了很多困难.并且这些错误检测很容易在自下而上的处理方法中累积.为了克服这些问题,本文提出了利用卷积网络生成的特征来检测文本.提出了适用文本检测的检测锚机制来准确预测文本区域.随后,集成循环神经网络将这些文本建议区域连接在一起,从而利用丰富的上下文信息来识别文本区域.
+</p>
+
+<p>
+深度卷积神经网路(<i>CNN</i>)在目标识别领域带来了非常大的提升.最好的目标检测算法是 Faster Region-CNN(R-CNN)<sup><a id="fnr.7" class="footref" href="#fn.7">7</a></sup>,其中区域建议网络(<i>Region Proposal Network-RPN</i>)用来根据卷积神经网络的特征图生成高质量的,类别目标建议区域.然后将这些建议区域喂给 Fast R-CNN 模型,作更进一步的细分类和边框回归,从而实现了在一般目标检测场景下的最好效果.这种一般的目标检测算法,无法直接在文本区域检测场景下直接使用,因为文本区域检测常常需要更高的检测精度.目标检测中,一般正确的检测定义情况较为宽松,例如目标区域和检测区域的 IoU&gt;0.5 就认为是正确检测.相应的,文本识别和理解是个更为精细(<i>fine-grained</i>)的识别过程,需要文本检测能够正确的检测出整个文本行或者单词才行.因此,文本区域检测一般要求更为精准的定位,需要不同的评估标准,例如 Wolf 标准<sup><a id="fnr.8" class="footref" href="#fn.8">8</a></sup>,在很多的文本检测数据集中使用.
+</p>
+
+<p>
+本文主要通过扩展 RPN 结构,从而实现本文的精准定位.并且随后通过在网络中集成一个循环神经网络,使得网络可以利用卷积神经网络生成的特征图信息直接实现文本序列检测,从而避免后续再次使用卷积神经网络实现后处理工作.
+</p>
+</div>
+
+<div id="outline-container-org772efeb" class="outline-3">
+<h3 id="org772efeb">Contributions</h3>
+<div class="outline-text-3" id="text-org772efeb">
+<p>
+本文提出了一个新的方法,连续文本建议网络(<i>Connectionist Text Proposal Network - CTPN</i>),直接在卷积层定位文本序列.本方法克服了自下而上的方法很多限制.直接利用深度卷积网络学习到的特征优点,整体 CTPN 网络结构如<a href="#org571f96d">图-1</a>所示,主要贡献如下:
+</p>
+
+<p>
+第一,将文本检测问题等价于定位序列文本建议区域.提出了基于锚回归的机制,针对文本建议区域同时预测垂直区域范围和分类得分,可以实现非常准确的定位.这一点和原始的 RPN 具有非常的不同.
+</p>
+
+<p>
+第二,在网络结构中嵌入一个循环机制,用来将卷积特征图中的本文建议区域连接起来.从而可以使得检测算法能够利用整行本文信息来进行定位.
+</p>
+
+<p>
+第三,两部门无缝对接在一起,从而实现整体端到端的训练模型.本文提出的模型可以在一个流程中很好的应对多尺度和多种语言的本文定位,而且不需要额外的后处理和调整.
+</p>
+
+<p>
+第四,本文提出的模型在很多测试集上都达到了最好的效果(例如: 在 ICDAR2013 上 0.88 F 得分,ICDAR 2015 上 0.61 得分).并且整个模型的计算效率非常高,0.14s/image.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6cbd51a" class="outline-2">
+<h2 id="org6cbd51a">Related Work</h2>
+<div class="outline-text-2" id="text-org6cbd51a">
+<p>
+<b>Text detection.</b> 在自然场景下文本检测模型,过去的工作大多数采用自下而上的方法,从字符或者笔画检测开始.可以主要分为两种大类:基于元素链接的方法(<i>Conneted-Componenets</i>)和基于滑窗方法(<i>Sliding-Window</i>).元素链接方法采用一个速度极快的过滤器判断像素是否是文本,然后利用低层特征(对比度,颜色,梯度等)<sup><a id="fnr.1.100" class="footref" href="#fn.1">1</a></sup><sup>, </sup><sup><a id="fnr.2.100" class="footref" href="#fn.2">2</a></sup><sup>, </sup><sup><a id="fnr.3.100" class="footref" href="#fn.3">3</a></sup><sup>, </sup><sup><a id="fnr.9" class="footref" href="#fn.9">9</a></sup>将这些文本元素组合成候选的笔画或者字符.滑窗方法通过将多尺度窗口在输入图像上滑动来检测文本候选区域,利用手动设计的特征<sup><a id="fnr.6.100" class="footref" href="#fn.6">6</a></sup><sup>, </sup><sup><a id="fnr.10" class="footref" href="#fn.10">10</a></sup>或者卷积特征<sup><a id="fnr.11" class="footref" href="#fn.11">11</a></sup>来训练一个预训练的分类器区分窗口中是否包含文字.然而,两种组合方法都会因为文本检测性能,在后续的处理中累加错误.并且使用局部信息来检测和过滤字符是不合理的.
+</p>
+
+<p>
+<b>Object detection.</b> 卷积神经网络最近在目标识别中表现非常好.一般的目标检测策略是现通过简单的低层特征快速的选出候选目标建议区域,然后采用卷积神经分类器来进行分类和定位调整.选择性搜索(<i>Selective Search - SS</i>)常常用来生成一般目标建议区域.本文和一般目标有很大的不一样,所以无法直接使用一般的目标识别算法来处理文本检测任务.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org60c6803" class="outline-2">
+<h2 id="org60c6803">Connectionist Text Proposal Network</h2>
+<div class="outline-text-2" id="text-org60c6803">
+<p>
+本部分详细说明 CTPN 网络的结构细节.三个关键贡献: 小尺度的文本检测建议,循环链接文本建议区域,边框调整(<i>side-refinement</i>).
+</p>
+
+<div class="org-center">
+
+<div id="org571f96d" class="figure">
+<p><img src="assets/ctpn/figure-1.png" alt="figure-1.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>(a) CTPN 网络结构.主要是在 VGG16 网络的最后一层卷积层(conv5)执行一个 3*3 空间窗口滑动.每一行的序列窗口采用循环神经网络(<i>Bi-directional LSTM</i>)进行链接,每个滑动窗口的卷积特征(3*3*C)作为 256D BLSTM)(双向 128DLSTM)的输入.然后循环神经网络连接着 512D 的全链接层,最后连接着输出层,用来预测 k 个建议区域的文本分类得分,y 轴的坐标和边框调整偏移.(b) CTPN 输出的固定宽度的小尺度文本建议区域.颜色预示文本分类得分.只有为文本的边框才显示出来.</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org01392e9" class="outline-3">
+<h3 id="org01392e9">Detecting Text in Fine-scale Proposals</h3>
+<div class="outline-text-3" id="text-org01392e9">
+<p>
+类似于区域建议网络(<i>Region Proposal Network - RPN</i>),CTPN 本质上讲也是一个全卷积神经网络,允许输入的图像具有任意尺寸.通过在卷积层输出的特征图上移动一个小的滑动窗口来检测文本行,然后输出对应的小尺度文本(固定宽度为 16 像素)建议区域,如<a href="#org571f96d">图-1(b)</a>所示.
+</p>
+
+<p>
+本文采用了非常深的 VGG16 作为卷积特征提取网络.整个 CTPN 的网络结构如<a href="#org571f96d">图-1(a)</a>所示.采用了一个小的空间窗口,3*3,在最后一层卷积层(例如:vgg 的 conv5 层)上进行滑动.conv5 特征图的大小由输入图像决定,但是总的步长和感受野为 16 和 228 个像素.这里虽然也采用了滑动窗口,但是是在特征图上采用,可以很大的减少运算量.
+</p>
+
+<p>
+一般滑动窗口的方法会结合多尺度窗口来检测不同大小的目标.Ren et al<sup><a id="fnr.7.100" class="footref" href="#fn.7">7</a></sup>提出了一个非常有效的锚回归机制,从而允许 RPN 在一个尺度窗口上检测多个尺度目标对象.主要的思想是,采用多个固定尺度的锚边框,就可以在一个单独的窗口上预测出多尺度和不同长宽比例的目标.本文通过对这种基于锚边框检测机制进行扩展,从而实现文本检测.但是文本检测和一般目标检测具有较大的差异,文本序列并没有一个比较明显的边框,并且包括多种级别的目标元素,例如笔画,字符,词,文本行或者文本区域,并且这些目标元素并没有明显的差异.文本检测定义为词和文本行检测,如果将文本行或者词当成一个整体目标进行检测,很容易出现错误.<a href="#orgbf0a952">图-2</a>显示了 RPN 网络直接用来训练和定位文本行的效果.
+</p>
+
+<div class="org-center">
+
+<div id="orgbf0a952" class="figure">
+<p><img src="assets/ctpn/figure-2.png" alt="figure-2.png" />
+</p>
+<p><span class="figure-number">Figure 2: </span>左图: RPN 网络检测.右图: 小尺度文本检测.</p>
+</div>
+</div>
+
+<p>
+由于文本行中的文字目标其实是隔离和独立的,所以 RPN 网络较难准确的预估出文本行水平边界.很自然的可以认为文本行是由一系列的小吃度文本建议区域组成的,每个建议区域为文本的一小部分,例如,16 个像素固定宽度的文本片段.每个提议区域可能包含一个或者多个笔画,字符的一部分,一个字符或者多个字符.这样可以固定难以预测的水平尺度,只需要预测比较准确的垂直尺度.对比与 RPN 网络预测一个目标的 4 个坐标,该方案降低了问题的难度.从而提出固定锚建议边框的宽度,然后预测本文/非文本分类和 y 轴定位的锚建议区域机制.
+</p>
+
+<p>
+最后,本文提出了一个小尺度文本建议区域模型.检测器在 conv5 的每一个空间位置进行锚建议区域检测.每个文本建议区域具有 16 像素的固定宽度.并且 conv5 的特征图总步长为 16 像素.然后设计 K 个垂直建议区域去预测每个建议区域的 y 轴偏移.k 个锚建议区域具有相同的水平位置,并且具有固定的 16 像素宽度,但是垂直方向具有 k 个不同的高度.本文实验中,采用 k=10 个锚建议边框,高度从 11 像素 到 273 像素(处以 0.7 每次)递增.实际的垂直坐标通过相对于建议区域的高度比例和 y 轴中心点偏移比例来定位.相对的预测垂直坐标(<b>v</b>)和建议边框的关系如下:
+</p>
+\begin{equation}
+\mathcal{v}_{c}=(c_{y}-c_{y}^{a})/h^{a},\ \ \mathcal{v}_{h}=\log{(h/h^{a})}
+\end{equation}
+
+\begin{equation}
+\mathcal{v}_{c}^{*}=(c_{y}^{*}-c_{y}^{a})/h^{a},\ \ \mathcal{v}^{*}=\log{(h^{*}/h^{a})}
+\end{equation}
+<p>
+\(\mathcal{v}={v_{c}, v_{h}}\),\(\mathcal{v}^{*}={v_{c}^{*},v_{h}^{*}}\) 为预测边框和真实边框对于建议边框的相对坐标. \(c_{y
+}^{a}\) 和 \(h_{a}\) 为建议边框的中心点(y 轴)和高度; \(c_{y}\) 和 \(h\) 为预测的 y 轴中心点坐标和边框高度; \(c_{y}^{*}\) 和 \(h^{*}\) 为真实边框的 y 轴中心点坐标和高度.那么每个预测的边框大小为 [h,16],如<a href="#org571f96d">图-1(b)</a>和<a href="#orgbf0a952">图-2(右)</a>所示.
+</p>
+
+<p>
+检测过程如下.输入图像经过 VGG16 计算后得到 H*W*C 的卷积层 5 的特征图,其中 C 为特征图的个数,W*H 为特征图空间尺度.然后检测器在卷积层 5 上执行 3*3 滑窗检测,输入为 3*3*C 的卷积特征.每个预测,水平位置(x 轴)和 k 个锚检测区域位置固定.检测器输出对应的边框的文本得分和 k 个锚边框的 y 轴相对坐标(<b>v</b>).检测出的文本建议区域由文本得分大于 0.7 的锚区域经过非极大值抑制后得到.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb549920" class="outline-3">
+<h3 id="orgb549920">Recurrent Connectionist Text Proposals</h3>
+<div class="outline-text-3" id="text-orgb549920">
+<p>
+为了提高定位精度,将文本行分割成了一系列的小尺度文本区域,然后分别预测.显然,分别独立考虑单个的建议检测区域是不合理的.会使得大量的假真样本的出现,一旦局部图像类似文字就会被检测成文字区区域,如<a href="#org4c80139">图-3(上)</a>所示.文本具有很强的序列特征可以用来进行可靠的检测.最近的工作<sup><a id="fnr.12" class="footref" href="#fn.12">12</a></sup>证明循环神经网络可以很好将这些上下文信息编码从而实现文本识别.
+</p>
+
+<div class="org-center">
+
+<div id="org4c80139" class="figure">
+<p><img src="assets/ctpn/figure-3.png" alt="figure-3.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>(上) 没有集成 RNN 的 CTPN.(下)集成 RNN 的 CTPN.</p>
+</div>
+</div>
+
+<p>
+循环神经网络可以通过内部隐藏状态多个连续的文字建议区域信息记录下来,然后在预测的时候可以参考左右链接的建议区域的信息同时做出预测,从而提高预测性能.本文在卷积层 conv5 后链接循环层,以 conv5 层的 3*3 滑动窗口的特征向量作为输入,然后根据如下公式更新内部循环状态 \(H_{t}\):
+</p>
+\begin{equation}
+H_{t} = \varphi (H_{t-1}, X_{t}),\ \ \ t=1,2,...,W
+\end{equation}
+
+<p>
+\(X_{t} \in R^{3*3*C}\) 为在卷积层 conv5 的第 t 个 3*3 滑动窗口特征向量.滑动窗口从左向右滑动, \(t=1,2,...,W\).\(W\) 为 conv5 卷积层的宽度.\(H_{t}\) 为循环层内部的隐含状态,由当前输入(X<sub>t</sub>)和前一刻隐含状态(H<sub>t-1</sub>)联合计算.\(\varphi\) 为循环层用的非线性函数.本文采用的是长短时记忆网络(<i>long short-term memory (LSTM)</i>)作为循环层<sup><a id="fnr.13" class="footref" href="#fn.13">13</a></sup>,并且采用双向 LSTM 进行上下文信息编码,使得任意一个位置都可以包含正行卷积特征信息.
+</p>
+
+<p>
+内部状态 \(H_{t}\) 随后跟着一个全链接层进行变换,最后输出层用来计算第 t 个建议的预测结果.增加 RNN 层,对向量的上下文滑动窗口内的信息进行编码,从而实现更为精准的预测,结果如<a href="#org4c80139">图-3</a>所示.可以看到减少了假真,并且检测出了很多不是很明显的文本区域.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3f439e2" class="outline-3">
+<h3 id="org3f439e2">Side-refinement</h3>
+<div class="outline-text-3" id="text-org3f439e2">
+<p>
+在检测出小尺度本文建议区域后,可以直接将文本的分大于 0.7 的连续相邻文本建议区域链接起来.文本行构建如下:首先,对于一个本文建议区域 \(B_{i}\) 定义成对相邻建议区域(B<sub>j</sub>)为 \(B_{j}->B_{i}\),满足(i) \(B_{j}\) 为水平方向和 \(B_{i}\) 最近;(ii) 这个距离小于 50 像素;(iii)他们的垂直区域重合 0.7.其次,如果两个文本建议区域满足 \(B_{j}->B_{i},B_{i}->B_{j}\),那么这一对建议区域组成一对.本文行通过上述过程迭代执行构成.
+</p>
+
+<p>
+上述的小尺度建议检测和 RNN 上下文信息编码机制能够很准确在垂直方向上定位文本区域.在水平方向,图像被分成序列的 16 像素等宽的建议区域,当真实标记区域没有很好的在水平方向上标记文本区域会带来不精准的检测,如<a href="#org516c762">图-4</a>所示.这种不精准的定位在一般物体检测场景中没有问题,但是在文本识别是不可接受的.
+</p>
+
+<div class="org-center">
+
+<div id="org516c762" class="figure">
+<p><img src="assets/ctpn/figure-4.png" alt="figure-4.png" />
+</p>
+<p><span class="figure-number">Figure 4: </span>CTPN 检测结果,红色框包含边微调和黄色虚线不包含边微调的结果.</p>
+</div>
+</div>
+
+<p>
+为了克服上述问题,本文提出了一个边微调(<i>side-refinement</i>)的方法,用来精准的预估每个建议区域左右水平边的偏移.类似 y-轴坐标预测,相对偏移定义:
+</p>
+\begin{equation}
+o=(x_{side}-c_{x}^{a})/w^{a},\ \ o^{*}=(x_{side}^{*}-c_{x}^{a})/w^{a}
+\end{equation}
+
+<p>
+\(x_{side}\) 为预估的 x-轴相对于当前锚建议区域的最近水平边(左边或者右边). \(x_{side}^{*}\) 为真实标记(<i>ground truth</i>)的 x-轴坐标.\(c_{x}^{a}\) 为当前锚建议区域的 x-轴中心坐标.\(w^{a}\) 为锚建议区域宽,固定为 16.边微调只在本文行的开始和结束的预测建议区域使用.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd7aa350" class="outline-3">
+<h3 id="orgd7aa350">Model Outputs and Loss Functions</h3>
+<div class="outline-text-3" id="text-orgd7aa350">
+<p>
+CTPN 模型最后有 3 个输出,如<a href="#org571f96d">图-1(a)</a>所示.三个输出同时预测文本得分(<b>s</b>),垂直坐标(\(v={v_{c},v_{h}}\))和边微调偏移(<b>o</b>).采用 k 个锚建议区域在 conv5 的每个空间位置预测实际的文本区域,所以输出是 2k,2k,k 个结果.
+</p>
+
+<p>
+本文采用多任务学习,同时优化整个模型参数.总共有三个损失函数,\(L_{s}^{cl},L_{v}^{re},L_{o}^{re}\),分别对应文本得分损失,垂直坐标损失和边微调损失.总损失函数为:
+</p>
+\begin{equation}
+  L(s_{i},v_{j},o_{k})=\frac{1}{N_{s}}\sum_{i}L_{s}^{cl}(s_{i},s_{i}^{*})+\frac{\lambda_{1}}{N_{v}}\sum_{j}L_{v}^{re}(v_{j},v_{j}^{*})+\frac{\lambda_{2}}{N_{o}}\sum_{k}L_{o}^{re}(o_{k},o_{k}^{*})
+\end{equation}
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+Epshtein, B., Ofek, E., Wexler, Y.: Detecting text in natural scenes with stroke width transform (2010), in IEEE Computer Vision and Pattern Recognition (CVPR)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+Huang, W., Lin, Z., Yang, J., Wang, J.: Text localization in natural images using stroke feature transform and text covariance descriptors (2013), in IEEE International Conference on Computer Vision (ICCV)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.3" class="footnum" href="#fnr.3">3</a></sup> <div class="footpara"><p class="footpara">
+Huang, W., Qiao, Y., Tang, X.: Robust scene text detection with convolutional neural networks induced mser trees (2014), in European Conference on Computer Vision (ECCV)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.4" class="footnum" href="#fnr.4">4</a></sup> <div class="footpara"><p class="footpara">
+Neumann, L., Matas, J.: Real-time lexicon-free scene text localization and recognition. In IEEE Trans. Pattern Analysis and Machine Intelligence (TPAMI) (2015)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.5" class="footnum" href="#fnr.5">5</a></sup> <div class="footpara"><p class="footpara">
+Zhang, Z., Shen, W., Yao, C., Bai, X.: Symmetry-based text line detection in natural scenes (2015), in IEEE Computer Vision and Pattern Recognition (CVPR)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.6" class="footnum" href="#fnr.6">6</a></sup> <div class="footpara"><p class="footpara">
+Tian, S., Pan, Y., Huang, C., Lu, S., Yu, K., Tan, C.L.: Text flow: A unified text detection system in natural scene images (2015), in IEEE International Conference on Computer Vision (ICCV)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.7" class="footnum" href="#fnr.7">7</a></sup> <div class="footpara"><p class="footpara">
+Ren, S., He, K., Girshick, R., Sun, J.: Faster R-CNN: Towards real-time object detection with region proposal networks (2015), in Neural Information Processing Systems (NIPS)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.8" class="footnum" href="#fnr.8">8</a></sup> <div class="footpara"><p class="footpara">
+Wolf, C., Jolion, J.: Object count / area graphs for the evaluation of object detection and segmentation algorithms. International Journal of Document Analysis 8, 280–296 (2006)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.9" class="footnum" href="#fnr.9">9</a></sup> <div class="footpara"><p class="footpara">
+Yin, X.C., Pei, W.Y., Zhang, J., Hao, H.W.: Multi-orientation scene text detection with adaptive clustering. IEEE Trans. Pattern Analysis and Machine Intelligence (TPAMI) 37, 1930–1937 (2015)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.10" class="footnum" href="#fnr.10">10</a></sup> <div class="footpara"><p class="footpara">
+Wang, K., Babenko, B., Belongie, S.: End-to-end scene text recognition (2011), in IEEE International Conference on Computer Vision (ICCV)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.11" class="footnum" href="#fnr.11">11</a></sup> <div class="footpara"><p class="footpara">
+Jaderberg, M., Vedaldi, A., Zisserman, A.: Deep features for text spotting (2014), in European Conference on Computer Vision (ECCV)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.12" class="footnum" href="#fnr.12">12</a></sup> <div class="footpara"><p class="footpara">
+He, P., Huang, W., Qiao, Y., Loy, C.C., Tang, X.: Reading scene text in deep convolutional sequences (2016), in The 30th AAAI Conference on Artificial Intelligence (AAAI-16)
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.13" class="footnum" href="#fnr.13">13</a></sup> <div class="footpara"><p class="footpara">
+Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Networks 9(8), 1735–1780 (1997)
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2018-11-09 Fri 11:44</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
