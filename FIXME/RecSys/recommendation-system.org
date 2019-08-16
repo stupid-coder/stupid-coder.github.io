@@ -1,0 +1,148 @@
+#+TITLE: 推荐系统简介
+#+AUTOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2 num:nil
+
+#+BEGIN_QUOTE
+推荐系统核心思想就是根据用户和物料之间的行为数据进行推荐。
+#+END_QUOTE
+
+* 推荐系统简介
+  =Recommendation System= 是利用用户(/user/)和物料(/item/)[fn:1]之间的行为(/feedback/)[fn:2]关系为用户产生潜在可能产生行为的物料列表的系统，从而提供用户和物料直接发生行为的系统。
+
+* 推荐系统目标
+推荐系统可以看作是两种类型的问题:
++ 预测问题 :: 根据用户和物料的特征直接进行行为预测.也可以看作是用户-物料行为矩阵的缺失值补充问题.
++ 排序问题 :: 实际问题中,并不需要精确的预测用户对物料的行为才能进行推荐.可以将推荐看作是将 top-k 物料推荐给用户即可.可以看作是排序问题.
+
+
+推荐系统的目标就是通过提高用户-物料之间交互行为,从而提高运营商收入.为了提高交互行为,推荐系统可行性或者叫做技术性目标为:
++ 相关性(/Relevance/) :: 推荐的物料和用户感兴趣的物料如果具有较高相似性,那么用户肯定更容易进行交互行为.
++ 新颖性(/Nelty/) ::  推荐系统如果能够通过用户感兴趣的物料来推荐用户过去没有见过的物料将会提高用户交换行为的可能.如果推荐的物料总是用户看到过的,那么用户会有审美疲劳感.
++ 新奇性(/Serendipity/) :: 推荐系统如果能够根据用户的历史行为,挖掘出用户潜在的感兴趣物料.那么会给用户带来一定的惊喜,从而提高用户的满意度.
++ 多样性(/Diversity/) :: 推荐系统推荐的 top-k 物料不能互相之间非常相似,这样会增加用户的反感.
+
+* 推荐系统常用模型
++ 协同过滤(/Collaborative filtering/) :: 通过用户-物料行为进行推荐
++ 基于内容(/Content-based/) :: 通过用户和物料的属性特征进行推荐
++ 基于知识(/Knowledge-based/) :: 通过用户通过交互提交自己感兴趣的物料筛选条件进行推荐
++ 混合系统(/Hybird/) :: 混合采用多种推荐算法进行推荐
+
+
+** 协同过滤 :: collaborative Filtering
+协同过滤可以看作是通过 =positive-unlabeled(/PU/) learning= 对缺失值进行补全问题.
+
++ 思想 :: 协同过滤模型通过多个用户对物料的行为信息进行推荐.
++ 挑战 :: 用户-物料行为矩阵非常稀疏.
++ 缺点 :: 无法解决冷启动问题.
+
+协同过滤模型可以细分为两种:
++ 基于内存方法(/Memory-based/) :: 也叫基于近邻的协同过滤算法.又可以细分为两种近邻方法
+  + 基于用户协同过滤(/User-based collaborative filtering/) :: 主要思想相似用户的行为也相似.通过计算和用户最为相似的 top-k 用户,根据 top-k 用户的行为进行加权求和来进行预测.
+  + 基于物料协同过滤(/Item-based collaborative filtering/) :: 主要思想用户对相似物品的行为也相似.通过计算和物料最为相似的 top-k 个物料,根据用户对 top-k 的物料的行为进行加权求和进行预测.
++ 基于模型方法(/Model-based/) :: 采用机器学习和数据挖掘的方法构建预测模型,然后采用该预测模型进行预测.
+
+*** 基于用户协同过滤
+数学记号:
++ $R=[r_{ij}]$ :: 用户-物料行为矩阵
++ $I_{u}$ :: 用户 /u/ 具有行为的物料集合
+
+
+基于用户协同过滤首先需要计算相似度top-k的用户集合,然后根据相似用户对物料的行为来进行预测:
++ 用户相似性度量 :: 采用基于物料行为向量计算相似度的方法,首先因为不同用户的行为尺度不一,所以首先需要对行为进行去均值,来保证行为数据尺度一致,然后再计算相关性.
+             \begin{equation}
+               \mu_{u} = \frac{\sum_{k \in I_{u}} r_{uk}}{\vert I_{u} \vert} \forall u \in {1...m}
+             \end{equation}
+  + Pearson 系数 ::
+                  \begin{equation}
+                    Sim(u,v) = Pearson(u,v) = \frac{\sum_{k \in I_{u} \cap I_{v}}(r_{uk}-\mu_{u}) \cdot (r_{vk}-\mu_{v})}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}(r_{uk} - \mu_{u})^2} \cdot \sqrt{\sum_{k \in I_{u} \cap I_{v}}(r_{vk} - \mu_{v})^2}}
+                  \end{equation}
+
+                  #+BEGIN_QUOTE
+                  严格讲: Pearson系数中的均值 $\mu_{u}$ 和 $\mu_{v}$ 应该只用 $I_{u} \cap I_{v}$ 中的元素计算.
+
+                  但是为了提高计算效率,这里采用每个用户全局行为进行一次计算.
+                  #+END_QUOTE
++ top-k用户行为预测 :: 由于每个人都有自己的行为规则,所以行为具有不同的尺度,可以首先进行去中心化,然后根据top-k用户对物料的行为进行加权预测.
+
+                 \begin{equation}
+                 s_{uj} = r_{uj} - \mu_{u} \forall u \in {1...m}
+                 \end{equation}
+
+                 \begin{align}
+                 \hat{r}_{[uj]} &= \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot s_{vj}}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert}  \\
+                                &= \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot (r_{vj}-\mu_{v})}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert}
+                 \end{align}
+                 
+**** 相似性函数变种
+直接采用 $\cos$ 函数作为相似性度量函数:
+\begin{equation}
+  RawCosine(u, v) = \frac{\sum_{k \in I_{u} \cap I_{v}}r_{uk} \cdot r_{vk}}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{uk}^{2}}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{vk}^{2}}}
+\end{equation}
+
+在有些 $\cos$ 实现中,归一化系数采用所有行为值,而不是两个用户都有行为:
+\begin{equation}
+  RawCosine(u, v) = \frac{\sum_{k \in I_{u} \cap I_{v}}r_{uk} \cdot r_{vk}}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{uk}^{2}}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{vk}^{2}}}
+\end{equation}
+
+可以看到相似性函数依赖于两个用户具有共同行为的物料多少,可以对共同行为的物料较少的情况进行降权(/significance weighting/):
+\begin{equation}
+  DiscountedSim(u,v) = Sim(u,v) \cdot \frac{\min{(\vert I_{u} \in I_{v} \vert, \beta)}}{\beta}
+\end{equation}
+
+**** 预测函数变种
+除了采用去均值操作外,可以对行为值进行z-score 归一化操作.
+
++ 计算方差 :: 
+          \begin{equation}
+            \sigma_{u} = \sqrt{\frac{\sum_{j \in I_{u}}(r_{uj}-\mu_{u})^2}{\vert I_{u} \vert - 1}} \forall u \in {1...m}
+          \end{equation}
+
++ 行为值标准化 ::
+            \begin{equation}
+              z_{uj} = \frac{r_{uj} - \mu_{u}}{\sigma_{u}} = \frac{s_{uj}}{\sigma_{u}}
+            \end{equation}
++ 预测行为值 :: 
+           \begin{equation}
+             \hat{r}_{uj} = \mu_{u} + \sigma_{u} \frac{\sum_{v \in P_{u}(j)}{Sim(u,v) \cdot z_{vj}}}{\sum_{v \in P_{u}(j)}{\vert Sim(u,v) \vert}}
+           \end{equation}
+           $P_{u}(j)$ 为与用户u相似度最高的且对物料j具有行为的k个用户集合.
+
+
+额外,可以通过对相关性系数进行增强(/amplify/),来增大不同用户对预测结果的影响:
+\begin{equation}
+  Sim(u,v) = Pearson(u,v)^{\alpha}
+\end{equation}
+
+**** 长尾效应 (/long-tail/)
+在推荐系统中推荐物料有一个很有名的效应叫做长尾效应.具有大量行为的物料对用户相似度计算没有区分度.这种情况和自然语言处理中的一些出现频率极高的词对信息检索没有帮助是一个道理.自然语言处理中引入 =Invert Document Frequency(idf)= 来降低频率极高的词对结果的影响.同理,在相似性计算的时候可以引入 =Inverse User Frequency=.
+
+$m_{j}$ 为对物料j具有行为的用户数量,m为总用户数量,则物料j的权重 $w_{j}$ 计算如下:
+\begin{equation}
+  w_{j} = \log{(\frac{m}{m_{j}})} \forall j \in {1...n}
+\end{equation}
+
+在计算相似性和预测阶段,都可以使用 w_{j} 对物料进行加权,例如在Person系数中:
+\begin{equation}
+  Person(u,v) = \frac{\sum_{k \in I_{u} \cap I_{v}} w_{k} \cdot (r_{uk} - \mu_{u}) \cdot (r_{vk} - \mu_{v})}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{uk}-\mu_{u})^2}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{vk}-\mu_{v})^2}} 
+\end{equation}
+
+*** 基于物料协同过滤
+基于物料的协同过滤算法中,通过计算相似物料来预测行为.
+
+
+* 冷启动
+| 推荐算法 | 用户冷启动 | 物料冷启动 |
+|----------+------------+------------|
+| 协同过滤 | x          | x          |
+| 基于内容 | x          | y          |
+| 基于知识 | y          | y          |
+
+* 推荐系统攻击问题
+* 主动学习
+* Footnotes
+
+[fn:2] 在不同的系统中指不同的行为，例如：亚马逊中行为指购买、收藏、点赞等；新闻客户端中指阅读、评论等。
+
+[fn:1] 在不同的系统中指不同的对象，例如：亚马逊中物料指可售卖商品；新闻客户端下物料指文章/视频；视频网站中指推荐视频。

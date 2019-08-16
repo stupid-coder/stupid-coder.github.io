@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2019-07-30 Tue 18:07 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>推荐系统简介</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="qixiang" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">推荐系统简介</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org86d5ad8">推荐系统简介</a></li>
+<li><a href="#org7e709a2">推荐系统目标</a></li>
+<li><a href="#org8539f4b">推荐系统常用模型</a>
+<ul>
+<li><a href="#org316fd4a">协同过滤 :: collaborative Filtering</a></li>
+</ul>
+</li>
+<li><a href="#orgb90bbfe">冷启动</a></li>
+<li><a href="#orgcc04bf3">推荐系统攻击问题</a></li>
+<li><a href="#orge852087">主动学习</a></li>
+</ul>
+</div>
+</div>
+<blockquote>
+<p>
+推荐系统核心思想就是根据用户和物料之间的行为数据进行推荐。
+</p>
+</blockquote>
+
+<div id="outline-container-org86d5ad8" class="outline-2">
+<h2 id="org86d5ad8">推荐系统简介</h2>
+<div class="outline-text-2" id="text-org86d5ad8">
+<p>
+<code>Recommendation System</code> 是利用用户(<i>user</i>)和物料(<i>item</i>)<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>之间的行为(<i>feedback</i>)<sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup>关系为用户产生潜在可能产生行为的物料列表的系统，从而提供用户和物料直接发生行为的系统。
+</p>
+</div>
+</div>
+
+<div id="outline-container-org7e709a2" class="outline-2">
+<h2 id="org7e709a2">推荐系统目标</h2>
+<div class="outline-text-2" id="text-org7e709a2">
+<p>
+推荐系统可以看作是两种类型的问题:
+</p>
+<dl class="org-dl">
+<dt>预测问题</dt><dd>根据用户和物料的特征直接进行行为预测.也可以看作是用户-物料行为矩阵的缺失值补充问题.</dd>
+<dt>排序问题</dt><dd>实际问题中,并不需要精确的预测用户对物料的行为才能进行推荐.可以将推荐看作是将 top-k 物料推荐给用户即可.可以看作是排序问题.</dd>
+</dl>
+
+
+<p>
+推荐系统的目标就是通过提高用户-物料之间交互行为,从而提高运营商收入.为了提高交互行为,推荐系统可行性或者叫做技术性目标为:
+</p>
+<dl class="org-dl">
+<dt>相关性(<i>Relevance</i>)</dt><dd>推荐的物料和用户感兴趣的物料如果具有较高相似性,那么用户肯定更容易进行交互行为.</dd>
+<dt>新颖性(<i>Nelty</i>)</dt><dd>推荐系统如果能够通过用户感兴趣的物料来推荐用户过去没有见过的物料将会提高用户交换行为的可能.如果推荐的物料总是用户看到过的,那么用户会有审美疲劳感.</dd>
+<dt>新奇性(<i>Serendipity</i>)</dt><dd>推荐系统如果能够根据用户的历史行为,挖掘出用户潜在的感兴趣物料.那么会给用户带来一定的惊喜,从而提高用户的满意度.</dd>
+<dt>多样性(<i>Diversity</i>)</dt><dd>推荐系统推荐的 top-k 物料不能互相之间非常相似,这样会增加用户的反感.</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-org8539f4b" class="outline-2">
+<h2 id="org8539f4b">推荐系统常用模型</h2>
+<div class="outline-text-2" id="text-org8539f4b">
+<dl class="org-dl">
+<dt>协同过滤(<i>Collaborative filtering</i>)</dt><dd>通过用户-物料行为进行推荐</dd>
+<dt>基于内容(<i>Content-based</i>)</dt><dd>通过用户和物料的属性特征进行推荐</dd>
+<dt>基于知识(<i>Knowledge-based</i>)</dt><dd>通过用户通过交互提交自己感兴趣的物料筛选条件进行推荐</dd>
+<dt>混合系统(<i>Hybird</i>)</dt><dd>混合采用多种推荐算法进行推荐</dd>
+</dl>
+</div>
+
+
+<div id="outline-container-org316fd4a" class="outline-3">
+<h3 id="org316fd4a">协同过滤 :: collaborative Filtering</h3>
+<div class="outline-text-3" id="text-org316fd4a">
+<p>
+协同过滤可以看作是通过 <code>positive-unlabeled(/PU/) learning</code> 对缺失值进行补全问题.
+</p>
+
+<dl class="org-dl">
+<dt>思想</dt><dd>协同过滤模型通过多个用户对物料的行为信息进行推荐.</dd>
+<dt>挑战</dt><dd>用户-物料行为矩阵非常稀疏.</dd>
+<dt>缺点</dt><dd>无法解决冷启动问题.</dd>
+</dl>
+
+<p>
+协同过滤模型可以细分为两种:
+</p>
+<dl class="org-dl">
+<dt>基于内存方法(<i>Memory-based</i>)</dt><dd>也叫基于近邻的协同过滤算法.又可以细分为两种近邻方法
+<dl class="org-dl">
+<dt>基于用户协同过滤(<i>User-based collaborative filtering</i>)</dt><dd>主要思想相似用户的行为也相似.通过计算和用户最为相似的 top-k 用户,根据 top-k 用户的行为进行加权求和来进行预测.</dd>
+<dt>基于物料协同过滤(<i>Item-based collaborative filtering</i>)</dt><dd>主要思想用户对相似物品的行为也相似.通过计算和物料最为相似的 top-k 个物料,根据用户对 top-k 的物料的行为进行加权求和进行预测.</dd>
+</dl></dd>
+<dt>基于模型方法(<i>Model-based</i>)</dt><dd>采用机器学习和数据挖掘的方法构建预测模型,然后采用该预测模型进行预测.</dd>
+</dl>
+</div>
+
+<ul class="org-ul">
+<li><a id="org448ba74"></a>基于用户协同过滤<br />
+<div class="outline-text-4" id="text-org448ba74">
+<p>
+数学记号:
+</p>
+<dl class="org-dl">
+<dt>\(R=[r_{ij}]\)</dt><dd>用户-物料行为矩阵</dd>
+<dt>\(I_{u}\)</dt><dd>用户 <i>u</i> 具有行为的物料集合</dd>
+</dl>
+
+
+<p>
+基于用户协同过滤首先需要计算相似度top-k的用户集合,然后根据相似用户对物料的行为来进行预测:
+</p>
+<dl class="org-dl">
+<dt>用户相似性度量</dt><dd><p>
+采用基于物料行为向量计算相似度的方法,首先因为不同用户的行为尺度不一,所以首先需要对行为进行去均值,来保证行为数据尺度一致,然后再计算相关性.
+</p>
+\begin{equation}
+  \mu_{u} = \frac{\sum_{k \in I_{u}} r_{uk}}{\vert I_{u} \vert} \forall u \in {1...m}
+\end{equation}
+<dl class="org-dl">
+<dt>Pearson 系数</dt><dd>\begin{equation}
+  Sim(u,v) = Pearson(u,v) = \frac{\sum_{k \in I_{u} \cap I_{v}}(r_{uk}-\mu_{u}) \cdot (r_{vk}-\mu_{v})}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}(r_{uk} - \mu_{u})^2} \cdot \sqrt{\sum_{k \in I_{u} \cap I_{v}}(r_{vk} - \mu_{v})^2}}
+\end{equation}
+
+<blockquote>
+<p>
+严格讲: Pearson系数中的均值 \(\mu_{u}\) 和 \(\mu_{v}\) 应该只用 \(I_{u} \cap I_{v}\) 中的元素计算.
+</p>
+
+<p>
+但是为了提高计算效率,这里采用每个用户全局行为进行一次计算.
+</p>
+</blockquote></dd>
+</dl></dd>
+<dt>top-k用户行为预测</dt><dd><p>
+由于每个人都有自己的行为规则,所以行为具有不同的尺度,可以首先进行去中心化,然后根据top-k用户对物料的行为进行加权预测.
+</p>
+
+\begin{equation}
+s_{uj} = r_{uj} - \mu_{u} \forall u \in {1...m}
+\end{equation}
+
+\begin{align}
+\hat{r}_{[uj]} &= \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot s_{vj}}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert}  \\
+               &= \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot (r_{vj}-\mu_{v})}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert}
+\end{align}</dd>
+</dl>
+</div>
+
+<ul class="org-ul">
+<li><a id="orgf698600"></a>相似性函数变种<br />
+<div class="outline-text-5" id="text-orgf698600">
+<p>
+直接采用 \(\cos\) 函数作为相似性度量函数:
+</p>
+\begin{equation}
+  RawCosine(u, v) = \frac{\sum_{k \in I_{u} \cap I_{v}}r_{uk} \cdot r_{vk}}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{uk}^{2}}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{vk}^{2}}}
+\end{equation}
+
+<p>
+在有些 \(\cos\) 实现中,归一化系数采用所有行为值,而不是两个用户都有行为:
+</p>
+\begin{equation}
+  RawCosine(u, v) = \frac{\sum_{k \in I_{u} \cap I_{v}}r_{uk} \cdot r_{vk}}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{uk}^{2}}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}r_{vk}^{2}}}
+\end{equation}
+
+<p>
+可以看到相似性函数依赖于两个用户具有共同行为的物料多少,可以对共同行为的物料较少的情况进行降权(<i>significance weighting</i>):
+</p>
+\begin{equation}
+  DiscountedSim(u,v) = Sim(u,v) \cdot \frac{\min{(\vert I_{u} \in I_{v} \vert, \beta)}}{\beta}
+\end{equation}
+</div>
+</li>
+
+
+<li><a id="org589f9ce"></a>预测函数变种<br />
+<div class="outline-text-5" id="text-org589f9ce">
+<p>
+除了采用去均值操作外,可以对行为值进行z-score 归一化操作.
+</p>
+
+<dl class="org-dl">
+<dt>计算方差</dt><dd>\begin{equation}
+  \sigma_{u} = \sqrt{\frac{\sum_{j \in I_{u}}(r_{uj}-\mu_{u})^2}{\vert I_{u} \vert - 1}} \forall u \in {1...m}
+\end{equation}</dd>
+
+<dt>行为值标准化</dt><dd>\begin{equation}
+  z_{uj} = \frac{r_{uj} - \mu_{u}}{\sigma_{u}} = \frac{s_{uj}}{\sigma_{u}}
+\end{equation}</dd>
+<dt>预测行为值</dt><dd>\begin{equation}
+  \hat{r}_{uj} = \mu_{u} + \sigma_{u} \frac{\sum_{v \in P_{u}(j)}{Sim(u,v) \cdot z_{vj}}}{\sum_{v \in P_{u}(j)}{\vert Sim(u,v) \vert}}
+\end{equation}
+<p>
+\(P_{u}(j)\) 为与用户u相似度最高的且对物料j具有行为的k个用户集合.
+</p></dd>
+</dl>
+
+
+<p>
+额外,可以通过对相关性系数进行增强(<i>amplify</i>),来增大不同用户对预测结果的影响:
+</p>
+\begin{equation}
+  Sim(u,v) = Pearson(u,v)^{\alpha}
+\end{equation}
+</div>
+</li>
+
+<li><a id="org52549df"></a>长尾效应 (<i>long-tail</i>)<br />
+<div class="outline-text-5" id="text-org52549df">
+<p>
+在推荐系统中推荐物料有一个很有名的效应叫做长尾效应.具有大量行为的物料对用户相似度计算没有区分度.这种情况和自然语言处理中的一些出现频率极高的词对信息检索没有帮助是一个道理.自然语言处理中引入 <code>Invert Document Frequency(idf)</code> 来降低频率极高的词对结果的影响.同理,在相似性计算的时候可以引入 <code>Inverse User Frequency</code>.
+</p>
+
+<p>
+\(m_{j}\) 为对物料j具有行为的用户数量,m为总用户数量,则物料j的权重 \(w_{j}\) 计算如下:
+</p>
+\begin{equation}
+  w_{j} = \log{(\frac{m}{m_{j}})} \forall j \in {1...n}
+\end{equation}
+
+<p>
+在计算相似性和预测阶段,都可以使用 w<sub>j</sub> 对物料进行加权,例如在Person系数中:
+</p>
+\begin{equation}
+  Person(u,v) = \frac{\sum_{k \in I_{u} \cap I_{v}} w_{k} \cdot (r_{uk} - \mu_{u}) \cdot (r_{vk} - \mu_{v})}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{uk}-\mu_{u})^2}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{vk}-\mu_{v})^2}} 
+\end{equation}
+</div>
+</li>
+</ul>
+</li>
+
+
+
+<li><a id="orgfe4d0ec"></a>基于物料协同过滤<br /></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orgb90bbfe" class="outline-2">
+<h2 id="orgb90bbfe">冷启动</h2>
+<div class="outline-text-2" id="text-orgb90bbfe">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">推荐算法</th>
+<th scope="col" class="org-left">用户冷启动</th>
+<th scope="col" class="org-left">物料冷启动</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">协同过滤</td>
+<td class="org-left">x</td>
+<td class="org-left">x</td>
+</tr>
+
+<tr>
+<td class="org-left">基于内容</td>
+<td class="org-left">x</td>
+<td class="org-left">y</td>
+</tr>
+
+<tr>
+<td class="org-left">基于知识</td>
+<td class="org-left">y</td>
+<td class="org-left">y</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-orgcc04bf3" class="outline-2">
+<h2 id="orgcc04bf3">推荐系统攻击问题</h2>
+</div>
+<div id="outline-container-orge852087" class="outline-2">
+<h2 id="orge852087">主动学习</h2>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+在不同的系统中指不同的对象，例如：亚马逊中物料指可售卖商品；新闻客户端下物料指文章/视频；视频网站中指推荐视频。
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+在不同的系统中指不同的行为，例如：亚马逊中行为指购买、收藏、点赞等；新闻客户端中指阅读、评论等。
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: qixiang</p>
+<p class="date">Created: 2019-07-30 Tue 18:07</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
