@@ -49,7 +49,7 @@
 + $I_{u}$ :: 用户 /u/ 具有行为的物料集合
 
 
-基于用户协同过滤首先需要计算相似度top-k的用户集合,然后根据相似用户对物料的行为来进行预测:
+基于用户协同过滤首先需要计算相似度 top-k 的用户集合,然后根据相似用户对物料的行为来进行预测:
 + 用户相似性度量 :: 采用基于物料行为向量计算相似度的方法,首先因为不同用户的行为尺度不一,所以首先需要对行为进行去均值,来保证行为数据尺度一致,然后再计算相关性.
              \begin{equation}
                \mu_{u} = \frac{\sum_{k \in I_{u}} r_{uk}}{\vert I_{u} \vert} \forall u \in {1...m}
@@ -60,11 +60,11 @@
                   \end{equation}
 
                   #+BEGIN_QUOTE
-                  严格讲: Pearson系数中的均值 $\mu_{u}$ 和 $\mu_{v}$ 应该只用 $I_{u} \cap I_{v}$ 中的元素计算.
+                  严格讲: Pearson 系数中的均值 $\mu_{u}$ 和 $\mu_{v}$ 应该只用 $I_{u} \cap I_{v}$ 中的元素计算.
 
                   但是为了提高计算效率,这里采用每个用户全局行为进行一次计算.
                   #+END_QUOTE
-+ top-k用户行为预测 :: 由于每个人都有自己的行为规则,所以行为具有不同的尺度,可以首先进行去中心化,然后根据top-k用户对物料的行为进行加权预测.
++ top-k 用户行为预测 :: 由于每个人都有自己的行为规则,所以行为具有不同的尺度,可以首先进行去中心化,然后根据 top-k 用户对物料的行为进行加权预测.
 
                  \begin{equation}
                  s_{uj} = r_{uj} - \mu_{u} \forall u \in {1...m}
@@ -92,7 +92,7 @@
 \end{equation}
 
 **** 预测函数变种
-除了采用去均值操作外,可以对行为值进行z-score 归一化操作.
+除了采用去均值操作外,可以对行为值进行 z-score 归一化操作.
 
 + 计算方差 :: 
           \begin{equation}
@@ -107,7 +107,7 @@
            \begin{equation}
              \hat{r}_{uj} = \mu_{u} + \sigma_{u} \frac{\sum_{v \in P_{u}(j)}{Sim(u,v) \cdot z_{vj}}}{\sum_{v \in P_{u}(j)}{\vert Sim(u,v) \vert}}
            \end{equation}
-           $P_{u}(j)$ 为与用户u相似度最高的且对物料j具有行为的k个用户集合.
+           $P_{u}(j)$ 为与用户 u 相似度最高的且对物料 j 具有行为的 k 个用户集合.
 
 
 额外,可以通过对相关性系数进行增强(/amplify/),来增大不同用户对预测结果的影响:
@@ -118,19 +118,228 @@
 **** 长尾效应 (/long-tail/)
 在推荐系统中推荐物料有一个很有名的效应叫做长尾效应.具有大量行为的物料对用户相似度计算没有区分度.这种情况和自然语言处理中的一些出现频率极高的词对信息检索没有帮助是一个道理.自然语言处理中引入 =Invert Document Frequency(idf)= 来降低频率极高的词对结果的影响.同理,在相似性计算的时候可以引入 =Inverse User Frequency=.
 
-$m_{j}$ 为对物料j具有行为的用户数量,m为总用户数量,则物料j的权重 $w_{j}$ 计算如下:
+$m_{j}$ 为对物料 j 具有行为的用户数量,m 为总用户数量,则物料 j 的权重 $w_{j}$ 计算如下:
 \begin{equation}
   w_{j} = \log{(\frac{m}{m_{j}})} \forall j \in {1...n}
 \end{equation}
 
-在计算相似性和预测阶段,都可以使用 w_{j} 对物料进行加权,例如在Person系数中:
+在计算相似性和预测阶段,都可以使用 w_{j} 对物料进行加权,例如在 Person 系数中:
 \begin{equation}
   Person(u,v) = \frac{\sum_{k \in I_{u} \cap I_{v}} w_{k} \cdot (r_{uk} - \mu_{u}) \cdot (r_{vk} - \mu_{v})}{\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{uk}-\mu_{u})^2}\cdot\sqrt{\sum_{k \in I_{u} \cap I_{v}}w_{k}\cdot(r_{vk}-\mu_{v})^2}} 
 \end{equation}
 
 *** 基于物料协同过滤
-基于物料的协同过滤算法中,通过计算相似物料来预测行为.
+基于物料的协同过滤模型,计算相似物料,然后根据用户对相似物料的行为来预估目标物料的行为.
 
+在计算相似性之前,首先需要对用户行为进行去均值化.相似度量函数如下:
+\begin{equation}
+  AdjustedCosine(i,j) = \frac{\sum_{u \in U_{i} \cap U_{j}}s_{ui} \cdot s_{uj}}{\sqrt{\sum_{u \in U_{i} \cap U_{j}} s_{ui}^{2}}\cdot\sqrt{\sum_{u \in U_{i} \cap U_{j}} s_{uj}^{2}}}
+\end{equation}
+
+上述相似性度量函数因为需要先进行去行均值化操作,所以叫 /adjusted cosine/.该方法要比 person 要好.
+
+然后根据上述相似性函数度量的结果选取 topk 的物料进行预估:
+\begin{equation}
+  \hat{ut} = \frac{\sum_{j \in Q_{t}(u)}AdjustedCosine(j,t)*r_{uj}}{\sum_{j \in Q_{t}(u)} \vert AdjustedCosine(j,t) \vert}
+\end{equation}
+
+*** 基于用户和基于物料的协同过滤算法对比和总结
+
+**** 对比
+基于物料的协同过滤算法因为是利用用户对自己其他相似的物料的行为来预测,所以一般要比基于用户的协同过滤算法准确一些.并且在用户多于物料的情况下,基于物料的协同过滤算法更为稳定,因为相似物料度量可以参考大量用户的行为,更为精准;基于用户的协同过滤参考的物料信息交集较少,会被少数的行为影响.
+
+反过来说给予用户的协同过滤算法的推荐多样性要好于基于物料的系统过滤算法.
+
+基于物料的协同过滤不需要在每次增加新用户都进行重新的计算,并且一般新用户的增加频率要大于新物料的增加.所以基于物料的协同过滤算法要比基于用户的协同过滤算法更为有效和稳定.
+
+**** 基于紧邻的协同过滤算法的优点和缺点
+基于紧邻的协同过滤算法简单和直观,所以较为容易实现和检查正确性.
+
+主要的缺点是计算量大,近似计算常常需要 $O(m^2)$ 的时间和空间;次要缺点是行为矩阵一般比较稀疏,所以相似性计算结果不够健壮.
+
+**** 统一基于用户和基于物料的协同过滤算法
+基于用户和基于物料的协同过滤算法缺点分别是因为在计算用户相似性忽略了物料之间的相似性;计算物料相似性的时候忽略了用户相似性.所以可以通过计算相似性的时候同时考量用户相似性和物料相似性提高性能.
+
+为了达到统一两种协同过滤算法,首先需要明白两种协同过滤算法基本是相同的,除了用户的行为得分需要去均值,并且一旦去均值化后 Person 系数和 Cosine 系数是相同的.基于这些前提,基于用户和基于物料的方法可以采用如下统一方法来描述预测过程:
+- 对于预测目标 $(u,j)$,采用 cosine 来计算出最为相似的用户和物料,然后根据一个结合函数来决定最为相似的用户和物料.例如:采用物料相似度加上用户相似度来决定最为相似的用户-物料对.
+- 采用第一步中获得的结合函数计算的相似度作加权预测获得预测值.
+
+
+
+
+*** 聚类在基于领域的方法中应用
+基于领域的方法主要的问题是离线相似性计算过程太复杂.假设用户量为 m,那么基于用户的协同过滤算法的计算复杂度为 $O(m^2 \cdot n^{'})$.
+
+为了克服上述计算量大的问题,主要思想是采用聚类模型来替代紧邻计算过程.通过聚类将行为相似的用户聚成多个簇,然后在各个簇内计算 topk 相似用户.这样将相似性度量的 $O(n^2)$ 计算复杂度局限在较小规模的簇内执行.
+
+*** 降维在基于领域的方法中应用
+降维方法可以同时提高基于紧邻的方法的性能和效果的提升.特别是在行为矩阵较为稀疏的话,成对相似性计算非常难以保证计算的健壮性.降维方法通过隐因子模型(/latent factor models/)来将高维稀疏行为矩阵转为低维稠密矩阵.即使两个用户只有非常少的公共行为,在低维稠密矩阵表示下也可以计算出距离.
+
+降维方法一般分为: 1. 对列或者对行进行降维; 2. 同时对行列进行降维,并可以通过降维矩阵还原出原始矩阵,这种降维方法可以看作是基于模型的协同过滤的一种实现方法.
+
+这里先讨论第一种降维方法,在基于用户的协同过滤算法中基础思想是将 $[m,n]$ 矩阵 $R$ 通过主成份分析方法降维到 $[m,d]$,其中 $d \ll n$.
+
+*** SVD-like 降维
+首先需要确定缺失矩阵 R 的补充值问题.两种方法:
++ 用户行为均值,行均值填充
++ 物料行为均值,列均值填充
+
+
+设填充后的矩阵为 $R_{f}$,那么物料相似矩阵[n,n]为 $S=R_{f}^{T}R_{f}$.该矩阵为对称且半正定矩阵,执行对角化:
+\begin{equation}
+  S = P \Delta P^{T}
+\end{equation}
+
+其中: P 为 S 的特征向量矩阵,每一列为一个特征向量. $\Delta$ 为对角矩阵,且为 S 的特征值.
+
+$P_{d}$ 为前 d 大的特征值对应的特征向量构成的矩阵[n,d],则 $R_{f}$ 的低维表示只需要直接执行矩阵乘 $R_{f}P_{d}$,得到低维[m,d]表达矩阵.
+
+上述对缺失矩阵 R 进行补全，不管是采用何种方式都会来带偏执(/bias/).
+
+
+**** 偏执问题
+假设有如下行为矩阵:
+#+CAPTION: 在进行相似性计算时，不管什么方式补全矩阵，都会带来一定的偏执.
+| User Index | Godfather | Gladiator | Nero |
+|------------+-----------+-----------+------|
+|          1 |         1 |         1 | 1    |
+|          2 |         7 |         7 | 7    |
+|          3 |         3 |         1 | 1    |
+|          4 |         5 |         7 | 7    |
+|          5 |         3 |         1 | ?    |
+|          6 |         5 |         7 | ?    |
+|          7 |         3 |         1 | ?    |
+|          8 |         5 |         7 | ?    |
+|          9 |         3 |         1 | ?    |
+|         10 |         5 |         7 | ?    |
+|         11 |         3 |         1 | ?    |
+|         12 |         5 |         7 | ?    |
+
+假设采用列均值来对矩阵进行补全,可以看到在不进行补全前电影 /Gladiator/ 和 /Nero/ 的协方差非常高，因为前四个用户的评分一致。但是如果采用列均值进行补全时,/Nero/ 的均值为 (1+7+1+7)/4=4,这些未有行为的都被补为 4.这些补全的数据会显著的降低 /Gladiator/ 和 /Nero/ 的协方差.但是这些补全的值对 /Godfther/ 和 /Gladiator/ 没有影响.从而使得 /Gladiator/ 和 /Nero/ 的协方差小于 /Godfather/ 和 /Gladiator/ 的协方差.
+
+在稀疏矩阵中,这种偏执尤其会影响推荐效果.如下有两种方法来解决这种问题.
+
+**** 最大似然评估
+有一些重构方法提出基于概率的方法,例如 EM 算法去估计协方差矩阵.在构建概率生成模型的同时直接计算出对应的协方差矩阵.
+
+最简单的方法是计算协方差值的时候,之采用具有行为的对象.
+
+在进行 PCA 降维时,可以采用原始矩阵 R 通过矩阵 $P_{d}$ 进行降维映射,而不采用补全的矩阵 $R_{f}$ 进行映射.
+
+**** 矩阵因子分解
+采用矩阵因子分解方法(/SVD/)对缺失矩阵进行分解,然后重构原始矩阵.
+
+对于行为矩阵 [m,n] R 可以利用 SVD 直接进行分解:
+\begin{equation}
+  R = Q \Sigma P^{T}
+\end{equation}
+
+Q 为 [m,m] 矩阵,其中列为矩阵 $RR^{T}$ 的特征向量.矩阵 P 为 [n,n] 矩阵,其中列为矩阵 $R^{T}R$ 的特征向量. $\Sigma$ 为 [m,n] 对角阵,为矩阵 $R^{T}R$ 和 $RR^{T}$ 的特征值的开方.
+
+可以采用 /truncatedSVD/ 来近似对矩阵进行分解,即只保留 d 个最大的特征值对应的特征向量来构建行为矩阵:
+\begin{equation}
+  R \approx Q_{d} \Sigma_{d} P_{d}^{T}
+\end{equation}
+
+可以看到 $P_{d}$ 为 PCA 降维的映射矩阵, $Q_{d}\Sigma_{d}$ 为 PCA 降维后的矩阵.所以可以看到上式将降维后的矩阵映射回原始矩阵.
+
+SVD 分解方法带来的一个问题就是原始的行为矩阵必须是补全矩阵.可以采用上述的公式,然后采用非线性优化方法来进行参数评估即可.
+
+*** 基于近邻的方法与回归模型关系
+关于基于近邻的方法的一个重要观察是: 1,基于用户的协同过滤方法可以看作是相邻用户对相同物料行为的线性函数;2,基于物料的协同过滤方法可以看作是同一个用户对相邻物料行为的线性函数.
+
+基于上述观点,可以将预估函数改写成如下:
+\begin{equation}
+  \hat{r_{uj}} = \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot (r_{vj} - \mu_{v})}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert }
+\end{equation}
+
+可以看到预估的值为相同其他用户对相同物料的行为的加权线性组合.只是上述的加权值是启发式的,采用用户之间的相似性来进行加权.所以,也可以采用优化方法来对这些加权值进行求解.[fn:3]
+
+**** 基于用户近邻的回归模型
+可以将上述公式中的相似系数替换成优化参数 $w_{vu}^{user}$:
+\begin{equation}
+  \hat{r_{uj}} = \mu_u + \sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - \mu_{v})
+\end{equation}
+其中,$P_{u}(j)$ 在近邻模型中是通过 person 系数来提前定义的.因此大小一定是 k 的.在归回模型中, $P_{u}(j)$ 是提前决定的,然后保留下具有共同行为的用户,所以一般会小于 k.
+
+基于模型的回归模型额外需要定义一个损失函数,来指导模型参数的预估.一般采用均方方差.
+
+***** 稀疏和偏执问题
+上述回归模型的一个问题是 $P_{u}(j)$ 包含的用户数量不定.例如:目标用户 u 对物料 $Gladiator$ 和 $Nero$ 具有行为,目标用户 u 的最近临用户中只有 1 个用户对 $Gladiator$ 具有行为,k 个用户对 $Nero$ 具有行为.那么归回系数 $w_{uv}^{user}$ 将会严重的被 $Gladiator$ 具有行为的用户影响.会带来严重的过拟合问题.
+
+基本思想是改变预测函数,对于物料 j 预估回归值只影响一部分 $\frac{\vert P_{u}(j) \vert}{k}$.
+\begin{equation}
+  \hat{r_{uj}} \cdot \frac{\vert P_{u}(j) \vert}{k} = \mu_{u} + \sum_{v \in P_{u}(j)}{w_{vu}^{user} \cdot (r_{vj}-\mu_{v})}
+\end{equation}
+
+其他启发式的调整也可以使用,例如在书[fn:4]中采用调整系数 $\sqrt{\vert P_{u}(j)\vert/k}$.由于 k 为公共参数,所以可以直接简化为 $\sqrt{\vert P_{u}(j) \vert}$.一个相关的提升是将常量偏移 $\mu_{u}$ 替换成一个偏移变量 $b_{u}$,该参数参与优化.对应的预估函数为:
+\begin{equation}
+  \hat{r_{uj}} = b_{u}^{user} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj}-b_{v}^{user})}{\sqrt{\vert P_{u}(j) \vert}}
+\end{equation}
+
+额外的还可以添加物料侧的偏移项:
+\begin{equation}
+  \hat{r_{uj}} = b_{u}^{user} + b_{j}^{item} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - b_{v}^{user} - b_{j}^{item})}{\sqrt{\vert P_{u}(j) \vert}}
+\end{equation}
+
+此外,推荐对行为矩阵进行全局均值化,然后预估时加回去.
+
+**** 基于物料近邻的回归模型
+基于物料近邻的方法和基于用户近邻的方法非常相似.同样,可以将预估函数中的相似系数 /AdjustedCosine/ 替换成可学习的参数 $w_{jt}^{item}$,公式如下:
+\begin{equation}
+  \hat{ut} = \sum_{j \in Q_{t}(u)}{w_{jt}^{item} \cdot r_{uj}}
+\end{equation}
+
+$Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
+
+其他实现和基于用户近邻的回归模型类似.
+
+**** 统一回归模型
+可以在统一的回归框架下结合上述两种归回模型[fn:4].因此,预估结果同时基于相似用户和相似物料,预估函数如下:
+\begin{equation}
+  \hat{uj} = b_{u}^{user} + b_{j}^{item} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj}- B_{vj})}{\sqrt{\vert P_{u}(j) \vert }} + \frac{\sum_{i \in Q_{j}(u)} w_{ij}^{item} \cdot (r_{ui}- B_{ui})}{\sqrt{\vert Q_{j}(u) \vert }}
+\end{equation}
+
+**** 相似加权联合插值
+在[fn:5]中提出了不同的统一回归模型.基础思想是在采用基于用户的回归模型来预测用户 u 的行为,然后不是用观察到的物料的行为来进行对比,而是采用该用户在其他物料上的行为进行比较.
+
+假设 S 为行为矩阵中所有的用户-物料对集合:
+\begin{equation}
+  S = {(u,t): r_{ut} is observed}
+\end{equation}
+
+损失函数如下:
+\begin{aligned}
+  Minimize \sum_{s:(u,s) \in S} \sum_{j:j \neq s} AdjustedCosine(j,s) \cdot (r_{us}-\hat{r_{uj}})^2 \\
+  = \sum_{s:(u,s) \in S} \sum_{j:j \neq s} AdjustedCosine(j,s) \cdot (r_{us} - [ \,\mu_{u} + \sum_{v \in P_{u}(j)}w_{vu}^{user}\cdot(r_{vj}-\mu_{v})] \,)^2
+\end{aligned}
+
+看到 /Adjusted Cosine/ 作为损失的系数,从而强迫用户对相似物料的行为也相似.可以看到上述损失函数中同时用到了用户和物料相似函数,但是是不同的方式:
+1. 物料相似度用来作为损失函数系数,从而保证用户对相似物料具有相似行为.
+2. 用户相似度用来预测行为得分.
+
+**** 稀疏线性模型 - Sparse Linear Models (SLIM)
+基于物料的回归模型,论文[fn:6]提出了稀疏线性模型族(/sparse linear models/).该模型通过引入正则化方法来增加模型的稀疏性.该模型只能处理行为是非负的情况.所以,行为矩阵中的没有行为的物料可以直接补全为 0.
+
+不像之前的近邻回归方法限制回归系数为近邻的.SLIM 中预估函数如下:
+\begin{equation}
+  \hat{r_{ut}} = \sum_{j=1}^{n} w_{jt}^{item} \cdot r_{uj} \forall u \in {1...m}, \forall t \in {1...n}
+\end{equation}
+
+需要注意是的,右侧需要设置 $w_{tt}^{item}=0$ 来防止模型过拟合. $W^{item}=[w_{jt}^{item}]$ 表示是物料相似回归矩阵.因此,假设矩阵 $W^{item}$ 的对角元素限制为 0,那么上述的预测可以用如下矩阵表示:
+\begin{equation}
+  \hat{R} = RW^{item} \\
+  Diagonal(W^{item}) = 0
+\end{equation}
+
+因此,主要的优化目标是最小化 /Frobenius norm/ $\|R-RW^{item} \|^2$.
+\begin{align}
+  \min_{w} \quad J_{t}^{s} &= \sum_{u=1}^{m}(r_{ut}-\hat{r_{ut}})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
+  &= \sum_{u=1}^{m}(r_{ut}-\sum_{j=1}^{n}w_{jt}^{item} \cdot r_{uj})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
+  \mathrm{s.t.} \\
+  w_{jt}^{item} & \geq 0 \forall j \in {1...n} \\
+  w_{tt}^{item} & = 0
+\end{align}
 
 * 冷启动
 | 推荐算法 | 用户冷启动 | 物料冷启动 |
@@ -142,6 +351,14 @@ $m_{j}$ 为对物料j具有行为的用户数量,m为总用户数量,则物料j�
 * 推荐系统攻击问题
 * 主动学习
 * Footnotes
+
+[fn:6] X. Ning and G. Karypis. SLIM: Sparse linear methods for top-N recommender systems. IEEE International Conference on Data Mining, pp. 497–506, 2011.
+
+[fn:5] Scalable collaborative filtering with jointly derived neighbor-hood interpolation weights
+
+[fn:4] Y. Koren and R. Bell. Advances in collaborative filtering. Recommender Systems Handbook, Springer, pp. 145–186, 2011. (Extended version in 2015 edition of hand- book).
+
+[fn:3] Factorization meets the neighborhood: a multifaceted collaborative filtering model
 
 [fn:2] 在不同的系统中指不同的行为，例如：亚马逊中行为指购买、收藏、点赞等；新闻客户端中指阅读、评论等。
 
