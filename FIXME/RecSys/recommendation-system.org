@@ -2,7 +2,7 @@
 #+AUTOR: stupid-coder
 #+EMAIL: stupid_coder@163.com
 #+STARTUP: indent
-#+OPTIONS: H:2 num:nil
+#+OPTIONS: H:3 num:nil
 
 #+BEGIN_QUOTE
 推荐系统核心思想就是根据用户和物料之间的行为数据进行推荐。
@@ -28,7 +28,6 @@
 + 基于内容(/Content-based/) :: 通过用户和物料的属性特征进行推荐
 + 基于知识(/Knowledge-based/) :: 通过用户通过交互提交自己感兴趣的物料筛选条件进行推荐
 + 混合系统(/Hybird/) :: 混合采用多种推荐算法进行推荐
-
 
 ** 协同过滤 :: collaborative Filtering
 协同过滤可以看作是通过 =positive-unlabeled(/PU/) learning= 对缺失值进行补全问题.
@@ -163,7 +162,6 @@ $m_{j}$ 为对物料 j 具有行为的用户数量,m 为总用户数量,则物�
 为了达到统一两种协同过滤算法,首先需要明白两种协同过滤算法基本是相同的,除了用户的行为得分需要去均值,并且一旦去均值化后 Person 系数和 Cosine 系数是相同的.基于这些前提,基于用户和基于物料的方法可以采用如下统一方法来描述预测过程:
 - 对于预测目标 $(u,j)$,采用 cosine 来计算出最为相似的用户和物料,然后根据一个结合函数来决定最为相似的用户和物料.例如:采用物料相似度加上用户相似度来决定最为相似的用户-物料对.
 - 采用第一步中获得的结合函数计算的相似度作加权预测获得预测值.
-
 
 
 
@@ -332,7 +330,7 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
   Diagonal(W^{item}) = 0
 \end{equation}
 
-因此,主要的优化目标是最小化 /Frobenius norm/ $\|R-RW^{item} \|^2$.
+因此,主要的优化目标是最小化 /Frobenius norm/ $\|R-RW^{item} \|^2$.对于物料 t,损失函数如下:
 \begin{align}
   \min_{w} \quad J_{t}^{s} &= \sum_{u=1}^{m}(r_{ut}-\hat{r_{ut}})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
   &= \sum_{u=1}^{m}(r_{ut}-\sum_{j=1}^{n}w_{jt}^{item} \cdot r_{uj})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
@@ -340,6 +338,103 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
   w_{jt}^{item} & \geq 0 \forall j \in {1...n} \\
   w_{tt}^{item} & = 0
 \end{align}
+
+上述损失中最后两项分别为 L2-和 L1-正则,合起来叫做 /elastic-net regularizer/.L1-正则用来增加系数稀疏性,稀疏性确保预测的行为结果是由其他一部分具有相关性物料的线性组合,保证了结果具有较好的可解释性.
+
+*** 图模型在基于近邻模型中应用
+行为矩阵的稀疏性在基于近邻模型中近似计算中带来了很大的挑战,图模型可以用来计算相似性.图能够提供用户或物料之间结构化表示,从而实现多种推荐模型.
+
+**** 用户-物料图模型
+可以在用户-物料图上的结构传递性来定义近邻,从而替代 /Person/ 相关性系数,应对行为矩阵的稀疏问题.
+
+用户-物料图采用单向二部图 $G=(N_{u} \cup N_{i}, A)$ 定义, $N_{u}$ 为用户节点集合, $N_{i}$ 为物料节点集合.图中的边只存在与用户和物料之间. $A$ 为边的集合.
+
+#+CAPTION: 行为矩阵和对应的用户-物料图表示
+[[file:assets/user-item-graph.png]]
+
+例如,上图中表示的就是行为矩阵和对应的用户-物料图表示.基于图的主要优点是两个用户不需要有很多相同的物料行为,只需要具有较短的路径能把两个用户联系在一起就可以计算相似性.也就是说可以通过两个节点的间接连接(/indirect connectivity/)来定义近邻.
+
+间接连接通过基于路径(/path-based/)或者基于游走(/walk-based/)的方法来定义.
+
+***** 随即游走(/random walk/)定义近邻
+用户的近邻定义为以该用户作为起点,然后在二部图上随机游走时高频次碰到的用户集合.随机游走(/random-walk/)方法主要应用在搜索排序中,可以采用搜索中经典的 /PageRank/ 或者 /SimRank/ 方法来获取 tok 用户.
+
+***** /Katz Measure/ 定义近邻
+除了采用概率度量方法(例如随机游走),也可以采用加权游走来定义近邻.每次游走时,权值都进行衰减,这种两个节点之间加权步数叫做 /Katz Measure/.
+
+-----
+#+BEGIN_QUOTE
+=定义 Katz Measure= 设 $n_{ij}^{(t)}$ 为节点 i 和节点 j 之间步长为 t 的路径数量.用户定义衰减系数 $\beta < 1$, Katz 度量如下:
+\begin{equation}
+  Katz(i,j) = \sum_{t=1}^{\infty} \beta^{t} \cdot n_{ij}^{(t)}
+\end{equation}
+#+END_QUOTE
+-----
+
+设 K 为 [m,m] 的用户之间的 Katz 系数矩阵.A 为二部图对称邻接矩阵.则 /Katz/ 系数矩阵 K 计算过程如下:
+\begin{equation}
+  K = \sum_{i=1}^{\infty}(\beta A)^{i} = (I-\beta A)^{-1} - I
+\end{equation}
+
+$\beta$ 需要比矩阵 A 的最大特征值的倒数小就可以保证上述的无穷公式收敛.
+
+一旦计算出 K 矩阵,就可以选取每个用户的 topk 用户作为近邻,从而预估行为.
+
+**** 用户-用户图模型
+在用户-物料图模型中,用户-用户的关联关系通过在用户-物料二部图中奇数跳跃来确定.除了上述方法,可以直接采用 2 级跳跃来创建用户-用户图.用户-用户图中的边通过考虑两个用户和物料之间的关系(数量/权值等)携带更多的信息.
+
+用户-用户图构建如下:
++ 图中的节点 u 对应[m,n]用户-物料矩阵中的 m 用户中的一个.$I_{u}$ 为用户 u 具有行为的物料集合,$I_{v}$ 为用户 v 具有行为的物料集合.
++ 图中的边创建的方法叫做 /horting/. horting 是一种用户和用户之间非对称关系,主要依赖于两个用户具有行为的相似物料.
+  
+  
+-----
+#+BEGIN_QUOTE
+=定义 Horting= 如果如下条件中的任意一条满足,就可以说用户 u hort 用户 v 的关系为 (F,G):
+\begin{equation}
+  \vert I_{u} \cap I_{v} \vert \geq F \\
+  \vert I_{u} \cap I_{v} \vert / \vert I_{u} \vert \geq G
+\end{equation}
+#+END_QUOTE
+-----
+
+F 和 G 为算法参数.
+
+----
+#+BEGIN_QUOTE
+=定义 Predicatability= 如果用户 u hort 用户 v,并且存在一个线性变换函数 $f(\cdot)$ 满足如下条件,则可以称用户 v predict 用户 u:
+\begin{equation}
+  \frac{\sum_{k \in I_{u} \cap I_{v}}\vert r_{uk} - f(r_{vk}) \vert}{\vert I_{u} \cap I_{v} \vert} \leq U
+\end{equation}
+#+END_QUOTE
+----
+
+如果用户-用户图中每一条边都满足上述的线性变换约束,则该图为 /user-user predictability graph/.线性变换定义了预估的方式,在用户链中可以通过链头用户的行为预估链尾用户的行为.用户 u 对物料 k 的行为可以通过所有距离 u 最短路径上对物料 k 具有行为的用户来预测.
+
+例如: 假设一个长度为 r 的用户 u 到用户 r 的有向路径.设 $f_{1},...,f_{r}$ 表示用户 u 到用户的有向路径上的线性变换函数.则用户 u 对物料 k 的预估行为值 $\hat{r_{uk}^{()}}$ 可以应用 r 个线性变换来获得:
+\begin{equation}
+  \hat{r_{uk}^{v}} = (f_{1} \cicr f_{2} \cicr ... \cicr f_{r})(r_{vk})
+\end{equation}
+
+最终的预估得分对所有满足条件的用户 v 进行加权平均即可.
+
+更多 horting 方法可以参考[fn:7].
+
+**** 物料-物料图
+同理,也可以构造物料-物料图来进行推荐,该带权值的有向图也叫做 /correlation graph/.如果物料 i 和物料 j 具有一个共同用户,那么在物料-物料图中有向边(i,j)和(j,i)存在.
+
+设 $U_{i}$ 为对物料 i 具有行为的用户集合, $U_{j}$ 为对物料 j 具有行为的用户集合.权值计算如下:
++ 初始化权值 w_{i,j} 为 $\vert U_{i} \cap U_{j} \vert$.初始化时权值矩阵为对称矩阵.
++ 对权值进行归一化,即一个节点的所有出度的边的和为 1.该归一化操作后,权值矩阵将不再是对称矩阵.该权值分布对应于随即游走的概率.具体参考下图.
+  #+CAPTION: 行为矩阵和对应的相关性图
+  [[file:assets/item-item-graph.png]]
+
+
+可以看到上述构建没有考虑行为得分,也可以用其他方式构造相关性图.例如:采用两个物料的行为向量的 cosine 值.
+
+在物料-物料图构建完成后,就可以确定近邻集合,然后进行行为预估.也可以采用 /PageRank/ 直接计算推荐得分,叫做 /ItemRank/.
+
+** 基于模型的协同过滤 :: Model-Based Collaborative Filtering
 
 * 冷启动
 | 推荐算法 | 用户冷启动 | 物料冷启动 |
@@ -351,6 +446,8 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
 * 推荐系统攻击问题
 * 主动学习
 * Footnotes
+
+[fn:7] C. Aggarwal, J. Wolf, K.-L. Wu, and P. Yu. Horting hatches an egg: a new graph theoretic approach to collaborative filtering. ACM KDD Conference, pp. 201–212, 1999.
 
 [fn:6] X. Ning and G. Karypis. SLIM: Sparse linear methods for top-N recommender systems. IEEE International Conference on Data Mining, pp. 497–506, 2011.
 
