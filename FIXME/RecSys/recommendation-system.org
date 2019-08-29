@@ -248,7 +248,7 @@ SVD 分解方法带来的一个问题就是原始的行为矩阵必须是补全�
 
 基于上述观点,可以将预估函数改写成如下:
 \begin{equation}
-  \hat{r_{uj}} = \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot (r_{vj} - \mu_{v})}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert }
+  \hat{r}_{uj} = \mu_{u} + \frac{\sum_{v \in P_{u}(j)}Sim(u,v) \cdot (r_{vj} - \mu_{v})}{\sum_{v \in P_{u}(j)}\vert Sim(u,v) \vert }
 \end{equation}
 
 可以看到预估的值为相同其他用户对相同物料的行为的加权线性组合.只是上述的加权值是启发式的,采用用户之间的相似性来进行加权.所以,也可以采用优化方法来对这些加权值进行求解.[fn:3]
@@ -256,7 +256,7 @@ SVD 分解方法带来的一个问题就是原始的行为矩阵必须是补全�
 **** 基于用户近邻的回归模型
 可以将上述公式中的相似系数替换成优化参数 $w_{vu}^{user}$:
 \begin{equation}
-  \hat{r_{uj}} = \mu_u + \sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - \mu_{v})
+  \hat{r}_{uj} = \mu_u + \sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - \mu_{v})
 \end{equation}
 其中,$P_{u}(j)$ 在近邻模型中是通过 person 系数来提前定义的.因此大小一定是 k 的.在归回模型中, $P_{u}(j)$ 是提前决定的,然后保留下具有共同行为的用户,所以一般会小于 k.
 
@@ -267,17 +267,17 @@ SVD 分解方法带来的一个问题就是原始的行为矩阵必须是补全�
 
 基本思想是改变预测函数,对于物料 j 预估回归值只影响一部分 $\frac{\vert P_{u}(j) \vert}{k}$.
 \begin{equation}
-  \hat{r_{uj}} \cdot \frac{\vert P_{u}(j) \vert}{k} = \mu_{u} + \sum_{v \in P_{u}(j)}{w_{vu}^{user} \cdot (r_{vj}-\mu_{v})}
+  \hat{r}_{uj} \cdot \frac{\vert P_{u}(j) \vert}{k} = \mu_{u} + \sum_{v \in P_{u}(j)}{w_{vu}^{user} \cdot (r_{vj}-\mu_{v})}
 \end{equation}
 
 其他启发式的调整也可以使用,例如在书[fn:4]中采用调整系数 $\sqrt{\vert P_{u}(j)\vert/k}$.由于 k 为公共参数,所以可以直接简化为 $\sqrt{\vert P_{u}(j) \vert}$.一个相关的提升是将常量偏移 $\mu_{u}$ 替换成一个偏移变量 $b_{u}$,该参数参与优化.对应的预估函数为:
 \begin{equation}
-  \hat{r_{uj}} = b_{u}^{user} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj}-b_{v}^{user})}{\sqrt{\vert P_{u}(j) \vert}}
+  \hat{r}_{uj} = b_{u}^{user} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj}-b_{v}^{user})}{\sqrt{\vert P_{u}(j) \vert}}
 \end{equation}
 
 额外的还可以添加物料侧的偏移项:
 \begin{equation}
-  \hat{r_{uj}} = b_{u}^{user} + b_{j}^{item} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - b_{v}^{user} - b_{j}^{item})}{\sqrt{\vert P_{u}(j) \vert}}
+  \hat{r}_{uj} = b_{u}^{user} + b_{j}^{item} + \frac{\sum_{v \in P_{u}(j)} w_{vu}^{user} \cdot (r_{vj} - b_{v}^{user} - b_{j}^{item})}{\sqrt{\vert P_{u}(j) \vert}}
 \end{equation}
 
 此外,推荐对行为矩阵进行全局均值化,然后预估时加回去.
@@ -303,14 +303,14 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
 
 假设 S 为行为矩阵中所有的用户-物料对集合:
 \begin{equation}
-  S = {(u,t): r_{ut} is observed}
+  S = \{(u,t): r_{ut}\ is\ observed\}
 \end{equation}
 
 损失函数如下:
-\begin{aligned}
-  Minimize \sum_{s:(u,s) \in S} \sum_{j:j \neq s} AdjustedCosine(j,s) \cdot (r_{us}-\hat{r_{uj}})^2 \\
+\begin{align}
+  Minimize \sum_{s:(u,s) \in S} \sum_{j:j \neq s} AdjustedCosine(j,s) \cdot (r_{us}-\hat{r}_{uj})^2 \\
   = \sum_{s:(u,s) \in S} \sum_{j:j \neq s} AdjustedCosine(j,s) \cdot (r_{us} - [ \,\mu_{u} + \sum_{v \in P_{u}(j)}w_{vu}^{user}\cdot(r_{vj}-\mu_{v})] \,)^2
-\end{aligned}
+\end{align}
 
 看到 /Adjusted Cosine/ 作为损失的系数,从而强迫用户对相似物料的行为也相似.可以看到上述损失函数中同时用到了用户和物料相似函数,但是是不同的方式:
 1. 物料相似度用来作为损失函数系数,从而保证用户对相似物料具有相似行为.
@@ -321,7 +321,7 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
 
 不像之前的近邻回归方法限制回归系数为近邻的.SLIM 中预估函数如下:
 \begin{equation}
-  \hat{r_{ut}} = \sum_{j=1}^{n} w_{jt}^{item} \cdot r_{uj} \forall u \in {1...m}, \forall t \in {1...n}
+  \hat{r}_{ut} = \sum_{j=1}^{n} w_{jt}^{item} \cdot r_{uj} \forall u \in {1...m}, \forall t \in {1...n}
 \end{equation}
 
 需要注意是的,右侧需要设置 $w_{tt}^{item}=0$ 来防止模型过拟合. $W^{item}=[w_{jt}^{item}]$ 表示是物料相似回归矩阵.因此,假设矩阵 $W^{item}$ 的对角元素限制为 0,那么上述的预测可以用如下矩阵表示:
@@ -332,7 +332,7 @@ $Q_{t}(u)$ 最近临集合可以采用 /AdjustedCosine/ 来选取.
 
 因此,主要的优化目标是最小化 /Frobenius norm/ $\|R-RW^{item} \|^2$.对于物料 t,损失函数如下:
 \begin{align}
-  \min_{w} \quad J_{t}^{s} &= \sum_{u=1}^{m}(r_{ut}-\hat{r_{ut}})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
+  \min_{w} \quad J_{t}^{s} &= \sum_{u=1}^{m}(r_{ut}-\hat{r}_{ut})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
   &= \sum_{u=1}^{m}(r_{ut}-\sum_{j=1}^{n}w_{jt}^{item} \cdot r_{uj})^2 + \lambda \cdot \sum_{j=1}^{n}(w_{jt}^{item})^2 + \lambda_{1} \cdot \sum_{j=1}^{n}\vert w_{jt}^{item}\vert \\
   \mathrm{s.t.} \\
   w_{jt}^{item} & \geq 0 \forall j \in {1...n} \\
@@ -400,20 +400,20 @@ $\beta$ 需要比矩阵 A 的最大特征值的倒数小就可以保证上述的
 
 F 和 G 为算法参数.
 
-----
+-----
 #+BEGIN_QUOTE
 =定义 Predicatability= 如果用户 u hort 用户 v,并且存在一个线性变换函数 $f(\cdot)$ 满足如下条件,则可以称用户 v predict 用户 u:
 \begin{equation}
   \frac{\sum_{k \in I_{u} \cap I_{v}}\vert r_{uk} - f(r_{vk}) \vert}{\vert I_{u} \cap I_{v} \vert} \leq U
 \end{equation}
 #+END_QUOTE
-----
+-----
 
 如果用户-用户图中每一条边都满足上述的线性变换约束,则该图为 /user-user predictability graph/.线性变换定义了预估的方式,在用户链中可以通过链头用户的行为预估链尾用户的行为.用户 u 对物料 k 的行为可以通过所有距离 u 最短路径上对物料 k 具有行为的用户来预测.
 
-例如: 假设一个长度为 r 的用户 u 到用户 r 的有向路径.设 $f_{1},...,f_{r}$ 表示用户 u 到用户的有向路径上的线性变换函数.则用户 u 对物料 k 的预估行为值 $\hat{r_{uk}^{()}}$ 可以应用 r 个线性变换来获得:
+例如: 假设一个长度为 r 的用户 u 到用户 r 的有向路径.设 $f_{1},...,f_{r}$ 表示用户 u 到用户的有向路径上的线性变换函数.则用户 u 对物料 k 的预估行为值 $\hat{r}_{uk}^{v}$ 可以应用 r 个线性变换来获得:
 \begin{equation}
-  \hat{r_{uk}^{v}} = (f_{1} \cicr f_{2} \cicr ... \cicr f_{r})(r_{vk})
+  \hat{r}_{uk}^{v} = (f_{1} \circ f_{2} \circ ... \circ f_{r})(r_{vk})
 \end{equation}
 
 最终的预估得分对所有满足条件的用户 v 进行加权平均即可.
@@ -435,6 +435,142 @@ F 和 G 为算法参数.
 在物料-物料图构建完成后,就可以确定近邻集合,然后进行行为预估.也可以采用 /PageRank/ 直接计算推荐得分,叫做 /ItemRank/.
 
 ** 基于模型的协同过滤 :: Model-Based Collaborative Filtering
+基于近邻的方法可以看作是 /k-nearest neighbor classifiers/.
+
+基于模型的方法是先根据数据学习到一个模型,然后使用该模型进行预测.
+
+基于模型的方法要比基于近邻的方法的优势是:
++ 占用空间更少 :: 一般模型的空间要小于最开始的行为矩阵.
++ 训练速度和预测速度 :: 模型的训练速度要比近邻方法中相似性计算快,并且预测速度也要比近邻方法快.
++ 过拟合 :: 基于模型的方法可以很容易的引入正则化等一系列方法来抑制过拟合问题.
+
+*** 分类和回归决策树
+决策树通过递归的对数据空间进行分片,最后对分片数据进行预测的算法.对数据进行分片的时候,依赖于切分标准(/split criteria/),基本准则是切分后的数据里数据更为纯粹.
+
+分片纯粹程度可以采用加权 /Gini index/ 来度量.假设切分后的某个子树中不同分类的比例为 $p_{1}...p_{r}$,那么该子树的 /Gini Index/ 计算公式如下:
+\begin{equation}
+  G(S) = 1 - \sum_{i=1}^{r} p_{i}^{2}
+\end{equation}
+
+/Gini Index/ 值在 0-1 之间,较小的值表示该子树更为纯粹.那么决定采用哪个特征进行切分时,需要综合考虑切分后形成的所有子树的 /Gini Index/.例如切分后有两个子树 $S_{1}$ 和 $S_{2}$,n_{1} 和 n_{2} 为两个子树包含的样本个数,则该分片的 /Gini Index/ 计算公式如下:
+\begin{equation}
+  Gini(S \Rightarrow [S_1,S_2]) = \frac{n_{1} \cdot G(S_{1}) + n_{2} \cdot G(S_{2}}{n_{1}+n_{2}}
+\end{equation}
+
+通过上述公式来选择每次切分采用的特征对象.可以切分到子树只包含某一类的样本时候,或者将所有特征都切分完成后停止,然后该叶节点用样本中分类最多的分类作为该叶节点分类.
+
+回归树中,切分标准不再采用 /Gini Index/,而是采用方差来选择切分特征.那么叶节点可以采用均值来预测回归,也可以采用线性模型来预测.
+
+**** 扩展决策树到协同过滤
+决策树无法直接应用在协同过滤中,因为:1.没有明显的特征和标签的区分;2.推荐场景下的行为矩阵非常稀疏.
+
+第一个问题很好解决,可以构建多个决策树,假设行为矩阵为 [m,n],那么构造 n 个决策树,每个决策树将对应物料当作目标,其他物料当成特征即可.
+
+第二个问题就不太好解决.考虑在根据某个物料进行分片的时候,由于行为矩阵非常稀疏,那么这些没有行为的样本应该分到哪一个分片呢?理论上是分到所有子树去,但是这样的话,大量的样本具有很多条路径,那么最终进行预测时候会有很多得分,如何合并呢?
+
+更为合理的方法是将高维稀疏的行为矩阵映射到到低维稠密矩阵.具体做法是如果预测 jth 物料,首先去掉物料 j 的行为列,构建[m,n-1]行为矩阵.然后将该行为矩阵映射到低维矩阵(例如:svd 或者 pca).然后进行预测即可.决策树需要保存下特征值和特征向量.
+
+*** 基于规则的协同过滤
+关联规则(/association rules/)和协同过滤算法非常相似,因为关联规则第一次提出来就是为了分析超市商品之间的关系的.
+
+假设有一个交易数据库 $T = \{\tau_{1}...\tau_{m}\}$,包含 n 个商品的 m 条交易记录. $I$ 为商品集,则每个交易 $\tau_{i}$ 中包含的商品都是 $I$ 的子集.关联规则主要是挖掘出商品之间的关联关系.主要是定义两种描述值:支持度 /support/ 和 置信度 /confidence/.
+
+-----
+#+BEGIN_QUOTE
+=定义 支持度= 一个商品子集 $X \subseteq I$ 的支持度为在交易数据库中包含商品子集 $X$ 的比例.
+#+END_QUOTE
+-----
+
+并且定义一个支持度的阈值 s,超过该阈值的商品子集定义为频繁子集.
+
+-----
+#+BEGIN_QUOTE
+=定义 置信度= 置信度为包含商品 X 后,又包含商品 Y 的条件概率.计算为同时包含商品 $X \cup Y$ 的支持度除以 $X$ 的支持度.
+#+END_QUOTE
+-----
+
+基于以上定义,可以知道如果支持度满足阈值,并且对应的置信度满足阈值,那么就可以给出关联规则 $X \Rightarrow Y$ 为真,表示购买了 X 商品集的客户通常也会买 Y 商品集.
+
+-----
+=定义 关联规则= 满足如下两个条件的规则 $X \Rightarrow Y$ 为满足最小支持度为 s,最小置信度为 c 的关联规则:
+1. $X \cup Y$ 的支持度至少为 s.
+2. $X \Rightarrow Y$ 的置信度至少为 c.
+-----
+
+从数据集中找到关联规则的算法分两阶段.第一阶段,计算满足最小支持阈值 s 的商品集合.从这些集合中分裂成两个集合 $(X,Z-X)$ 创建关联规则 $X \Rightarrow Z-X$.保留满足最小置信度的规则.
+
+**** 应用关联规则到协同过滤
+首先,对于单值行为矩阵(购买)中缺失值进行补 0,虽然补 0 在很多行为矩阵中都会带来一定的偏执,但是对于单值行为矩阵带来的偏执较少.这样行为矩阵可以看作为补全行为矩阵.
+
+第一步是挖掘出满足支持度和置信度阈值的规则.这两个阈值可以看作是两个超参,用来最大化预测准确率.并且在构建关联规则时,只保留 Y 为单个物料的规则.这些规则就是模型,用来对满足 X 的用户推荐 Y 物料.对于用户找到用户满足 X 的所有规则,然后按照置信度选取 topk 物料进行推荐.
+
+上述方法只能处理单值行为矩阵.对于多值的行为矩阵可以将物料-行为得分当作一个虚拟的物料,例如(物料=面包,行为=不喜欢).在新的虚拟的物料集上进行上述算法即可.
+
+*** 朴素贝叶斯协同过滤
+假设行为矩阵的得分只有较少数量的不同得分,这些得分看作是不同种类的得分,之间没有序列关系.例如:喜欢,中立,不喜欢.
+
+假设有 l 个行为的得分 $\nu_{1}...\nu_{l}$.
+
+朴素贝叶斯模型是一个生成模型,主要用来进行分类.可以将物料作为特征,用户作为样例,采用分类模型对缺失行为进行预测.主要的挑战是任意的特征(物料)都可以时协同过滤中的目标.并且特征变量是不完整的.这些问题可以通过对朴素贝叶斯模型进行微调来处理.
+
+考虑 /u/th 用户具有行为的物料集为 $I_{u}$.那么贝叶斯分类器需要预测用户 u 对物料 j 的未知行为 $r_{uj}$.可以知道 $r_{uj}$ 为离散目标值中的一个 ${\nu_{1}...\nu_{l}}$.因此,需要计算出用户具有 $I_{u}$ 的行为后,$r_{uj}$ 为这些离散值的条件概率 $P(r_{uj}=\nu_{s}\vert Observed\ ratings\ in\ I_{u})$.
+
+贝叶斯概率公式:
+\begin{equation}
+  P(A \vert B) = \frac{P(A) \cdot P(B \vert A)}{P(B)}
+\end{equation}
+
+因此,对于目标值 $s \in \{1...l\}$,条件概率为:
+\begin{equation}
+  P(r_{uj}=\nu_{s} \vert Observed\ ratings\ in\ I_{u}) = \frac{P(r_{uj}=\nu_{s}) \cdot P(Observed\ ratings\ in\ I_{u} \vert r_{uj} = \nu_{s})}{P(Observed\ ratings\ in\ I_{u})}
+\end{equation}
+
+可以看到公式右边的分母和目标值 s 无关的值,如果只是需要求取最大概率值,公式如下:
+\begin{equation}
+  P(r_{uj} = \nu_s \vert Observed\ ratings\ in\ I_{u}) \propto P(r_{uj} = \nu_{s}) \cdot P(Observed\ ratings\ in\ I_{u} \vert r_{uj} = \nu_{s})
+\end{equation}
+
+$P(r_{uj}=\nu_s)$ 为 $r_{uj}$ 的先验概率,为所有用户对物料 j 具有行为 $\nu_{s}$ 的比例.朴素贝叶斯指的就是在计算 $P(Observed ratings in I_{u} \vert r_{uj} = \nu_{s})$ 假设用户在不同物料上的行为时条件独立的.具体表示如下:
+\begin{equation}
+  P(Observed\ ratings\ in\ I_{u} \vert r_{uj} = \nu_{s}) = \prod_{k \in I_{u}}P(r_{uk} \vert r_{uj} = \nu_s)
+\end{equation}
+
+所以最终的后验概率计算公式如下:
+\begin{equation}
+  P(r_{uj} = \nu_s \vert Observed\ ratings\ in\ I_{u}) \propto P(r_{uj} = \nu_{s}) \cdot \prod_{k \in I_{u}}P(r_{uk} \vert r_{uj} = \nu_s)
+\end{equation}
+
+$r_{uj}$ 后验概率可以通过如下两个方式来预测 $\hat{r}_{uj}$:
++ 可以对于每一个 $s \in \{1...l\}$,计算上述公式,然后取最大后验概率的 s 作为预测结果,公式如下
+  \begin{align}
+    \hat{r}_{uj} &= \arg\max_{\nu_{s}} P(r_{uj} = \nu_{s} \vert Observed\ ratings\ in\ I_{u}) \\
+    &= \arg\max_{\nu_{s}} P(r_{uj} = \nu_{s}) \cdot \prod_{k \in I_{u}} P(r_{uk} \vert r_{uj} = \nu_{s})
+  \end{align}
+  这种方法将行为得分当成分类值并且忽略掉行为得分的序列.当行为得分种类较少是一个可行的方法.
++ 可以采用后验概率对预估得分加权平均作为预估结果.公式如下:
+  \begin{align}
+    \hat{r}_{uj} &= \frac{\sum_{s=1}^{l}\nu_{s} \cdot P(r_{uj}=\nu_{s} \vert Observed\ ratings\ in\ I_{u})}{\sum_{s=1}^{l} P(r_{uj}=\nu_{s} \vert Observed\ ratings\ in\ I_{u})} \\
+    &= \frac{\sum_{s=1}^{l}\nu_{s} \cdot P(Observed\ ratings\ in\ I_{u} \vert r_{uj}=\nu_{s})}{\sum_{s=1}^{l} P(Observed\ ratings\ in\ I_{u}) \vert r_{uj}=\nu_{s})} \\
+    &= \frac{\sum_{s=1}^{l}\nu_{s} \cdot \prod_{k \in I_{u}} P(r_{uk} \vert r_{uj} = \nu_{s})}{P(r_{uk} \vert r_{uj} = \nu_{s})} \\
+  \end{align}
+
+
+可以看到基于条件概率的贝叶斯是基于物料的方法.
+
+**** 抑制过拟合
+当行为矩阵非常稀疏的时候,贝叶斯这种统计概率的方法将变得容易过拟合.例如,先验概率 $P(r_{uj}=\nu_s)$ 在 jth 物料行为比较少的时候,概率将不可信,或者直接没有行为的话会出现 0/0 的情况.
+
+为了处理上述稀疏矩阵带来的统计概率不准的情况,通常情况下可以引入拉普拉斯平滑(/Laplacian smoothing/).
+
+例如:设 $q_1,...,q_l$ 为分别对 jth 物料有对应行为 $\nu_1,...,\nu_l$ 的用户数量.在估计先验 $P(r_{uj}=v_{s})$ 的时候不直接采用 $q_{s}/\sum_{t=1}^{l}q_{l}$,而是采用如下公式($\alpha 为平滑参数$):
+\begin{equation}
+  P(r_{uj}=\nu_s)=\frac{q_{s}+\alpha}{\sum_{t=1}^{l}q_{t}+l \cdot \alpha}
+\end{equation}
+
+如果对于 jth 物料没有用户具有行为的话,那么采用上述方法会将先验概率设置为均分概率 1/l.参数 $\alpha$ 控制的平滑程度.
+
+
+
 
 * 冷启动
 | 推荐算法 | 用户冷启动 | 物料冷启动 |
