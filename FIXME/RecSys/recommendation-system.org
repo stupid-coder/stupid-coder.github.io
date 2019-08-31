@@ -633,11 +633,11 @@ U 为[m,k]的矩阵,V 为[n,k]的矩阵,两个矩阵分别在行空间,列空间
 \end{equation}
 #+END_QUOTE
 
-矩阵 U 和 V 的每一列都是潜在向量,矩阵 U 和 V 的每一行为潜在系数.矩阵 U 的第 ith 行 $\vec{u}_{i}$ 对应这用户的因子,包含 k 个元素,为用户映射到 k 个潜在因子上的向量.同理,矩阵 V 的每一行为物料的潜在因子向量,在 k 维潜在因子表示的.
+矩阵 U 和 V 的每一列都是潜在向量,矩阵 U 和 V 的每一行为潜在系数.矩阵 U 的第 ith 行 $\overline{u}_{i}$ 对应这用户的因子,包含 k 个元素,为用户映射到 k 个潜在因子上的向量.同理,矩阵 V 的每一行为物料的潜在因子向量,在 k 维潜在因子表示的.
 
 则行为矩阵中的得分可以用用户的潜在向量和物料的潜在向量的内积表示:
 \begin{equation}
-  r_{i,j} \approx \vec{u}_{i} \cdot \vec{v}_{j}
+  r_{i,j} \approx \overline{u}_{i} \cdot \overline{v}_{j}
 \end{equation}
 
 不同矩阵因式分解方法的主要区别在于在矩阵 U 和 V 上增加的限制条件(例如:正交,非负等)和目标函数上(例如:回归模型最小化范式,生成模型最大化似然).
@@ -678,7 +678,7 @@ U 为[m,k]的矩阵,V 为[n,k]的矩阵,两个矩阵分别在行空间,列空间
   \frac{\partial\mathrm{J}}{\partial\mathrm{u_{iq}}} &= \sum_{j:(i,j) \in S}(r_{ij}-\sum_{s=1}^{k}u_{is} \cdot v_{js})(-v_{jq}) &\forall\ i\ \in \{i...m\},q\ \in\ \{1...k\} \\
   &= \sum_{j:(i,j) \in S}(e_{ij})(-v_{jq}) &\forall\ i\ \in \{i...m\},q\ \in\ \{1...k\} \\
   \frac{\partial\mathrm{J}}{\partial\mathrm{v_{jq}}} &= \sum_{i:(i,j) \in S}(r_{ij}-\sum_{s=1}^{k}u_{is} \cdot v_{js})(-u_{iq}) &\forall\ j\ \in \{i...n\},q\ \in\ \{1...k\} \\
-  &= \sum_{i:(i,j) \in S}(e_{ij})(-u_{iq}) &\forall\ j\ \in \{i...m\},q\ \in\ \{1...k\} \\
+  &= \sum_{i:(i,j) \in S}(e_{ij})(-u_{iq}) &\forall\ j\ \in \{i...m\},q\ \in\ \{1...k\}
 \end{align}
 
 如何错误矩阵 $E=R-UV^{T}$ 以稀疏矩阵存储的化,那么梯度下降算法可以采用矩阵形式表达:
@@ -687,7 +687,47 @@ U 为[m,k]的矩阵,V 为[n,k]的矩阵,两个矩阵分别在行空间,列空间
   V \Leftarrow V + \alpha E^{T}U
 \end{equation}
 
+***** 正则化
+当行为矩阵非常稀疏,并且相关行为较少时,矩阵分解方法会有很多问题.首先就是模型会过拟合.常见解决过拟合的方法是采用正则化(/regularization/).
+
+正则化的思想就是抑制矩阵U和矩阵V中的系数增大,从而使得模型预测结果较为稳定.正则化项 $\frac{\lambda}{2}({\parallel U \parallel}^{2} + {\parallel V \parallel}^{2})$ 添加到损失函数中,其中 $\lambda > 0$ 为正则化系数.增加正则化项后,损失函数如下:
+\begin{align}
+  \mathop{Minimize}\ \mathrm{J} &= \frac{1}{2} \sum_{(i,j) \in S}e_{ij}^{2} + \frac{\lambda}{2}\sum_{i=1}^{m}\sum_{s=1}^{k}u_{is}^{2} + \frac{\lambda}{2}\sum_{j=1}^{n}\sum_{s=1}^{k}v_{js}^{2} \\
+  &= \frac{1}{2} \sum_{(i,j) \in S}(r_{ij}-\sum_{s=1}^{k}u_{is} \cdot v_{js})^{2} + \frac{\lambda}{2}\sum_{i=1}^{m}\sum_{s=1}^{k}u_{is}^{2} + \frac{\lambda}{2}\sum_{j=1}^{n}\sum_{s=1}^{k}v_{js}^{2}
+\end{align}
+
+损失函数对系数梯度基本没有变,只是追加了一个 $\lambda u_{iq}$ 和 $\lambda v_{jq}$:
+\begin{align}
+  \frac{\partial\mathrm{J}}{\partial\mathrm{u_{iq}}} &= \sum_{j:(i,j) \in S}(r_{ij}-\sum_{s=1}^{k}u_{is} \cdot v_{js})(-v_{jq}) + \lambda u_{iq} &\forall\ i\ \in \{i...m\},q\ \in\ \{1...k\} \\
+  &= \sum_{j:(i,j) \in S}(e_{ij})(-v_{jq}) + \lambda u_{iq} &\forall\ i\ \in \{i...m\},q\ \in\ \{1...k\} \\
+  \frac{\partial\mathrm{J}}{\partial\mathrm{v_{jq}}} &= \sum_{i:(i,j) \in S}(r_{ij}-\sum_{s=1}^{k}u_{is} \cdot v_{js})(-u_{iq}) + \lambda v_{jq} &\forall\ j\ \in \{i...n\},q\ \in\ \{1...k\} \\
+  &= \sum_{i:(i,j) \in S}(e_{ij})(-u_{iq}) + \lambda v_{jq} &\forall\ j\ \in \{i...m\},q\ \in\ \{1...k\} \\
+\end{align}
+
+对应的矩阵表示:
+\begin{align}
+  U &\Leftarrow U(1 - \alpha \lambda) + \alpha E V \\
+  V &\Leftarrow V(1 - \alpha \lambda) + \alpha E^{T} U 
+\end{align}
+
+那么一般正则化系数如何确定呢?
++ 从数据集中拆分出一部分数据作为验证集(/valid dataset/),用来确定最好的正则化系数.
++ 交叉验证(/cross-validation/).
+
+***** 增量训练
+上述基于梯度下降的训练模型的一种变种是对潜在因子进行增量学习.也就是说在进行梯度更新:$u_{iq} \Leftarrow u_{iq} + \alpha(e_{ij} \cdot v_{jq} - \lambda \cdot u_{iq})$ 和 $v_{jq} \Leftarrow v_{jq} + \alpha(e_{ij} \cdot u_{iq} - \lambda \cdot v_{jq})$,先从q=1开始,且直到先q=1收敛.因此,先学习到第一对列向量 $\overline{U}_{1}$ 和 $\overline{V}_1$.
+
+然后对具有观察值的行为矩阵减去外积 $\overline{U}_{1}\onverline{V}_{1}^{T}$,然后对q=2进行训练,学习第二对列向量 $\overline{U}_2$ 和 $\overline{V}_2$,然后减去外积 $\overline{U}_{2}\overline{V}_2^{T}$.
+
+重复上述过程,直到q=k.最终,行为矩阵可以用k对秩为1的向量外积表示:
+\begin{equation}
+  R \approx UV^{T} = \sum_{q=1}^{k}\overline{U}_{q}\overline{V}_{q}^{T}
+\end{equation}
+
+增量训练因为每次只对少量的参数进行训练,所以具有更快更稳定的收敛速度.但是该种方法会使得前几次学习到的潜在因子具有很大的中用,有点类似SVD,但是学习到的矩阵U和矩阵V中的列向量并不正交.也可以强制采用正交梯度更新来使得矩阵U和矩阵V的列向量正交.
+
 ***** 
+
 * 冷启动
 | 推荐算法 | 用户冷启动 | 物料冷启动 |
 |----------+------------+------------|
