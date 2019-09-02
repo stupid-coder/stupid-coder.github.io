@@ -774,6 +774,105 @@ U 为[m,k]的矩阵,V 为[n,k]的矩阵,两个矩阵分别在行空间,列空间
 **** 奇异值分解
 奇异值分解(/Singular value decomposition/)是一种基础的矩阵分解方法,并且对 U 和 V 的列向量具有正交化约束.
 
+当行为矩阵是全矩阵,可以直接采用 /truncated SVD/ 进行矩阵分解:
+\begin{equation}
+  R \approx Q_{k}\Sigma_{k}P_{k}^{T}
+\end{equation}
+
+其中 $Q_{k},\Sigma_{k},P_{k}$ 分别为[m,k],[k,k],[n,k]. $Q_{k}$ 为矩阵 $RR^{T}$ 的k个最大特征向量组成的矩阵, $P_{k}$ 为矩阵 $R^{T}R$ 的k个最大特征向量组成的矩阵,对角阵 $\Sigma_{k}$ 为上面两个矩阵的k个最大特征值的开根.
+
+SVD分解为三个矩阵,而潜在因子模型需要分解成两个矩阵.由于对角阵 $\Sigma_{k}$ 可以放在用户侧 $Q_{k}$,也可以放在物料侧 $P_{k}$:
+\begin{align}
+  U &= Q_{k}\Sigma_{k} \\
+  V &= P_{k}
+\end{equation}
+
+SVD算法可以用如下优化问题表示:
+\begin{equation}
+  \mathop{Minimize}\ \mathrm{J} = \frac{1}{2}{\parallel R - UV^{T} \parallel}^{2} \\
+  subject\ to: \\
+  Columns\ of\ U\ are\ mutually\ orthogonal \\
+  Columns\ of\ V\ are\ mutually\ orthogonal 
+\end{equation}
+
+相对于非受限的因式分解,SVD的损失函数是一样,只不过是解空间受限于正交条件.
+
+***** SVD的一种简单迭代方法
+如果行为矩阵缺失一部分数据时,如何执行SVD算法呢?
+
+首先,对行为矩阵进行去行均值化.然后缺失值填充为0,记为 $R_{c}$.该方法等同于对缺失进行行均值填充.然后执行SVD分解,获得 $R_{c} = Q_{k}\Sigma_{k}P_{k}^{T}$.则,用户的潜在因子为 $U=Q_{k}\Sigma_{k}$,物料潜在因子为 $P_{k}$.矩阵 U 的行向量记为 $\overline{u}_{i}$,矩阵V的行向量记为 $\overline{v}_{j}$,则行为得分 $\hat{r}_{ij}$ 等于:
+\begin{equation}
+  \hat{r}_{ij} = \overline{u}_{i} \cdot \overline{v}_{j} + \mu_{i}
+\end{equation}
+
+上述方法的主要问题在于,对于缺失值直接补全为用户行为均值会带来很大的偏执.一种方法是采用最大似然估计;另外一种方法通过迭代式的提高缺失值的预估值来降低偏执,方法如下:
++ =初始化= :: 对缺失值采用用户的行为均值 $\mu_{i}$ 初始化创建矩阵 $R_{f}$.
++ =迭代1= :: 对矩阵 $R_{f} $执行秩为k的SVD分解,得到 $Q_{k}\Sigma_{k}P_{k}^{T}$.
++ =迭代2= :: 然后只对缺失值填充上述近似矩阵的值,然后执行 /迭代1/.
+
+上述方法在初始化的时候采用用户行为均值填充,带来了一定的偏执,当执行SVD分解得到近似矩阵时候缺失值和近似值差距较大,但是随着迭代进行,最后近似矩阵会慢慢收敛,从而减低偏执.
+
+该方法在缺失值较多的时候有可能会陷入局部最优化.特别的,是否陷入局部最优化与参数的初始化关系很大.可以采用一个基础预测模型参数来作为初始化.思想是通过只学习用户和物料偏执来进行预测 $B_{ij}$.然后从行为矩阵中观察到的行为减去对应的预测值 $B_{ij}$,然后对缺失值填充0.然后将上述的迭代方法应用到这个矩阵.最后在预测阶段,将 $B_{ij}$ 加回去.
+
+***** 基于优化的方法
+迭代的方法来进行SVD分解在数据集较大的情况下不太适用.更为有效的方法是将正交约束添加到优化模型上.改造一下基于梯度下降的方法就可以优化带正交化约束的模型.S为行为矩阵中观察到行为,最优化问题如下:
+\begin{equation}
+  \mathop{Minimize}\ \mathrm{J} = \frac{1}{2} \sum_{(i,j) \in S}(r_{ij} - \sum_{s=1}^{k}u_{is} \cdot v_{js})^2 + \frac{\lambda_1}{2}\sum_{i=1}^{m}\sum_{s=1}^{k}u_{is}^{2} + \frac{\lambda_2}{2}\sum_{j}^{n}\sum_{s=1}^{k}v_{js}^{2} \\
+  subject\ to: \\
+  Columns\ of\ U\ are\ mutually\ orthogonal \\
+  Columns\ of\ V\ are\ mutually\ orthogonal \\
+\end{equation}
+
+需要采用 /projected gradient descent/[fn:9] 进行优化.
+**** 非负的矩阵分解
+非负的矩阵分解(/Non-negative matrix factorization - NMF/)可以应用在非负的行为矩阵.该方法的主要优势不是准确性,而是具有较好的可解释性.优化公式如下:
+\begin{equation}
+  \mathop{Minimize}\ \mathrm{J} = \frac{1}{2} {\parallel R - UV^{T} \parallel}^2 \\
+  subject\ to: \\
+  U \ge 0 \\
+  V \ge 0
+\end{equation}
+
+虽然非负矩阵分解可以应用在任何的具有非负行为矩阵的场景下,但是为了具有更好的可解释性的场景是用户具有显式方式来表示喜欢某个物料,没有显式的方法来表示不喜欢.
+
+可以看到非负的矩阵分解是一个有约束最优化问题,可以直接采用标准的方法,例如拉格朗日乘子法.
+
+更新矩阵 $U$ 和 $V$ 的迭代方法是,是记 $u_{ij}$ 和 $v_{ij}$ 分别为矩阵 U 和 V 的 (i,j) 的元素.对应的更新规则如下:
+\begin{align}
+  u_{ij} &\Leftarrow \frac{(RV)_{ij}u_{ij}}{(UV^{T}V)_{ij}+\epsilon}\ \forall i \in \{1...m\},\forall j \in \{1...k\} \\
+  v_{ij} &\Leftarrow \frac{(R^{T}U)_{ij}v_{ij}}{(VU^{T}U)_{ij}+\epsilon}\ \forall i \in \{1...m\},\forall j \in \{1...k\} \\
+\end{align}
+
+***** 可解释性
+非负矩阵分解最重要的一个优点就是可解释性较高.假设有下图的数据集.
+
+#+CAPTION: 非负矩阵分解样例
+[[file:assets/non-negative-matrix-factorization.png]]
+
+可以明显看到物料属于两大类 /dairy/ 和 /drinks/.并且用户也基本分为喜欢两种物料的用户.矩阵分解提供了一个很好的解释性.U矩阵显示了用户对两类物料的喜好程度.V矩阵显示了物料属于两类的权重.因此近似行为矩阵 $r_{ij} \approx \sum_{s=1}^{k}u_{is} \cdot v_{js}$ 可以用如下解释:
+\begin{equation}
+r_{ij} \approx (Affinity\ of\ user\ i\ to\ dairy\ aspect) \times (Affinity\ of\ item\ j\ to\ dairy\ aspect) + (Affinity\ of\ user\ i\ to\ drinks\ aspect) \times (Affinity\ of\ item\ j\ to\ drinks\ aspect)
+\end{equation}
+
+上述显示了最终的预测行为值可以看作是用户所属不同隐向量和物料所属不同隐向量的共现值和.这也是为什么非负矩阵分解常常用来做聚类向量.秩k的近似矩阵 $UV^{T}$ 可以分解成 U 和 V 对应的k个列向量 $\overline{U}_{i}$ 和 $\overline{V}_{i}$ 的矩阵乘的和:
+\begin{equation}
+  UV^{T} = \sum_{i=1}^{k}\overline{U}_{i}\overline{V}_{i}^{T}
+\end{equation}
+
+每个 [m*n] 矩阵 $\overline{U}_{i}\overline{V}_{i}^{T}$ 的秩为1,对应着不同隐维度的数据.
+
+***** 隐反馈中的计算和权重问题
+非负矩阵分解默认将缺失行为设置为0,在行为矩阵较大的时候会带来计算问题.可以对缺失行为做采样设置为0,然后执行矩阵分解,将多次采样的结果取平均值作为最终结果.也可以对负反馈样本做加权,用来区分正反馈行为.
+
+也可以直接在损失函数中对缺失行为进行加权,并设置缺失行为为0.从而是的这些缺失行为贡献的损失比有正反馈的行为贡献的损失值要小.可以采用交叉验证来确定加权系数.论文[fn:10]中建议如下的启发式加权方法:
+\begin{equation}
+  w_{ij} = 1 + \theta \cdot r_{ij}
+\end{equation}
+
+**** 理解矩阵分解算法
+明显矩阵分解算法大同小异.都是优化残差矩阵的平方.
+
+
 * 冷启动
 | 推荐算法 | 用户冷启动 | 物料冷启动 |
 |----------+------------+------------|
@@ -784,6 +883,10 @@ U 为[m,k]的矩阵,V 为[n,k]的矩阵,两个矩阵分别在行空间,列空间
 * 推荐系统攻击问题
 * 主动学习
 * Footnotes
+
+[fn:10] Y. Hu, Y. Koren, and C. Volinsky. Collaborative filtering for implicit feedback datasets. IEEE International Conference on Data Mining, pp. 263–272, 2008.
+ 
+[fn:9] D. P. Bertsekas. Nonlinear programming. Athena Scientific Publishers, Belmont, 1999. 
 
 [fn:8] C. Aggarwal and S. Parthasarathy. Mining massively incomplete data sets by concep- tual reconstruction. ACM KDD Conference, pp. 227–232, 2001. 
 
