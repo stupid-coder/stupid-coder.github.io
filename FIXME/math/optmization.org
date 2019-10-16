@@ -7,9 +7,11 @@
 主要资料来自 wiki: https://en.wikipedia.org/wiki/Mathematical_optimization
 
 #+BEGIN_QUOTE
-最优化简单来看就是在受限或者非受限情况下,对一个实值函数求解最大或最小值.
+最优化简单来看就是在无约束或者有约束条件下,对一个实值函数求解最大或最小值.
 #+END_QUOTE
 
+
+* 无约束优化
 
 * 最优化问题
   最优化问题可以表示为如下形式:
@@ -197,7 +199,6 @@
 * Footnotes
 
 [fn:3] http://www.onmyphd.com/?p=kkt.karush.kuhn.tucker
-
 
 [fn:2] https://en.wikipedia.org/wiki/Hessian_matrix#Bordered_Hessian
 

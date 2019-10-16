@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-11-09 Fri 11:44 -->
+<!-- 2019-08-20 Tue 10:38 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>&lrm;</title>
@@ -255,18 +255,19 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgdc78e34">Introduction</a>
+<li><a href="#orgc825947">Introduction</a>
 <ul>
-<li><a href="#org772efeb">Contributions</a></li>
+<li><a href="#org44a3f8c">Contributions</a></li>
 </ul>
 </li>
-<li><a href="#org6cbd51a">Related Work</a></li>
-<li><a href="#org60c6803">Connectionist Text Proposal Network</a>
+<li><a href="#org6d7504b">Related Work</a></li>
+<li><a href="#org71f8f87">Connectionist Text Proposal Network</a>
 <ul>
-<li><a href="#org01392e9">Detecting Text in Fine-scale Proposals</a></li>
-<li><a href="#orgb549920">Recurrent Connectionist Text Proposals</a></li>
-<li><a href="#org3f439e2">Side-refinement</a></li>
-<li><a href="#orgd7aa350">Model Outputs and Loss Functions</a></li>
+<li><a href="#orgfd4906f">Detecting Text in Fine-scale Proposals</a></li>
+<li><a href="#org1a8e8a8">Recurrent Connectionist Text Proposals</a></li>
+<li><a href="#orgbf157f0">Side-refinement</a></li>
+<li><a href="#org2e74655">Model Outputs and Loss Functions</a></li>
+<li><a href="#orga624bef">Training and Implementation Details</a></li>
 </ul>
 </li>
 </ul>
@@ -282,9 +283,9 @@ for the JavaScript code in this tag.
 </p>
 </blockquote>
 
-<div id="outline-container-orgdc78e34" class="outline-2">
-<h2 id="orgdc78e34">Introduction</h2>
-<div class="outline-text-2" id="text-orgdc78e34">
+<div id="outline-container-orgc825947" class="outline-2">
+<h2 id="orgc825947">Introduction</h2>
+<div class="outline-text-2" id="text-orgc825947">
 <p>
 自然图像上的文字识别近年来在很多领域都有使用场景,例如图像 OCR,多语言翻译,图像检索等.一般文字识别包含两个子任务:文本区域检测和文字识别.文本工作主要是文字区域检测.
 </p>
@@ -302,11 +303,11 @@ for the JavaScript code in this tag.
 </p>
 </div>
 
-<div id="outline-container-org772efeb" class="outline-3">
-<h3 id="org772efeb">Contributions</h3>
-<div class="outline-text-3" id="text-org772efeb">
+<div id="outline-container-org44a3f8c" class="outline-3">
+<h3 id="org44a3f8c">Contributions</h3>
+<div class="outline-text-3" id="text-org44a3f8c">
 <p>
-本文提出了一个新的方法,连续文本建议网络(<i>Connectionist Text Proposal Network - CTPN</i>),直接在卷积层定位文本序列.本方法克服了自下而上的方法很多限制.直接利用深度卷积网络学习到的特征优点,整体 CTPN 网络结构如<a href="#org571f96d">图-1</a>所示,主要贡献如下:
+本文提出了一个新的方法,连续文本建议网络(<i>Connectionist Text Proposal Network - CTPN</i>),直接在卷积层定位文本序列.本方法克服了自下而上的方法很多限制.直接利用深度卷积网络学习到的特征优点,整体 CTPN 网络结构如<a href="#orga440df9">图-1</a>所示,主要贡献如下:
 </p>
 
 <p>
@@ -328,9 +329,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org6cbd51a" class="outline-2">
-<h2 id="org6cbd51a">Related Work</h2>
-<div class="outline-text-2" id="text-org6cbd51a">
+<div id="outline-container-org6d7504b" class="outline-2">
+<h2 id="org6d7504b">Related Work</h2>
+<div class="outline-text-2" id="text-org6d7504b">
 <p>
 <b>Text detection.</b> 在自然场景下文本检测模型,过去的工作大多数采用自下而上的方法,从字符或者笔画检测开始.可以主要分为两种大类:基于元素链接的方法(<i>Conneted-Componenets</i>)和基于滑窗方法(<i>Sliding-Window</i>).元素链接方法采用一个速度极快的过滤器判断像素是否是文本,然后利用低层特征(对比度,颜色,梯度等)<sup><a id="fnr.1.100" class="footref" href="#fn.1">1</a></sup><sup>, </sup><sup><a id="fnr.2.100" class="footref" href="#fn.2">2</a></sup><sup>, </sup><sup><a id="fnr.3.100" class="footref" href="#fn.3">3</a></sup><sup>, </sup><sup><a id="fnr.9" class="footref" href="#fn.9">9</a></sup>将这些文本元素组合成候选的笔画或者字符.滑窗方法通过将多尺度窗口在输入图像上滑动来检测文本候选区域,利用手动设计的特征<sup><a id="fnr.6.100" class="footref" href="#fn.6">6</a></sup><sup>, </sup><sup><a id="fnr.10" class="footref" href="#fn.10">10</a></sup>或者卷积特征<sup><a id="fnr.11" class="footref" href="#fn.11">11</a></sup>来训练一个预训练的分类器区分窗口中是否包含文字.然而,两种组合方法都会因为文本检测性能,在后续的处理中累加错误.并且使用局部信息来检测和过滤字符是不合理的.
 </p>
@@ -341,16 +342,16 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org60c6803" class="outline-2">
-<h2 id="org60c6803">Connectionist Text Proposal Network</h2>
-<div class="outline-text-2" id="text-org60c6803">
+<div id="outline-container-org71f8f87" class="outline-2">
+<h2 id="org71f8f87">Connectionist Text Proposal Network</h2>
+<div class="outline-text-2" id="text-org71f8f87">
 <p>
 本部分详细说明 CTPN 网络的结构细节.三个关键贡献: 小尺度的文本检测建议,循环链接文本建议区域,边框调整(<i>side-refinement</i>).
 </p>
 
 <div class="org-center">
 
-<div id="org571f96d" class="figure">
+<div id="orga440df9" class="figure">
 <p><img src="assets/ctpn/figure-1.png" alt="figure-1.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>(a) CTPN 网络结构.主要是在 VGG16 网络的最后一层卷积层(conv5)执行一个 3*3 空间窗口滑动.每一行的序列窗口采用循环神经网络(<i>Bi-directional LSTM</i>)进行链接,每个滑动窗口的卷积特征(3*3*C)作为 256D BLSTM)(双向 128DLSTM)的输入.然后循环神经网络连接着 512D 的全链接层,最后连接着输出层,用来预测 k 个建议区域的文本分类得分,y 轴的坐标和边框调整偏移.(b) CTPN 输出的固定宽度的小尺度文本建议区域.颜色预示文本分类得分.只有为文本的边框才显示出来.</p>
@@ -358,24 +359,24 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org01392e9" class="outline-3">
-<h3 id="org01392e9">Detecting Text in Fine-scale Proposals</h3>
-<div class="outline-text-3" id="text-org01392e9">
+<div id="outline-container-orgfd4906f" class="outline-3">
+<h3 id="orgfd4906f">Detecting Text in Fine-scale Proposals</h3>
+<div class="outline-text-3" id="text-orgfd4906f">
 <p>
-类似于区域建议网络(<i>Region Proposal Network - RPN</i>),CTPN 本质上讲也是一个全卷积神经网络,允许输入的图像具有任意尺寸.通过在卷积层输出的特征图上移动一个小的滑动窗口来检测文本行,然后输出对应的小尺度文本(固定宽度为 16 像素)建议区域,如<a href="#org571f96d">图-1(b)</a>所示.
+类似于区域建议网络(<i>Region Proposal Network - RPN</i>),CTPN 本质上讲也是一个全卷积神经网络,允许输入的图像具有任意尺寸.通过在卷积层输出的特征图上移动一个小的滑动窗口来检测文本行,然后输出对应的小尺度文本(固定宽度为 16 像素)建议区域,如<a href="#orga440df9">图-1(b)</a>所示.
 </p>
 
 <p>
-本文采用了非常深的 VGG16 作为卷积特征提取网络.整个 CTPN 的网络结构如<a href="#org571f96d">图-1(a)</a>所示.采用了一个小的空间窗口,3*3,在最后一层卷积层(例如:vgg 的 conv5 层)上进行滑动.conv5 特征图的大小由输入图像决定,但是总的步长和感受野为 16 和 228 个像素.这里虽然也采用了滑动窗口,但是是在特征图上采用,可以很大的减少运算量.
+本文采用了非常深的 VGG16 作为卷积特征提取网络.整个 CTPN 的网络结构如<a href="#orga440df9">图-1(a)</a>所示.采用了一个小的空间窗口,3*3,在最后一层卷积层(例如:vgg 的 conv5 层)上进行滑动.conv5 特征图的大小由输入图像决定,但是总的步长和感受野为 16 和 228 个像素.这里虽然也采用了滑动窗口,但是是在特征图上采用,可以很大的减少运算量.
 </p>
 
 <p>
-一般滑动窗口的方法会结合多尺度窗口来检测不同大小的目标.Ren et al<sup><a id="fnr.7.100" class="footref" href="#fn.7">7</a></sup>提出了一个非常有效的锚回归机制,从而允许 RPN 在一个尺度窗口上检测多个尺度目标对象.主要的思想是,采用多个固定尺度的锚边框,就可以在一个单独的窗口上预测出多尺度和不同长宽比例的目标.本文通过对这种基于锚边框检测机制进行扩展,从而实现文本检测.但是文本检测和一般目标检测具有较大的差异,文本序列并没有一个比较明显的边框,并且包括多种级别的目标元素,例如笔画,字符,词,文本行或者文本区域,并且这些目标元素并没有明显的差异.文本检测定义为词和文本行检测,如果将文本行或者词当成一个整体目标进行检测,很容易出现错误.<a href="#orgbf0a952">图-2</a>显示了 RPN 网络直接用来训练和定位文本行的效果.
+一般滑动窗口的方法会结合多尺度窗口来检测不同大小的目标.Ren et al<sup><a id="fnr.7.100" class="footref" href="#fn.7">7</a></sup>提出了一个非常有效的锚回归机制,从而允许 RPN 在一个尺度窗口上检测多个尺度目标对象.主要的思想是,采用多个固定尺度的锚边框,就可以在一个单独的窗口上预测出多尺度和不同长宽比例的目标.本文通过对这种基于锚边框检测机制进行扩展,从而实现文本检测.但是文本检测和一般目标检测具有较大的差异,文本序列并没有一个比较明显的边框,并且包括多种级别的目标元素,例如笔画,字符,词,文本行或者文本区域,并且这些目标元素并没有明显的差异.文本检测定义为词和文本行检测,如果将文本行或者词当成一个整体目标进行检测,很容易出现错误.<a href="#orgf16c2a7">图-2</a>显示了 RPN 网络直接用来训练和定位文本行的效果.
 </p>
 
 <div class="org-center">
 
-<div id="orgbf0a952" class="figure">
+<div id="orgf16c2a7" class="figure">
 <p><img src="assets/ctpn/figure-2.png" alt="figure-2.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>左图: RPN 网络检测.右图: 小尺度文本检测.</p>
@@ -398,7 +399,7 @@ for the JavaScript code in this tag.
 \end{equation}
 <p>
 \(\mathcal{v}={v_{c}, v_{h}}\),\(\mathcal{v}^{*}={v_{c}^{*},v_{h}^{*}}\) 为预测边框和真实边框对于建议边框的相对坐标. \(c_{y
-}^{a}\) 和 \(h_{a}\) 为建议边框的中心点(y 轴)和高度; \(c_{y}\) 和 \(h\) 为预测的 y 轴中心点坐标和边框高度; \(c_{y}^{*}\) 和 \(h^{*}\) 为真实边框的 y 轴中心点坐标和高度.那么每个预测的边框大小为 [h,16],如<a href="#org571f96d">图-1(b)</a>和<a href="#orgbf0a952">图-2(右)</a>所示.
+}^{a}\) 和 \(h_{a}\) 为建议边框的中心点(y 轴)和高度; \(c_{y}\) 和 \(h\) 为预测的 y 轴中心点坐标和边框高度; \(c_{y}^{*}\) 和 \(h^{*}\) 为真实边框的 y 轴中心点坐标和高度.那么每个预测的边框大小为 [h,16],如<a href="#orga440df9">图-1(b)</a>和<a href="#orgf16c2a7">图-2(右)</a>所示.
 </p>
 
 <p>
@@ -407,16 +408,16 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orgb549920" class="outline-3">
-<h3 id="orgb549920">Recurrent Connectionist Text Proposals</h3>
-<div class="outline-text-3" id="text-orgb549920">
+<div id="outline-container-org1a8e8a8" class="outline-3">
+<h3 id="org1a8e8a8">Recurrent Connectionist Text Proposals</h3>
+<div class="outline-text-3" id="text-org1a8e8a8">
 <p>
-为了提高定位精度,将文本行分割成了一系列的小尺度文本区域,然后分别预测.显然,分别独立考虑单个的建议检测区域是不合理的.会使得大量的假真样本的出现,一旦局部图像类似文字就会被检测成文字区区域,如<a href="#org4c80139">图-3(上)</a>所示.文本具有很强的序列特征可以用来进行可靠的检测.最近的工作<sup><a id="fnr.12" class="footref" href="#fn.12">12</a></sup>证明循环神经网络可以很好将这些上下文信息编码从而实现文本识别.
+为了提高定位精度,将文本行分割成了一系列的小尺度文本区域,然后分别预测.显然,分别独立考虑单个的建议检测区域是不合理的.会使得大量的假真样本的出现,一旦局部图像类似文字就会被检测成文字区区域,如<a href="#orgec7cb5f">图-3(上)</a>所示.文本具有很强的序列特征可以用来进行可靠的检测.最近的工作<sup><a id="fnr.12" class="footref" href="#fn.12">12</a></sup>证明循环神经网络可以很好将这些上下文信息编码从而实现文本识别.
 </p>
 
 <div class="org-center">
 
-<div id="org4c80139" class="figure">
+<div id="orgec7cb5f" class="figure">
 <p><img src="assets/ctpn/figure-3.png" alt="figure-3.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>(上) 没有集成 RNN 的 CTPN.(下)集成 RNN 的 CTPN.</p>
@@ -435,25 +436,25 @@ H_{t} = \varphi (H_{t-1}, X_{t}),\ \ \ t=1,2,...,W
 </p>
 
 <p>
-内部状态 \(H_{t}\) 随后跟着一个全链接层进行变换,最后输出层用来计算第 t 个建议的预测结果.增加 RNN 层,对向量的上下文滑动窗口内的信息进行编码,从而实现更为精准的预测,结果如<a href="#org4c80139">图-3</a>所示.可以看到减少了假真,并且检测出了很多不是很明显的文本区域.
+内部状态 \(H_{t}\) 随后跟着一个全链接层进行变换,最后输出层用来计算第 t 个建议的预测结果.增加 RNN 层,对向量的上下文滑动窗口内的信息进行编码,从而实现更为精准的预测,结果如<a href="#orgec7cb5f">图-3</a>所示.可以看到减少了假真,并且检测出了很多不是很明显的文本区域.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org3f439e2" class="outline-3">
-<h3 id="org3f439e2">Side-refinement</h3>
-<div class="outline-text-3" id="text-org3f439e2">
+<div id="outline-container-orgbf157f0" class="outline-3">
+<h3 id="orgbf157f0">Side-refinement</h3>
+<div class="outline-text-3" id="text-orgbf157f0">
 <p>
 在检测出小尺度本文建议区域后,可以直接将文本的分大于 0.7 的连续相邻文本建议区域链接起来.文本行构建如下:首先,对于一个本文建议区域 \(B_{i}\) 定义成对相邻建议区域(B<sub>j</sub>)为 \(B_{j}->B_{i}\),满足(i) \(B_{j}\) 为水平方向和 \(B_{i}\) 最近;(ii) 这个距离小于 50 像素;(iii)他们的垂直区域重合 0.7.其次,如果两个文本建议区域满足 \(B_{j}->B_{i},B_{i}->B_{j}\),那么这一对建议区域组成一对.本文行通过上述过程迭代执行构成.
 </p>
 
 <p>
-上述的小尺度建议检测和 RNN 上下文信息编码机制能够很准确在垂直方向上定位文本区域.在水平方向,图像被分成序列的 16 像素等宽的建议区域,当真实标记区域没有很好的在水平方向上标记文本区域会带来不精准的检测,如<a href="#org516c762">图-4</a>所示.这种不精准的定位在一般物体检测场景中没有问题,但是在文本识别是不可接受的.
+上述的小尺度建议检测和 RNN 上下文信息编码机制能够很准确在垂直方向上定位文本区域.在水平方向,图像被分成序列的 16 像素等宽的建议区域,当真实标记区域没有很好的在水平方向上标记文本区域会带来不精准的检测,如<a href="#org7c9c775">图-4</a>所示.这种不精准的定位在一般物体检测场景中没有问题,但是在文本识别是不可接受的.
 </p>
 
 <div class="org-center">
 
-<div id="org516c762" class="figure">
+<div id="org7c9c775" class="figure">
 <p><img src="assets/ctpn/figure-4.png" alt="figure-4.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>CTPN 检测结果,红色框包含边微调和黄色虚线不包含边微调的结果.</p>
@@ -473,11 +474,11 @@ o=(x_{side}-c_{x}^{a})/w^{a},\ \ o^{*}=(x_{side}^{*}-c_{x}^{a})/w^{a}
 </div>
 </div>
 
-<div id="outline-container-orgd7aa350" class="outline-3">
-<h3 id="orgd7aa350">Model Outputs and Loss Functions</h3>
-<div class="outline-text-3" id="text-orgd7aa350">
+<div id="outline-container-org2e74655" class="outline-3">
+<h3 id="org2e74655">Model Outputs and Loss Functions</h3>
+<div class="outline-text-3" id="text-org2e74655">
 <p>
-CTPN 模型最后有 3 个输出,如<a href="#org571f96d">图-1(a)</a>所示.三个输出同时预测文本得分(<b>s</b>),垂直坐标(\(v={v_{c},v_{h}}\))和边微调偏移(<b>o</b>).采用 k 个锚建议区域在 conv5 的每个空间位置预测实际的文本区域,所以输出是 2k,2k,k 个结果.
+CTPN 模型最后有 3 个输出,如<a href="#orga440df9">图-1(a)</a>所示.三个输出同时预测文本得分(<b>s</b>),垂直坐标(\(v={v_{c},v_{h}}\))和边微调偏移(<b>o</b>).采用 k 个锚建议区域在 conv5 的每个空间位置预测实际的文本区域,所以输出是 2k,2k,k 个结果.
 </p>
 
 <p>
@@ -486,6 +487,32 @@ CTPN 模型最后有 3 个输出,如<a href="#org571f96d">图-1(a)</a>所示.三
 \begin{equation}
   L(s_{i},v_{j},o_{k})=\frac{1}{N_{s}}\sum_{i}L_{s}^{cl}(s_{i},s_{i}^{*})+\frac{\lambda_{1}}{N_{v}}\sum_{j}L_{v}^{re}(v_{j},v_{j}^{*})+\frac{\lambda_{2}}{N_{o}}\sum_{k}L_{o}^{re}(o_{k},o_{k}^{*})
 \end{equation}
+
+<p>
+每个锚建议区域都是一个训练样本,i 为锚建议区域的下标. \(S_{i}\) 为锚建议区域 i 的文本得分预估概率. \(S_{i}^{*} = {0,1}\), 为真实标记(<i>ground truth</i>).j 为参与 y-轴坐标回归的有效锚建议区域对应的下标.有效的锚建议区域定义:有效的锚建议区域为正锚建议区域(\(s_{j}^{*}=1\)),或者和真实本文区域的交叉面积(<i>Intersection-over-Union (IoU)</i>)大于 0.5. \(v_{j}\) 和 \(v_{j}^{*}\) j 的锚文本区域的预测和真实的 y 轴坐标.k 为做边微调的锚建议区域坐标,定义为与真实文本行左右边界的距离在 32 像素以内的锚建议区域.\(o_{k}\) 和 \(o_{k}^{*}\) 为在 x-轴上预测和真实的边界偏差. \(L_{s}^{cl}\) 为文本分类损失,采用 softmax 作为损失函数.\(L_{v}^{re}\) 和 \(L_{o}^{re}\) 为回归损失,采用平滑 L1 损失函数. \(\lambda_{1}\) 和 \(\lambda_{2}\) 为损失系数来平衡各种任务,经验值设置为 1.0 和 2.0.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga624bef" class="outline-3">
+<h3 id="orga624bef">Training and Implementation Details</h3>
+<div class="outline-text-3" id="text-orga624bef">
+<p>
+CTPN 采用标准反向传播算法和随机梯度下降直接可以实现端到端的训练.类似与 RPN,训练的样本是锚建议区域,在根据输入图像和标记的文本区域预计算.
+</p>
+
+<p>
+<b>Training labels.</b> 对于文本分类,一个二分类标签赋给每一个锚建议区域.通过计算锚建议区域和真实区域之间的 IoU.正标记定义为:(i)锚建议区域和真实区域的 IoU&gt;0.7;(ii)和真实区域具有最大 IoU 的锚建议区域.条件(ii)保证即使很小的文本区域也具有一个正的锚建议区域.从而使得 CTPN 可以检测非常小的文本区域.IoU&lt;0.5 的锚文本建议区域定义为负样本.
+</p>
+
+<p>
+<b>Training data.</b> 在训练过程中,每个批量样本是随机从一个输入图像生成的.每一个批次的样本大小固定为 N<sub>s</sub>=128,正负样本比例为 1:1.
+如果输入图像的正锚建议区域少于 64 个,那么用负样本补充.模型在 3000 个图像集上进行训练,包括 229 张 ICDAR 2013 的训练样本.所有样本将最小分辨率缩放到 600.
+</p>
+
+<p>
+<b>Implementation Details.</b> 卷积网络采用在 ImageNet 上预训练的 VGG16 模型.新增网络层采用均值为 0,标准方差为 0.01 的高斯分布随机初始化.前两层卷积层权值不参与训练.动能系数设置为 0.9,采用 0.005 权值衰减.学习率在最开始的 16K 此迭代设置为 0.001,随后的 4K 训练中学习率设置为 0.0001.
+</p>
 </div>
 </div>
 </div>
@@ -550,7 +577,7 @@ Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Networks 9(8), 1
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: stupid-coder</p>
-<p class="date">Created: 2018-11-09 Fri 11:44</p>
+<p class="date">Created: 2019-08-20 Tue 10:38</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

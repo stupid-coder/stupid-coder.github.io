@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2019-09-30 Mon 19:05 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Summary on RecSys</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Summary on RecSys</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orga83efba">1. 简介</a></li>
+<li><a href="#orgd821d0c">2. 数据处理</a></li>
+<li><a href="#orgf85f801">3. 表达</a></li>
+<li><a href="#orgdb9fd7b">4. 召回</a></li>
+<li><a href="#org66ffd3c">5. 排序</a>
+<ul>
+<li><a href="#org5ed2daa">5.1. LR</a></li>
+<li><a href="#orge6f4b75">5.2. Piecewise Linear Model(LS-PLM)</a></li>
+<li><a href="#org63f72bb">5.3. Factorization Machine</a></li>
+</ul>
+</li>
+<li><a href="#orgdfa9c34">6. 重排</a></li>
+<li><a href="#orga198834">7. 评估</a></li>
+</ul>
+</div>
+</div>
+<blockquote>
+<p>
+推荐系统从工程角度来看,一般分为召回&amp;粗排&amp;精排&amp;去重等过程.文本用来总结一些重要论文在这些部分分别的贡献.
+</p>
+</blockquote>
+
+<div id="outline-container-orga83efba" class="outline-2">
+<h2 id="orga83efba"><span class="section-number-2">1</span> 简介</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+推荐系统是一个大工程,工程和算法缺一不可.本文从工程角度梳理当前主流推荐算法在各个工程模块维度上的方法,从而能够对推荐系统有一个整体认识.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd821d0c" class="outline-2">
+<h2 id="orgd821d0c"><span class="section-number-2">2</span> 数据处理</h2>
+</div>
+
+<div id="outline-container-orgf85f801" class="outline-2">
+<h2 id="orgf85f801"><span class="section-number-2">3</span> 表达</h2>
+</div>
+
+<div id="outline-container-orgdb9fd7b" class="outline-2">
+<h2 id="orgdb9fd7b"><span class="section-number-2">4</span> 召回</h2>
+</div>
+
+<div id="outline-container-org66ffd3c" class="outline-2">
+<h2 id="org66ffd3c"><span class="section-number-2">5</span> 排序</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-org5ed2daa" class="outline-3">
+<h3 id="org5ed2daa"><span class="section-number-3">5.1</span> LR</h3>
+</div>
+
+<div id="outline-container-orge6f4b75" class="outline-3">
+<h3 id="orge6f4b75"><span class="section-number-3">5.2</span> Piecewise Linear Model(LS-PLM)</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+阿里 2017 年提出的 &lt;Learning Piece-wise Linear Models from Large Scale Data for Ad Click Prediction&gt; 基于数据分片然后在每个分片中训练一个模型,最后对多个线性模型的结果进行加权.该方法的具有如下优点
+</p>
+
+<dl class="org-dl">
+<dt>非线性</dt><dd>模型非线行拟合能力随着分片数量增加而提高.</dd>
+<dt>扩展性</dt><dd>类似 LR,LS-PLM 模型对大数据量和高纬度特征具有扩展性.</dd>
+<dt>稀疏性</dt><dd>LS-PLM 结合 L-1 和 L-2 正则化后能够达到较好的稀疏性.</dd>
+</dl>
+</div>
+
+<ol class="org-ol">
+<li><a id="orgf635e23"></a>模型说明<br />
+<div class="outline-text-4" id="text-5-2-1">
+\begin{equation}
+  p(y=1|x) = g(\sum_{j=1}^m\sigma{(u_j^Tx)}\eta{(w_j^Tx)})
+\end{equation}
+
+<p>
+其中, \(\Theta=\{u_1,...,u_m,w_1,...,w_m\} \in \Re^{d \times 2m}\) 表示为模型的参数.\(\{u_1,...,u_m\}\) 为分片函数 \(\sigma{(\cdot)}\) 的参数,\(\{w_1,...,w_m\}\) 为预测函数 \(\eta{(\times)}\) 的参数.输入样本 x,模型 \(p(y|x)\) 预测输出由两部分组成: \(\sigma{(u_j^Tx)}\) 将特征空间分成 m 片(m 为超参); \(\eta{(w_j^Tx)}\) 给出在每个分片上预测的结果.函数\(g(\cdot)\) 确保最后输出结果满足概率约束.
+</p>
+</div>
+
+<ol class="org-ol">
+<li><a id="org2824baa"></a>模型<br />
+<div class="outline-text-5" id="text-5-2-1-1">
+<p>
+采用 softmax 作为分片函数 \(\sigma{(x)}\),sigmoid 作为预测函数 \(\eta{(x)}\), \(g(x)=x\).则 LS-PLM 如下:
+</p>
+\begin{equation}
+  p(y=1|x) = \sum_{i=1}^m\frac{\exp{(u_i^Tx)}}{\sum_{j=1}^m\exp{(u_j^Tx)}}\cdot\frac{1}{1+\exp{(-w_i^Tx)}}
+\end{equation}
+
+<p>
+LS-PLM 目标函数如下:
+</p>
+\begin{equation}
+  \arg\min_\Theta \mathrm{f}(\Theta) = \mathop{loss}(\Theta) + \lambda\lVert\Theta\rVert_{2,1} + \beta\lVert\Theta\rVert_{1}
+\end{equation}
+
+\begin{equation}
+  \mathop{loss}(\Theta) = -\sum_{t=1}^n\left[ y_t\log{(p(y_t|x_t,\Theta))} + (1-y_t)\log{(p(y_t=0|x_t,\Theta))}\right]
+\end{equation}
+
+<p>
+损失函数为负对数似然, \(L_{2,1}\) 正则化项(\(\lVert\Theta\rVert_{2,1}=\sum_{i=1}^d\sqrt{\sum_{j=1}^{2m} \theta_{ij}^2}\)) 用来进行特征选择;\(L_1\) 正则化项(\lVert&Theta;\rVert<sub>1</sub>$=&sum;<sub>ij</sub>|&theta;<sub>ij</sub>|) 用来提高模型稀疏性.
+</p>
+</div>
+</li>
+
+<li><a id="org81828ed"></a>优化方法<br />
+<div class="outline-text-5" id="text-5-2-1-2">
+<p>
+两个非平滑的正则化项使得目标函数难以直接利用常规梯度下降来进行优化.
+</p>
+
+<p>
+记 \(\partial{x}_{ij}^{+}\mathrm{f}(\Theta)\) 为函数 \(\mathrm{f}\) 在 \(\Theta\) 点对参数 \(\Theta_{ij}\) 右偏导:
+</p>
+\begin{equation}
+  \partial{x}_{ij}^{+}\mathrm{f}(\Theta) = \lim_{\alpha \to 0}\frac{\mathrm{f}(\Theta + \alpha e_{ij})-\mathrm{f}(\Theta)}{\alpha}
+\end{equation}
+
+<p>
+记 \(\mathrm{f}'(\Theta;d)\) 为函数 \(\mathrm{f}\) 在 \(\Theta\) 点对整个参数方向为 d 的方向导数:
+</p>
+\begin{equation}
+  \mathrm{f}'(\Theta;d) = \lim_{\alpha \to 0}\frac{\mathrm{f}(\Theta+\alpha d)-\mathrm{f}(\Theta)}{\alpha}
+\end{equation}
+
+<p>
+当 \(\mathrm{f}'(\Theta;d)<0\) 时,向量 \(d\) 认为是一个下降方向. 
+</p>
+
+<p>
+\(\mathop{sign}(\cdot)\) 为符号函数.映射函数为:
+</p>
+\begin{equation}
+  \pi_{ij}(\Theta;\Omega) = \begin{cases}
+    \Theta_{ij} &,\mathop{sign}(\Theta_{ij}) = \mathop{sign}(\Omega_{ij}) \\
+    0 &, otherwise
+    \end{cases}
+\end{equation}
+</div>
+
+<ol class="org-ol">
+<li><a id="org00bf81d"></a>选择下降方向<br />
+<div class="outline-text-6" id="text-5-2-1-2-1">
+<p>
+虽然由于正则化项使得<a href="#org3ed4e36">目标函数</a>非凸和非平滑,但是可以采用梯度下降的方向来代替.可以证明方向导数对于任意参数和方向都是存在的.
+</p>
+
+
+<blockquote>
+<p>
+结论: 平滑的损失函数 \(\mathop{loss}(\Theta)\) 和 目标函数 \(\mathrm{f}(\Theta)=\mathop{loss}(\Theta) + \lambda\lVert\Theta\rVert_{2,1} + \beta\lVert\Theta\rVert_{1}\),最小化目标函数的方向梯度 \(\mathrm{f}'(\Theta;d)\) 如下:
+</p>
+\begin{equation}
+  d_{ij} = \begin{cases}
+    s - \beta\mathop{sign}(\Theta_{ij}), & \Theta_{ij} \neq 0 \\
+    \max{\{|s|-\beta,0\}}\mathop{sign}(s), & \Theta_{ij}=0,\lVert\Theta_{i\cdot}\rVert_{2,1} \neq 0 \\
+    \frac{\max{\{\lVert\nu\rVert_{2,1} - \lambda, 0 \}}}{\lVert\nu\rVert_{2,1}}\nu, &\lVert\Theta_{i\cdot}\rVert_{2,1} = 0,
+    \end{cases}
+\end{equation}
+<p>
+其中: \(s = -\nabla\mathop{loss}(\Theta)_{ij} - \lambda\frac{\Theta_{ij}}{\lVert\Theta_{i\cdot}\rVert_{2,1}}\), \(v = \max{\{|-\nabla\mathop{loss}(\Theta)_{ij}| - \beta, 0\}}\mathop{sign}(-\nabla\mathop{loss}(\Theta)_{ij})\)
+</p>
+</blockquote>
+</div>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</div>
+
+<div id="outline-container-org63f72bb" class="outline-3">
+<h3 id="org63f72bb"><span class="section-number-3">5.3</span> Factorization Machine</h3>
+</div>
+</div>
+
+<div id="outline-container-orgdfa9c34" class="outline-2">
+<h2 id="orgdfa9c34"><span class="section-number-2">6</span> 重排</h2>
+</div>
+
+<div id="outline-container-orga198834" class="outline-2">
+<h2 id="orga198834"><span class="section-number-2">7</span> 评估</h2>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2019-09-30 Mon 19:05</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

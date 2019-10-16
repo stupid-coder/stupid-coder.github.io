@@ -1,0 +1,102 @@
+#+TITLE: Summary on RecSys
+#+AUHTOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2 nil:^
+
+#+BEGIN_QUOTE
+推荐系统从工程角度来看,一般分为召回&粗排&精排&去重等过程.文本用来总结一些重要论文在这些部分分别的贡献.
+#+END_QUOTE
+
+* 简介
+  推荐系统是一个大工程,工程和算法缺一不可.本文从工程角度梳理当前主流推荐算法在各个工程模块维度上的方法,从而能够对推荐系统有一个整体认识.
+
+* 数据处理
+  
+* 表达
+
+* 召回
+
+* 排序
+
+** LR
+
+** Piecewise Linear Model(LS-PLM)
+阿里 2017 年提出的 <Learning Piece-wise Linear Models from Large Scale Data for Ad Click Prediction> 基于数据分片然后在每个分片中训练一个模型,最后对多个线性模型的结果进行加权.该方法的具有如下优点
+
++ 非线性 :: 模型非线行拟合能力随着分片数量增加而提高.
++ 扩展性 :: 类似 LR,LS-PLM 模型对大数据量和高纬度特征具有扩展性.
++ 稀疏性 :: LS-PLM 结合 L-1 和 L-2 正则化后能够达到较好的稀疏性.
+
+*** 模型说明
+#+NAME: LS-PLM
+\begin{equation}
+  p(y=1|x) = g(\sum_{j=1}^m\sigma{(u_j^Tx)}\eta{(w_j^Tx)})
+\end{equation}
+
+其中, $\Theta=\{u_1,...,u_m,w_1,...,w_m\} \in \Re^{d \times 2m}$ 表示为模型的参数.$\{u_1,...,u_m\}$ 为分片函数 $\sigma{(\cdot)}$ 的参数,$\{w_1,...,w_m\}$ 为预测函数 $\eta{(\times)}$ 的参数.输入样本 x,模型 $p(y|x)$ 预测输出由两部分组成: $\sigma{(u_j^Tx)}$ 将特征空间分成 m 片(m 为超参); $\eta{(w_j^Tx)}$ 给出在每个分片上预测的结果.函数$g(\cdot)$ 确保最后输出结果满足概率约束.
+
+**** 模型
+采用 softmax 作为分片函数 $\sigma{(x)}$,sigmoid 作为预测函数 $\eta{(x)}$, $g(x)=x$.则 LS-PLM 如下:
+#+NAME: LS-PLM-softmax-sigmoid
+\begin{equation}
+  p(y=1|x) = \sum_{i=1}^m\frac{\exp{(u_i^Tx)}}{\sum_{j=1}^m\exp{(u_j^Tx)}}\cdot\frac{1}{1+\exp{(-w_i^Tx)}}
+\end{equation}
+
+LS-PLM 目标函数如下:
+#+NAME: LS-PLM-OBJECT-FUNCTION
+\begin{equation}
+  \arg\min_\Theta \mathrm{f}(\Theta) = \mathop{loss}(\Theta) + \lambda\lVert\Theta\rVert_{2,1} + \beta\lVert\Theta\rVert_{1}
+\end{equation}
+
+#+NAME: LS-PLM-LOSS-FUNCTION
+\begin{equation}
+  \mathop{loss}(\Theta) = -\sum_{t=1}^n\left[ y_t\log{(p(y_t|x_t,\Theta))} + (1-y_t)\log{(p(y_t=0|x_t,\Theta))}\right]
+\end{equation}
+
+损失函数为负对数似然, $L_{2,1}$ 正则化项($\lVert\Theta\rVert_{2,1}=\sum_{i=1}^d\sqrt{\sum_{j=1}^{2m} \theta_{ij}^2}$) 用来进行特征选择;$L_1$ 正则化项(\lVert\Theta\rVert_1$=\sum_{ij}|\theta_{ij}|) 用来提高模型稀疏性.
+
+**** 优化方法
+两个非平滑的正则化项使得目标函数难以直接利用常规梯度下降来进行优化.
+
+记 $\partial{x}_{ij}^{+}\mathrm{f}(\Theta)$ 为函数 $\mathrm{f}$ 在 $\Theta$ 点对参数 $\Theta_{ij}$ 右偏导:
+\begin{equation}
+  \partial{x}_{ij}^{+}\mathrm{f}(\Theta) = \lim_{\alpha \to 0}\frac{\mathrm{f}(\Theta + \alpha e_{ij})-\mathrm{f}(\Theta)}{\alpha}
+\end{equation}
+
+记 $\mathrm{f}'(\Theta;d)$ 为函数 $\mathrm{f}$ 在 $\Theta$ 点对整个参数方向为 d 的方向导数:
+\begin{equation}
+  \mathrm{f}'(\Theta;d) = \lim_{\alpha \to 0}\frac{\mathrm{f}(\Theta+\alpha d)-\mathrm{f}(\Theta)}{\alpha}
+\end{equation}
+
+当 $\mathrm{f}'(\Theta;d)<0$ 时,向量 $d$ 认为是一个下降方向. 
+
+$\mathop{sign}(\cdot)$ 为符号函数.映射函数为:
+\begin{equation}
+  \pi_{ij}(\Theta;\Omega) = \begin{cases}
+    \Theta_{ij} &,\mathop{sign}(\Theta_{ij}) = \mathop{sign}(\Omega_{ij}) \\
+    0 &, otherwise
+    \end{cases}
+\end{equation}
+
+***** 选择下降方向
+虽然由于正则化项使得[[LS-PLM-OBJECT-FUNCTION][目标函数]]非凸和非平滑,但是可以采用梯度下降的方向来代替.可以证明方向导数对于任意参数和方向都是存在的.
+
+
+#+BEGIN_QUOTE
+结论: 平滑的损失函数 $\mathop{loss}(\Theta)$ 和 目标函数 $\mathrm{f}(\Theta)=\mathop{loss}(\Theta) + \lambda\lVert\Theta\rVert_{2,1} + \beta\lVert\Theta\rVert_{1}$,最小化目标函数的方向梯度 $\mathrm{f}'(\Theta;d)$ 如下:
+\begin{equation}
+  d_{ij} = \begin{cases}
+    s - \beta\mathop{sign}(\Theta_{ij}), & \Theta_{ij} \neq 0 \\
+    \max{\{|s|-\beta,0\}}\mathop{sign}(s), & \Theta_{ij}=0,\lVert\Theta_{i\cdot}\rVert_{2,1} \neq 0 \\
+    \frac{\max{\{\lVert\nu\rVert_{2,1} - \lambda, 0 \}}}{\lVert\nu\rVert_{2,1}}\nu, &\lVert\Theta_{i\cdot}\rVert_{2,1} = 0,
+    \end{cases}
+\end{equation}
+其中: $s = -\nabla\mathop{loss}(\Theta)_{ij} - \lambda\frac{\Theta_{ij}}{\lVert\Theta_{i\cdot}\rVert_{2,1}}$, $v = \max{\{|-\nabla\mathop{loss}(\Theta)_{ij}| - \beta, 0\}}\mathop{sign}(-\nabla\mathop{loss}(\Theta)_{ij})$
+#+END_QUOTE
+
+** Factorization Machine
+
+* 重排
+
+* 评估

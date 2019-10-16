@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-10-18 Thu 23:37 -->
+<!-- 2019-10-14 Mon 14:56 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Efficient BackProp</title>
@@ -256,32 +256,33 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgec4b881">Introduction</a></li>
-<li><a href="#orga11b677">Learning and Generalization</a></li>
-<li><a href="#org5bb95d8">Standard Backpropagation</a></li>
-<li><a href="#org9fa0c27">A Few Practical Tricks</a>
+<li><a href="#orgaca067f">Introduction</a></li>
+<li><a href="#orgdc5ab62">Learning and Generalization</a></li>
+<li><a href="#orgc31af94">Standard Backpropagation</a></li>
+<li><a href="#orgf3b55b5">A Few Practical Tricks</a>
 <ul>
-<li><a href="#org74b98d1">Stochastic versus Batch learning.</a></li>
-<li><a href="#org449adc6">Shuffling the Examples</a></li>
-<li><a href="#org457e04b">Normalizing the Inputs</a></li>
-<li><a href="#org08b5df0">The Sigmoid</a></li>
-<li><a href="#org72780e7">Choosing Target Values</a></li>
-<li><a href="#org6149bf4">Initializing the weights</a></li>
-<li><a href="#org0c96e71">Choosing Learning rates</a></li>
-<li><a href="#org716a136">Radial Basis Functions s Sigmoid Units</a></li>
+<li><a href="#org959dd3c">Stochastic versus Batch learning.</a></li>
+<li><a href="#org5c1c328">Shuffling the Examples</a></li>
+<li><a href="#org25ab3e2">Normalizing the Inputs</a></li>
+<li><a href="#orgfba0c37">The Sigmoid</a></li>
+<li><a href="#orgb5d6d62">Choosing Target Values</a></li>
+<li><a href="#org25e89d8">Initializing the weights</a></li>
+<li><a href="#org06a0b19">Choosing Learning rates</a></li>
+<li><a href="#org71bc3eb">Radial Basis Functions s Sigmoid Units</a></li>
 </ul>
 </li>
-<li><a href="#org2d04d66">Convergence of Gradient Descent</a>
+<li><a href="#org0d33a76">Convergence of Gradient Descent</a>
 <ul>
-<li><a href="#org54670d2">A Little Theory</a></li>
-<li><a href="#org8cfb6a8">Examples</a></li>
-<li><a href="#org50914f6">Input Transformations and Error Surface Transformations Revisited</a></li>
+<li><a href="#org247cb73">A Little Theory</a></li>
+<li><a href="#orga6a6598">Examples</a></li>
+<li><a href="#orgf357880">Input Transformations and Error Surface Transformations Revisited</a></li>
 </ul>
 </li>
-<li><a href="#orgf56f10a">Classical second order optimization methods</a>
+<li><a href="#org8bd2bc3">Classical second order optimization methods</a>
 <ul>
-<li><a href="#org150ac1b">Newton Algorithm</a></li>
-<li><a href="#orga341fe2">Conjugate Gradient</a></li>
+<li><a href="#org5e03fb2">Newton Algorithm</a></li>
+<li><a href="#org452734e">Conjugate Gradient</a></li>
+<li><a href="#org38e6961">Quasi-Newton(BFGS)</a></li>
 </ul>
 </li>
 </ul>
@@ -301,9 +302,9 @@ for the JavaScript code in this tag.
 </p>
 </blockquote>
 
-<div id="outline-container-orgec4b881" class="outline-2">
-<h2 id="orgec4b881">Introduction</h2>
-<div class="outline-text-2" id="text-orgec4b881">
+<div id="outline-container-orgaca067f" class="outline-2">
+<h2 id="orgaca067f">Introduction</h2>
+<div class="outline-text-2" id="text-orgaca067f">
 <p>
 由于反向传播理论上较为简单明了,计算有效,所以在神经网络训练上是最为常见的优化方法.然而,让反向传播算法具有良好的优化效果的方法更像一门艺术,而非科学.采用反向传播设计和训练神经网络需要做很多超参设置,例如:神经元的个数和类型,网络层的个数和类型,学习率,训练和测试集等等.这些选择是非常的关键的,但是由于这些超参的选择是非常苦难,并和数据集有很大关系,所以没有公式来确定这些超参.但是有很多启发式方法和一些基础理论来指导如何选择更好的超参.
 如下第一部分会先介绍以下标准的反向传播算法和一些用来提高模型性能的简单启发式技巧.随后讨论网络收敛相关问题,并描述了一些经典的二次非线性优化方法,并且显示这些方法在神经网络训练中具有很多限制.最后展示了一些二次优化算法在一些特定情况下具有加速训练功能.
@@ -311,11 +312,11 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-orga11b677" class="outline-2">
-<h2 id="orga11b677">Learning and Generalization</h2>
-<div class="outline-text-2" id="text-orga11b677">
+<div id="outline-container-orgdc5ab62" class="outline-2">
+<h2 id="orgdc5ab62">Learning and Generalization</h2>
+<div class="outline-text-2" id="text-orgdc5ab62">
 <p>
-最常见的机器学习优化算法是基于梯度的学习方法(<i>gradient-based learning methods</i>).如<a href="#orga3fbe07">1</a>所示,一个可学习机器用来输出得分函数 \(M(Z^{p},W)\) ,其中 \(Z^{p}\) 为第 p 个输入样本, W 为系统中可学习参数集.损失函数为 \(E^{p}=C(D^{p},M(Z^{p},W))\) 用来度量希望输出 \(D^{p}\) 和系统实际输出差值.均值损失函数 \(E_{train}(W)\) 为在训练集(<i>train set</i>)上 \({(Z^{1},D^{1}),...(Z^{p},D^{p})}\) 对应错误 \(E^{p}\) 的求均值.优化方法就是通过调整参数 W 最小训练集上的损失函数 \(E_{train}(W)\).实际应用中,在训练集上的损失指标没有在实际应用场景下的错误更为有用.所以可以在和训练集没有交集的测试集(<i>test set</i>)来度量该指标.最为常见的损失函数为均值方差错误(<i>Mean Squared Error</i>):
+最常见的机器学习优化算法是基于梯度的学习方法(<i>gradient-based learning methods</i>).如<a href="#orge826ece">1</a>所示,一个可学习机器用来输出得分函数 \(M(Z^{p},W)\) ,其中 \(Z^{p}\) 为第 p 个输入样本, W 为系统中可学习参数集.损失函数为 \(E^{p}=C(D^{p},M(Z^{p},W))\) 用来度量希望输出 \(D^{p}\) 和系统实际输出差值.均值损失函数 \(E_{train}(W)\) 为在训练集(<i>train set</i>)上 \({(Z^{1},D^{1}),...(Z^{p},D^{p})}\) 对应错误 \(E^{p}\) 的求均值.优化方法就是通过调整参数 W 最小训练集上的损失函数 \(E_{train}(W)\).实际应用中,在训练集上的损失指标没有在实际应用场景下的错误更为有用.所以可以在和训练集没有交集的测试集(<i>test set</i>)来度量该指标.最为常见的损失函数为均值方差错误(<i>Mean Squared Error</i>):
 \[
   E^{p} = \frac{1}{2}(D^{p} - M(Z^{p},W))^{2},\: \: E_{train} = \frac{1}{P}\sum_{p=1}{E^{p}}
   \]
@@ -323,7 +324,7 @@ for the JavaScript code in this tag.
 <hr />
 <div class="org-center">
 
-<div id="orga3fbe07" class="figure">
+<div id="orge826ece" class="figure">
 <p><img src="assets/efficient-backprop/figure-1.png" alt="figure-1.png" />
 </p>
 <p><span class="figure-number">Figure 1: </span>基于梯度的学习机器</p>
@@ -357,9 +358,9 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org5bb95d8" class="outline-2">
-<h2 id="org5bb95d8">Standard Backpropagation</h2>
-<div class="outline-text-2" id="text-org5bb95d8">
+<div id="outline-container-orgc31af94" class="outline-2">
+<h2 id="orgc31af94">Standard Backpropagation</h2>
+<div class="outline-text-2" id="text-orgc31af94">
 <p>
 虽然本节中展示的相关技巧和分析是在经典的多层前向神经网络中说明,其中的很多却适用于大多数其他基于梯度的学习方法.
 </p>
@@ -420,17 +421,17 @@ W(t)=W(t-1)-\eta\frac{\partial{E}}{\partial{W}}
 </div>
 </div>
 
-<div id="outline-container-org9fa0c27" class="outline-2">
-<h2 id="org9fa0c27">A Few Practical Tricks</h2>
-<div class="outline-text-2" id="text-org9fa0c27">
+<div id="outline-container-orgf3b55b5" class="outline-2">
+<h2 id="orgf3b55b5">A Few Practical Tricks</h2>
+<div class="outline-text-2" id="text-orgf3b55b5">
 <p>
 多层神经网络损失函数常常是非二次(<i>non-quadratic</i>),非凸(<i>non-convex</i>),并且由于输入是高维数据造成具有很多局部最小值和平滑平面存在,上述这些因素常常会使得反向传播在应用中收敛速度会变得非常慢.并且没有公式来保证 1.网络会收敛到一个较好的结果;2.快速收敛;3.结果一定收敛.本节,将会讨论一些相关技巧,来加速收敛速度,并且提高收敛的几率.
 </p>
 </div>
 
-<div id="outline-container-org74b98d1" class="outline-3">
-<h3 id="org74b98d1">Stochastic versus Batch learning.</h3>
-<div class="outline-text-3" id="text-org74b98d1">
+<div id="outline-container-org959dd3c" class="outline-3">
+<h3 id="org959dd3c">Stochastic versus Batch learning.</h3>
+<div class="outline-text-3" id="text-org959dd3c">
 <p>
 每次迭代,公式(5)需要计算所有的训练集,获取训练集的真实梯度.由于整个训练集需要计算后才会更新权值,整个过程叫做批次学习(<i>batch learning</i>).替换方法,可以采用随机梯度(<i>stochastic</i>)学习方法,每次更新权值只需要从训练集上随机选取一个样本.真实梯度估计(<i>true gradient estimate</i>)是基于单个随机选取的样本的错误 \(E^{t}\) ,然后更新权重:
 </p>
@@ -504,9 +505,9 @@ W(t+1) = W(t) - \eta\frac{\partial{E^{t}}}{\partial{W}}.
 </div>
 </div>
 
-<div id="outline-container-org449adc6" class="outline-3">
-<h3 id="org449adc6">Shuffling the Examples</h3>
-<div class="outline-text-3" id="text-org449adc6">
+<div id="outline-container-org5c1c328" class="outline-3">
+<h3 id="org5c1c328">Shuffling the Examples</h3>
+<div class="outline-text-3" id="text-org5c1c328">
 <p>
 由于神经网络从未见过的样本学习速度最快.因此建议在每次迭代中选择模型最不熟悉的样本(即模型分类错误的样本).可知的是,没有一个简单方法的来确定哪些样本对模型来说包含的信息最丰富,所以一个简单的技巧是每次选择的样本最好分布在不同类别的样本(相同类别下的样本携带的信息较为相似).
 </p>
@@ -534,9 +535,9 @@ W(t+1) = W(t) - \eta\frac{\partial{E^{t}}}{\partial{W}}.
 </div>
 </div>
 
-<div id="outline-container-org457e04b" class="outline-3">
-<h3 id="org457e04b">Normalizing the Inputs</h3>
-<div class="outline-text-3" id="text-org457e04b">
+<div id="outline-container-org25ab3e2" class="outline-3">
+<h3 id="org25ab3e2">Normalizing the Inputs</h3>
+<div class="outline-text-3" id="text-org25ab3e2">
 <p>
 如果训练集中的变量均值接近 0 时,模型的收敛速度更快.考虑一个极端情况,所有的输入变量都是正值.输入层的权重更新与 \(\delta{x}\) 成正比,\(\delta\) 是错误,x 为输入向量(参考公式(3.2)和(5)).如何输入的向量元素都是正数,那么更新的权重值都是相同符号.结果就是所有的权重面对一个样本的时候要不全部增加或者要不全部减少.所以权重的更新过程将会非常缓慢和充满抖动.
 </p>
@@ -580,12 +581,12 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </p>
 
 <p>
-输入数据是线性相关(<i>linearly dependent</i>)同样会减慢学习.假设:一个输入变量永远是另外一个输入变量的两倍(\(z_{2}=2z_{1}\)).网络输出如果是固定沿着直线 \(W_{2}=v-(1/2)W_{1}\),\(v\) 为常量.因此,损失梯度沿着直线永远是 0(如<a href="#orgf0f64b2">2</a>).沿着这些直线更新梯度,对损失函数没有任何学习作用.2-D 的机器学习问题退化为 1-D 的机器学问题.理想情况下,能够消除其中一个输入,从而简化整个模型和学习复杂度.
+输入数据是线性相关(<i>linearly dependent</i>)同样会减慢学习.假设:一个输入变量永远是另外一个输入变量的两倍(\(z_{2}=2z_{1}\)).网络输出如果是固定沿着直线 \(W_{2}=v-(1/2)W_{1}\),\(v\) 为常量.因此,损失梯度沿着直线永远是 0(如<a href="#orgc9176eb">2</a>).沿着这些直线更新梯度,对损失函数没有任何学习作用.2-D 的机器学习问题退化为 1-D 的机器学问题.理想情况下,能够消除其中一个输入,从而简化整个模型和学习复杂度.
 </p>
 <hr />
 <div class="org-center">
 
-<div id="orgf0f64b2" class="figure">
+<div id="orgc9176eb" class="figure">
 <p><img src="assets/efficient-backprop/figure-2.png" alt="figure-2.png" />
 </p>
 <p><span class="figure-number">Figure 2: </span>输入具有线性相关</p>
@@ -594,12 +595,12 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 <hr />
 
 <p>
-图<a href="#orgf16275c">3</a>显示了整个输入变换的过程.过程为(1)平移输入值,使得均值为 0;(2)去除输入变量之间的相关性;(3)缩放变量,使得方差相等.
+图<a href="#org56e92b1">3</a>显示了整个输入变换的过程.过程为(1)平移输入值,使得均值为 0;(2)去除输入变量之间的相关性;(3)缩放变量,使得方差相等.
 </p>
 <hr />
 <div class="org-center">
 
-<div id="orgf16275c" class="figure">
+<div id="org56e92b1" class="figure">
 <p><img src="assets/efficient-backprop/figure-3.png" alt="figure-3.png" />
 </p>
 <p><span class="figure-number">Figure 3: </span>输入预处理</p>
@@ -609,11 +610,11 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 </div>
 
-<div id="outline-container-org08b5df0" class="outline-3">
-<h3 id="org08b5df0">The Sigmoid</h3>
-<div class="outline-text-3" id="text-org08b5df0">
+<div id="outline-container-orgfba0c37" class="outline-3">
+<h3 id="orgfba0c37">The Sigmoid</h3>
+<div class="outline-text-3" id="text-orgfba0c37">
 <p>
-非线性激活函数的使用,使得神经网络拥有的非线性能力.最常用的激活函数是 sigmoid,该函数是一个单调递增函数.最常见的例子是标准 logistic 函数 \(f(x)=1/(1+e^{-x})\) 和双曲正切函数 \(f(x)=\tanh{(x)}\),如<a href="#org306eafb">4</a>所示.优先采取<a href="#org306eafb">4</a>b 所示的 sigmoid 函数,该函数关于 0 值对称,主要原因是该输出可能是下一层的输入,是已经平移到均值为 0 了.
+非线性激活函数的使用,使得神经网络拥有的非线性能力.最常用的激活函数是 sigmoid,该函数是一个单调递增函数.最常见的例子是标准 logistic 函数 \(f(x)=1/(1+e^{-x})\) 和双曲正切函数 \(f(x)=\tanh{(x)}\),如<a href="#orgd1fd71d">4</a>所示.优先采取<a href="#orgd1fd71d">4</a>b 所示的 sigmoid 函数,该函数关于 0 值对称,主要原因是该输出可能是下一层的输入,是已经平移到均值为 0 了.
 </p>
 <hr />
 <blockquote>
@@ -642,7 +643,7 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 <hr />
 <div class="org-center">
 
-<div id="org306eafb" class="figure">
+<div id="orgd1fd71d" class="figure">
 <p><img src="assets/efficient-backprop/figure-4.png" alt="figure-4.png" />
 </p>
 <p><span class="figure-number">Figure 4: </span>(a) 不推荐使用.标准 logistic 函数, \(f(x)=1/(1+e^{-x})\). (b) 双曲切线, \(f(x)=1.7159\ \tanh{(\frac{2}{3}x)}\)</p>
@@ -651,9 +652,9 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 <hr />
 </div>
 </div>
-<div id="outline-container-org72780e7" class="outline-3">
-<h3 id="org72780e7">Choosing Target Values</h3>
-<div class="outline-text-3" id="text-org72780e7">
+<div id="outline-container-orgb5d6d62" class="outline-3">
+<h3 id="orgb5d6d62">Choosing Target Values</h3>
+<div class="outline-text-3" id="text-orgb5d6d62">
 <p>
 在分类问题中,目标值一般都是二类(例如:{-1,+1}).一个可能的建议是将目标值用非对称的 sigmoid 函数的渐进线的值表示.但是这种方法具有很多弊端.
 </p>
@@ -667,7 +668,7 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </p>
 
 <p>
-一个解决上述问题的方法是将目标值放在 sigmoid 的值域区间内,而非 sigmoid 的渐进线值.值域需要仔细设计,确定值域不要是 sigmoid 近似线性的区域.最好的的方法是将目标值设置为 sigmoid 函数的二次导数的最大值位置,从而从分利用了 sigmoid 的非线性和避免 sigmoid 饱和状态出现.这也是<a href="#org306eafb">4</a>b 的 sigmoid 是较好的另一个原因,二次导数在 \(\pm 1\) 时最大,选取 \(\pm 1\) 作为二分类目标值.
+一个解决上述问题的方法是将目标值放在 sigmoid 的值域区间内,而非 sigmoid 的渐进线值.值域需要仔细设计,确定值域不要是 sigmoid 近似线性的区域.最好的的方法是将目标值设置为 sigmoid 函数的二次导数的最大值位置,从而从分利用了 sigmoid 的非线性和避免 sigmoid 饱和状态出现.这也是<a href="#orgd1fd71d">4</a>b 的 sigmoid 是较好的另一个原因,二次导数在 \(\pm 1\) 时最大,选取 \(\pm 1\) 作为二分类目标值.
 </p>
 
 <hr />
@@ -680,15 +681,15 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 </div>
 
-<div id="outline-container-org6149bf4" class="outline-3">
-<h3 id="org6149bf4">Initializing the weights</h3>
-<div class="outline-text-3" id="text-org6149bf4">
+<div id="outline-container-org25e89d8" class="outline-3">
+<h3 id="org25e89d8">Initializing the weights</h3>
+<div class="outline-text-3" id="text-org25e89d8">
 <p>
 权重值的初始化会对训练过程具有极大的影响.权重值应该随机初始化,但是极可能会使得激活值落在线性区域.如果采用较大的权重值,那么 sigmoid 会落在饱和区域,使得梯度较小,从而使得训练速度较慢.如果权重值非常小,那么梯度仍然会非常小.临近 sigmoid 函数线性区域之外的权重值具有一些良好的特性:(1) 梯度够大,利于训练过程使用.(2) 网络模型可以先学习线性映射关系,然后再学习更为困难的非线性映射部分.
 </p>
 
 <p>
-为了实现上述情况,需要将训练集归一化操作, sigmoid 函数选择,权值初始化都考虑在内.首先需要保证网络层输出值的标准方差(\(\sigma\))接近为 1.输入层通过<a href="#org457e04b">Normalizing the Inputs</a>就可以实现输入数据的标准方差为 1.为了使得第一层网络层输出的标准方差为 1,只需要采用上述推荐的 sigmoid 函数,并且保证输入的数据的标准方差为 1 即可.假设神经元 \(y_{i}\) 的输入数据标准方差为 1,并且已经去除相关性,那么通过权值加和后标准差为:
+为了实现上述情况,需要将训练集归一化操作, sigmoid 函数选择,权值初始化都考虑在内.首先需要保证网络层输出值的标准方差(\(\sigma\))接近为 1.输入层通过<a href="#org25ab3e2">Normalizing the Inputs</a>就可以实现输入数据的标准方差为 1.为了使得第一层网络层输出的标准方差为 1,只需要采用上述推荐的 sigmoid 函数,并且保证输入的数据的标准方差为 1 即可.假设神经元 \(y_{i}\) 的输入数据标准方差为 1,并且已经去除相关性,那么通过权值加和后标准差为:
 </p>
 \begin{equation}
 \sigma_{y_{i}} = \left(\sum_{j}{w_{ij}^{2}} \right)^{1/2}
@@ -717,7 +718,7 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </p>
 <ul class="org-ul">
 <li>训练集已经过归一化</li>
-<li>采用<a href="#org306eafb">4</a> b 描述的 sigmoid 函数</li>
+<li>采用<a href="#orgd1fd71d">4</a> b 描述的 sigmoid 函数</li>
 </ul>
 
 
@@ -731,9 +732,9 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 </div>
 
-<div id="outline-container-org0c96e71" class="outline-3">
-<h3 id="org0c96e71">Choosing Learning rates</h3>
-<div class="outline-text-3" id="text-org0c96e71">
+<div id="outline-container-org06a0b19" class="outline-3">
+<h3 id="org06a0b19">Choosing Learning rates</h3>
+<div class="outline-text-3" id="text-org06a0b19">
 <p>
 至少有一种具有良好理论解释的方法用来评估理想的学习率(\(\eta\)).许多其他的策略(大多数不具有理论支持)提出自动动态调整学习率的方法.大多数是在权值向量出现震荡(<i>oscillates</i>)时候,对学习率进行衰减;并且当权值向量具有一个稳定的更新方向时,增大学习率.这些方法在随机梯度优化或者在线学习的场景下不再适用,因为权值向量在整个优化的过程都在震荡.
 </p>
@@ -771,8 +772,8 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 
 <ul class="org-ul">
-<li><a id="orgdeb5288"></a>Momentum<br />
-<div class="outline-text-4" id="text-orgdeb5288">
+<li><a id="org3643e07"></a>Momentum<br />
+<div class="outline-text-4" id="text-org3643e07">
 <hr />
 \begin{equation}
 \Delta{w(t+1)}=\eta\frac{\partial{E_{t+1}}}{\partial{w}}+\mu{\Delta{w(t)}},
@@ -785,8 +786,8 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 </li>
 
-<li><a id="org08518e4"></a>Adaptive learning rates<br />
-<div class="outline-text-4" id="text-org08518e4">
+<li><a id="orgd3d70e1"></a>Adaptive learning rates<br />
+<div class="outline-text-4" id="text-orgd3d70e1">
 <hr />
 <p>
 很多作者包括 Sompolinsky et al.<sup><a id="fnr.4" class="footref" href="#fn.4">4</a></sup>, Darken&amp;Moody <sup><a id="fnr.5" class="footref" href="#fn.5">5</a></sup>,Sutton <sup><a id="fnr.6" class="footref" href="#fn.6">6</a></sup>,Murata et al.<sup><a id="fnr.7" class="footref" href="#fn.7">7</a></sup>提出了自动化调整学习率的一些规则(也看参考<sup><a id="fnr.8" class="footref" href="#fn.8">8</a></sup>).这些规则都是通过基于错误率来提高和降低学习率,从而实现控制模型收敛速度.
@@ -832,7 +833,7 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 
 <hr />
 
-<div id="org1014081" class="figure">
+<div id="org84c4952" class="figure">
 <p><img src="assets/efficient-backprop/figure-5.png" alt="figure-5.png" />
 </p>
 <p><span class="figure-number">Figure 5: </span>模型收敛轨迹.</p>
@@ -843,9 +844,9 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </ul>
 </div>
 
-<div id="outline-container-org716a136" class="outline-3">
-<h3 id="org716a136">Radial Basis Functions s Sigmoid Units</h3>
-<div class="outline-text-3" id="text-org716a136">
+<div id="outline-container-org71bc3eb" class="outline-3">
+<h3 id="org71bc3eb">Radial Basis Functions s Sigmoid Units</h3>
+<div class="outline-text-3" id="text-org71bc3eb">
 <p>
 常见的神经元采用向量内积和 sigmoid 实现,还有其他类型的神经元可以采用.常见的就是径向基函数(<i>radial basis function RBF</i>).在 RBF 网络中,输入向量和权值向量内积操作替换成了输入向量和权值向量的欧几里德距离(<i>Euclidean distance</i>),sigmoid 激活函数替换成了指数函数.计算公式如下:
 </p>
@@ -864,13 +865,13 @@ C_{i} = \frac{1}{P}\sum_{p=1}^{P}(z_{i}^{p})^2.
 </div>
 </div>
 
-<div id="outline-container-org2d04d66" class="outline-2">
-<h2 id="org2d04d66">Convergence of Gradient Descent</h2>
-<div class="outline-text-2" id="text-org2d04d66">
+<div id="outline-container-org0d33a76" class="outline-2">
+<h2 id="org0d33a76">Convergence of Gradient Descent</h2>
+<div class="outline-text-2" id="text-org0d33a76">
 </div>
-<div id="outline-container-org54670d2" class="outline-3">
-<h3 id="org54670d2">A Little Theory</h3>
-<div class="outline-text-3" id="text-org54670d2">
+<div id="outline-container-org247cb73" class="outline-3">
+<h3 id="org247cb73">A Little Theory</h3>
+<div class="outline-text-3" id="text-org247cb73">
 <p>
 在本节,将会讨论前面给出的技巧背后的一些理论.先从一维数据开始,梯度下降的更新公式如下:
 </p>
@@ -879,13 +880,13 @@ W(t+1)=W(t)-\eta{\frac{\mathrm{d}E(w)}{\mathrm{d}W}}
 \end{equation}
 
 <p>
-我们想知道 \(\eta\) 的值是如何影响学习速度和模型收敛.如<a href="#org92f60b7">6</a>所示,不同的 \(\eta\) 对训练过程的影响.在一维情况下,很容易定义最优学习率 \(\eta_{opt}\),学习率可以通过一步将权值移动到最小值的权重 \(W_{min}\)(如<a href="#org92f60b7">figure-6(i)b</a>所示).如果 \(\eta\) 小于 \(\eta_{opt
-}\) 那么移动的步长将变小,那么需要多步更新才能收敛.如果 \(\eta\) 在 \(\eta_{opt}\) 和 \(2\eta_{opt}\) 之间,那么权重更新就会在 \(W_{min}\) 附近震荡,但是最后会收敛(如<a href="#org92f60b7">figure-6(i)c</a>所示).如果 \(\eta\) 大于两倍的最优学习率 \(\eta_{opt}\),那么权重更新的步长太长,会使得权重与最小权重偏移的更大(如<a href="#org92f60b7">figure-6(i)d</a>所示),最终使得模型无法收敛.
+我们想知道 \(\eta\) 的值是如何影响学习速度和模型收敛.如<a href="#org245cef3">6</a>所示,不同的 \(\eta\) 对训练过程的影响.在一维情况下,很容易定义最优学习率 \(\eta_{opt}\),学习率可以通过一步将权值移动到最小值的权重 \(W_{min}\)(如<a href="#org245cef3">figure-6(i)b</a>所示).如果 \(\eta\) 小于 \(\eta_{opt
+}\) 那么移动的步长将变小,那么需要多步更新才能收敛.如果 \(\eta\) 在 \(\eta_{opt}\) 和 \(2\eta_{opt}\) 之间,那么权重更新就会在 \(W_{min}\) 附近震荡,但是最后会收敛(如<a href="#org245cef3">figure-6(i)c</a>所示).如果 \(\eta\) 大于两倍的最优学习率 \(\eta_{opt}\),那么权重更新的步长太长,会使得权重与最小权重偏移的更大(如<a href="#org245cef3">figure-6(i)d</a>所示),最终使得模型无法收敛.
 </p>
 
 <hr />
 
-<div id="org92f60b7" class="figure">
+<div id="org245cef3" class="figure">
 <p><img src="assets/efficient-backprop/figure-6.png" alt="figure-6.png" />
 </p>
 <p><span class="figure-number">Figure 6: </span>不同学习率下的梯度下降.</p>
@@ -921,7 +922,7 @@ W_{min}=W_{c}-\left(\frac{\mathrm{d}^{2}E(W_{c})}{\mathrm{d}W^{2}}\right)^{-1}\f
 \end{equation}
 
 <p>
-一个更简单和直观的方法如图<a href="#org92f60b7">figure-6(ii)</a>所示.下图显示了函数 \(E\) 的一阶导数函数.由于 \(E\) 是二次函数,梯度就是一条直线,并且在梯度等于 0 的时候获得全局最小值.所以计算斜率公式:
+一个更简单和直观的方法如图<a href="#org245cef3">figure-6(ii)</a>所示.下图显示了函数 \(E\) 的一阶导数函数.由于 \(E\) 是二次函数,梯度就是一条直线,并且在梯度等于 0 的时候获得全局最小值.所以计算斜率公式:
 </p>
 \begin{equation}
 \partial^{2}{E}/\partial^{2}{W}=\frac{\partial{E}(W_{c})/\partial{W}-0}{W_{c}-W_{min}}.
@@ -932,7 +933,7 @@ W_{min}=W_{c}-\left(\frac{\mathrm{d}^{2}E(W_{c})}{\mathrm{d}W^{2}}\right)^{-1}\f
 </p>
 
 <p>
-虽然最快收敛的最佳学习率是 \(\eta_{opt}\),但是最大的可以使用的学习率,并且不会引起模型发散(<i>divergence</i>)是(如<a href="#org92f60b7">figure-6(i)d</a>所示):
+虽然最快收敛的最佳学习率是 \(\eta_{opt}\),但是最大的可以使用的学习率,并且不会引起模型发散(<i>divergence</i>)是(如<a href="#org245cef3">figure-6(i)d</a>所示):
 </p>
 \begin{equation}
 \eta_{max}=2\eta_{opt}.
@@ -950,12 +951,12 @@ H_{ij}=\frac{\partial^{2}{E}}{\partial{W_{i}}\partial{W_{j}}}
 \end{equation}
 
 <p>
-\(H\) 为 \(E\) 曲率的度量.在二维数据, \(E\) 的梯度等高线如<a href="#orga8cf415">figure-7</a>所示. Hessian 矩阵的特征向量为对应梯度主要和次要方向.特征值表示损失函数 \(E\) 沿着两个方向的步长.
+\(H\) 为 \(E\) 曲率的度量.在二维数据, \(E\) 的梯度等高线如<a href="#orgd8d2a98">figure-7</a>所示. Hessian 矩阵的特征向量为对应梯度主要和次要方向.特征值表示损失函数 \(E\) 沿着两个方向的步长.
 </p>
 
 <hr />
 
-<div id="orga8cf415" class="figure">
+<div id="orgd8d2a98" class="figure">
 <p><img src="assets/efficient-backprop/figure-7.png" alt="figure-7.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>E 等高线</p>
@@ -977,11 +978,11 @@ H=\frac{1}{P}\sum_{p}{x^{p}{x^{p}}^{T}}.
 \end{equation}
 
 <p>
-因此,H 矩阵的每个特征值表示输入数据在该特征向量上的协方差或者分布强度,如<a href="#org4dc6a2e">8</a>所示.
+因此,H 矩阵的每个特征值表示输入数据在该特征向量上的协方差或者分布强度,如<a href="#org66dc2e3">8</a>所示.
 </p>
 <hr />
 
-<div id="org4dc6a2e" class="figure">
+<div id="org66dc2e3" class="figure">
 <p><img src="assets/efficient-backprop/figure-8.png" alt="figure-8.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>LMS 算法下,Hessian 矩阵度量了输入的数据分布.</p>
@@ -1016,7 +1017,7 @@ E(W)\simeq E(W_{min})+\frac{1}{2}(W-W_{min})^{T}H(W_{min})(W-W_{min}).
 </p>
 
 <p>
-那么如何选择学习率呢?理想情况下,希望在不同的特征向量上采用不同的学习率.如果特征向量和权值的坐标一直,那么就更简单,可以根据权值所在的特征向量方向上采用和特征值成比例的学习率.然而如果权值是耦合在一起的,需要对 Hessian 矩阵进行旋转,从而使得 H 变成对角阵,从而使得特征向量和坐标系一直(如<a href="#orga8cf415">figure-7 b</a>所示).
+那么如何选择学习率呢?理想情况下,希望在不同的特征向量上采用不同的学习率.如果特征向量和权值的坐标一直,那么就更简单,可以根据权值所在的特征向量方向上采用和特征值成比例的学习率.然而如果权值是耦合在一起的,需要对 Hessian 矩阵进行旋转,从而使得 H 变成对角阵,从而使得特征向量和坐标系一直(如<a href="#orgd8d2a98">figure-7 b</a>所示).
 </p>
 
 <p>
@@ -1070,34 +1071,34 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </p>
 </div>
 </div>
-<div id="outline-container-org8cfb6a8" class="outline-3">
-<h3 id="org8cfb6a8">Examples</h3>
-<div class="outline-text-3" id="text-org8cfb6a8">
+<div id="outline-container-orga6a6598" class="outline-3">
+<h3 id="orga6a6598">Examples</h3>
+<div class="outline-text-3" id="text-orga6a6598">
 </div>
 <ul class="org-ul">
-<li><a id="org4b8982e"></a>Linear Network<br />
-<div class="outline-text-4" id="text-org4b8982e">
+<li><a id="org0ec1aa3"></a>Linear Network<br />
+<div class="outline-text-4" id="text-org0ec1aa3">
 <p>
-<a href="#orge6f7e51">10</a>展示了从两个高斯分布采样的 100 个样本点,中心点分别是(-0.4,-0.8)和(0.4,0.8).这些样本点的协方差矩阵的特征值分别为 0.84 和 0.036.训练一个单层的线性网络,具有两个输入,一个输出,两个权值和一个偏置(如<a href="#org5008e19">9</a>所示).采用 batch 的 LMS 算法.<a href="#org1cd43aa">11</a>显示了 \(\eta=1.5\) 和 \(\eta=2.5\) 时训练过程中的权值更新和错误率.可以注意到最大学习率 \(\eta_{max}=2/\lambda_{max}=2/.94=2.38\)(公式(32)),所以 \(\eta=2.5\) 时,模型会发散.
+<a href="#org97b0fa6">10</a>展示了从两个高斯分布采样的 100 个样本点,中心点分别是(-0.4,-0.8)和(0.4,0.8).这些样本点的协方差矩阵的特征值分别为 0.84 和 0.036.训练一个单层的线性网络,具有两个输入,一个输出,两个权值和一个偏置(如<a href="#org3da1d0d">9</a>所示).采用 batch 的 LMS 算法.<a href="#org30bd6ec">11</a>显示了 \(\eta=1.5\) 和 \(\eta=2.5\) 时训练过程中的权值更新和错误率.可以注意到最大学习率 \(\eta_{max}=2/\lambda_{max}=2/.94=2.38\)(公式(32)),所以 \(\eta=2.5\) 时,模型会发散.
 </p>
 
 <hr />
 
-<div id="org5008e19" class="figure">
+<div id="org3da1d0d" class="figure">
 <p><img src="assets/efficient-backprop/figure-9.png" alt="figure-9.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>简单的线性模型</p>
 </div>
 <hr />
 
-<div id="orge6f7e51" class="figure">
+<div id="org97b0fa6" class="figure">
 <p><img src="assets/efficient-backprop/figure-10.png" alt="figure-10.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>中心点(-0.4,-0.8)和(0.4,0.8)的两个高斯采样数据集</p>
 </div>
 <hr />
 
-<div id="org1cd43aa" class="figure">
+<div id="org30bd6ec" class="figure">
 <p><img src="assets/efficient-backprop/figure-11.png" alt="figure-11.png" />
 </p>
 <p><span class="figure-number">Figure 11: </span>权值和错误率曲线.(a) \(\eta=1.5\), (b) \(\eta=2.5\).</p>
@@ -1105,12 +1106,12 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 <hr />
 
 <p>
-<a href="#orgb978153">12</a>显示了相同的训练集上,采用随机梯度进行优化,学习率为 \(\eta=0.2\).可以看到权值的更新充满更多的噪声.损失值是按 epoch 计算的.
+<a href="#orgc621a1b">12</a>显示了相同的训练集上,采用随机梯度进行优化,学习率为 \(\eta=0.2\).可以看到权值的更新充满更多的噪声.损失值是按 epoch 计算的.
 </p>
 
 <hr />
 
-<div id="orgb978153" class="figure">
+<div id="orgc621a1b" class="figure">
 <p><img src="assets/efficient-backprop/figure-12.png" alt="figure-12.png" />
 </p>
 <p><span class="figure-number">Figure 12: </span>采用学习率为 \(\eta=0.2\) 的随机梯度优化,相对应的权值更新和损失值.</p>
@@ -1119,21 +1120,21 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </div>
 </li>
 
-<li><a id="orgb4062fd"></a>Multilayer Network<br />
-<div class="outline-text-4" id="text-orgb4062fd">
+<li><a id="org534f2ad"></a>Multilayer Network<br />
+<div class="outline-text-4" id="text-org534f2ad">
 <p>
-<a href="#org201d18f">14</a>显示了一个非常简单的多层网络模型结构.有一个输入,一个隐层,一个输出节点.模型中具有 2 个权值和 2 个偏置.激活函数为 \(f(x)=1.71\tanh{(\frac{2}{3}x)}\).训练集包含 10 个样本,标记为 2 个类别.每一类都是从标准方差 0.4 的高斯采样获得.类别 1 的均值为-1,类别 2 的均值为+1.所以类别 1 的目标值为-1,类别 2 的目标值为+1.<a href="#org2dd4922">13</a>显示了随机梯度优化过程.
+<a href="#org4606c5d">14</a>显示了一个非常简单的多层网络模型结构.有一个输入,一个隐层,一个输出节点.模型中具有 2 个权值和 2 个偏置.激活函数为 \(f(x)=1.71\tanh{(\frac{2}{3}x)}\).训练集包含 10 个样本,标记为 2 个类别.每一类都是从标准方差 0.4 的高斯采样获得.类别 1 的均值为-1,类别 2 的均值为+1.所以类别 1 的目标值为-1,类别 2 的目标值为+1.<a href="#org879695c">13</a>显示了随机梯度优化过程.
 </p>
 <hr />
 
-<div id="org2dd4922" class="figure">
+<div id="org879695c" class="figure">
 <p><img src="assets/efficient-backprop/figure-13.png" alt="figure-13.png" />
 </p>
 <p><span class="figure-number">Figure 13: </span>1-1-1 网络模型,采用随机梯度优化,权值更新和损失值</p>
 </div>
 <hr />
 
-<div id="org201d18f" class="figure">
+<div id="org4606c5d" class="figure">
 <p><img src="assets/efficient-backprop/figure-14.png" alt="figure-14.png" />
 </p>
 <p><span class="figure-number">Figure 14: </span>简单的多层网络模型</p>
@@ -1144,9 +1145,9 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </ul>
 </div>
 
-<div id="outline-container-org50914f6" class="outline-3">
-<h3 id="org50914f6">Input Transformations and Error Surface Transformations Revisited</h3>
-<div class="outline-text-3" id="text-org50914f6">
+<div id="outline-container-orgf357880" class="outline-3">
+<h3 id="orgf357880">Input Transformations and Error Surface Transformations Revisited</h3>
+<div class="outline-text-3" id="text-orgf357880">
 <p>
 可以使用前面几节讨论的一些技巧.
 </p>
@@ -1163,7 +1164,7 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </p>
 
 <p>
-对于一个单个的线性神经元,Hessian 的特征向量(减去均值)沿着训练样本向量的主成份轴(<a href="#org4dc6a2e">8</a>).如果输入数据在不同轴上的分布分散,方差较大,会使得条件数变大,从而减慢训练速度.所以推荐:
+对于一个单个的线性神经元,Hessian 的特征向量(减去均值)沿着训练样本向量的主成份轴(<a href="#org66dc2e3">8</a>).如果输入数据在不同轴上的分布分散,方差较大,会使得条件数变大,从而减慢训练速度.所以推荐:
 </p>
 <hr />
 <blockquote>
@@ -1178,7 +1179,7 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </p>
 
 <p>
-具有相关性的输入变量常常会使得 Hessian 矩阵的特征向量偏离坐标轴(<a href="#orga8cf415">figure-7a usus 7b</a>),导致权值更新无法分离.分离权重更新可以使的 <b>一个权重一个学习率</b> 方法最优化,因此具有如下技巧:
+具有相关性的输入变量常常会使得 Hessian 矩阵的特征向量偏离坐标轴(<a href="#orgd8d2a98">figure-7a usus 7b</a>),导致权值更新无法分离.分离权重更新可以使的 <b>一个权重一个学习率</b> 方法最优化,因此具有如下技巧:
 </p>
 <hr />
 <blockquote>
@@ -1189,7 +1190,7 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 <hr />
 
 <p>
-假设现在输入数据已经去相关性后,Hessian 矩阵就是对角化的,并且特征值是沿着坐标轴的.在这种情况下,在图<a href="#orga8cf415">figure-7b</a>中显示更新的梯度并不是最好的梯度下降方向.在点 P 梯度方向并不指向最小值.但是如果我们给每一个权重值赋予自己的学习率(对应特征值的倒数),那么梯度下降方向就直接可以指向最小值:
+假设现在输入数据已经去相关性后,Hessian 矩阵就是对角化的,并且特征值是沿着坐标轴的.在这种情况下,在图<a href="#orgd8d2a98">figure-7b</a>中显示更新的梯度并不是最好的梯度下降方向.在点 P 梯度方向并不指向最小值.但是如果我们给每一个权重值赋予自己的学习率(对应特征值的倒数),那么梯度下降方向就直接可以指向最小值:
 </p>
 <hr />
 <blockquote>
@@ -1202,19 +1203,19 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </div>
 </div>
 
-<div id="outline-container-orgf56f10a" class="outline-2">
-<h2 id="orgf56f10a">Classical second order optimization methods</h2>
-<div class="outline-text-2" id="text-orgf56f10a">
+<div id="outline-container-org8bd2bc3" class="outline-2">
+<h2 id="org8bd2bc3">Classical second order optimization methods</h2>
+<div class="outline-text-2" id="text-org8bd2bc3">
 <p>
 随后的章节会简单介绍 Newton, conjugate gradient,Gauss-Newton,Levenberg Marquardt 和 Quasi-Newton(BFGS)方法,这些都是二阶优化算法.
 </p>
 </div>
 
-<div id="outline-container-org150ac1b" class="outline-3">
-<h3 id="org150ac1b">Newton Algorithm</h3>
-<div class="outline-text-3" id="text-org150ac1b">
+<div id="outline-container-org5e03fb2" class="outline-3">
+<h3 id="org5e03fb2">Newton Algorithm</h3>
+<div class="outline-text-3" id="text-org5e03fb2">
 <p>
-为了理解 Newton 法,让我们回顾一下<a href="#org54670d2">A Little Theory</a>,假设二次损失函数 E(公式 19),如<a href="#org92f60b7">figure-6(ii)</a>所示,我们可以计算权值更新(公式 16-18):
+为了理解 Newton 法,让我们回顾一下<a href="#org247cb73">A Little Theory</a>,假设二次损失函数 E(公式 19),如<a href="#org245cef3">figure-6(ii)</a>所示,我们可以计算权值更新(公式 16-18):
 </p>
 \begin{equation}
   \Delta{w}=\eta\left(\frac{\partial^{2}E}{\partial{w^{2}}}\right)^{-1}\frac{\partial{E}}{\partial{w}}=\eta H(w)^{-1}\frac{\partial{E}}{\partial{w}},
@@ -1225,7 +1226,7 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </p>
 
 <p>
-常常最小值附近的能量平面并不是椭圆形,或者是圆形,这些情况都依赖于 Hessian 矩阵的条件数.白化转换(<i>whitening transform</i>),可以通过转换 \(\mu = \Theta \Lambda^{1/2}w\) 将椭圆形变成球形(如<a href="#org698b6bd">15</a>和公式 28).如下两个方法都是相同的:(a)在未白化的权值空间上采用 Newton 算法;(b)在白化后的坐标系上执行常规梯度下降方法.
+常常最小值附近的能量平面并不是椭圆形,或者是圆形,这些情况都依赖于 Hessian 矩阵的条件数.白化转换(<i>whitening transform</i>),可以通过转换 \(\mu = \Theta \Lambda^{1/2}w\) 将椭圆形变成球形(如<a href="#orge2551ee">15</a>和公式 28).如下两个方法都是相同的:(a)在未白化的权值空间上采用 Newton 算法;(b)在白化后的坐标系上执行常规梯度下降方法.
 </p>
 
 <p>
@@ -1234,7 +1235,7 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 
 <hr />
 
-<div id="org698b6bd" class="figure">
+<div id="orge2551ee" class="figure">
 <p><img src="assets/efficient-backprop/figure-15.png" alt="figure-15.png" />
 </p>
 <p><span class="figure-number">Figure 15: </span>Newton 算法的白化性质描述</p>
@@ -1243,15 +1244,15 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 </div>
 </div>
 
-<div id="outline-container-orga341fe2" class="outline-3">
-<h3 id="orga341fe2">Conjugate Gradient</h3>
-<div class="outline-text-3" id="text-orga341fe2">
+<div id="outline-container-org452734e" class="outline-3">
+<h3 id="org452734e">Conjugate Gradient</h3>
+<div class="outline-text-3" id="text-org452734e">
 <p>
 共轭梯度(<i>Conjugate Gradient</i>)具有几个非常重要的特性:(1) O(N)的方法;(2) 不直接使用 Hessian 矩阵;(3) 试图找到的梯度下降方向,最小化破坏前几次迭代的结果;(4) 使用线性搜索; (5) 只能在 Batch 模式使用.
 </p>
 
 <p>
-第三个性质如<a href="#org4155d57">16</a>所示.假设选择了一个下降方向,例如梯度方向,然后沿着下降方向通过线性搜索找寻最小化长度.随后,需要找到的更新权值向量,不会更改下降方向,而仅仅找到下降长度(共轭方向),因为沿着这个方向下降不会破化前几次迭代下降的结果.在 k 次迭代中的下降方向计算如下:
+第三个性质如<a href="#org1da95cf">16</a>所示.假设选择了一个下降方向,例如梯度方向,然后沿着下降方向通过线性搜索找寻最小化长度.随后,需要找到的更新权值向量,不会更改下降方向,而仅仅找到下降长度(共轭方向),因为沿着这个方向下降不会破化前几次迭代下降的结果.在 k 次迭代中的下降方向计算如下:
 </p>
 \begin{equation}
 \rho_{k}=-\nabla E(w_{k})+\beta_{k}\rho_{k-1},
@@ -1259,12 +1260,56 @@ E(\nu) \simeq E(0) + \frac{1}{2}\nu^{T}\Lambda\nu
 
 <hr />
 
-<div id="org4155d57" class="figure">
+<div id="org1da95cf" class="figure">
 <p><img src="assets/efficient-backprop/figure-16.png" alt="figure-16.png" />
 </p>
-<p><span class="figure-number">Figure 16: </span>2D 损失平面,共轭梯度方向说明</p>
+<p><span class="figure-number">Figure 16: </span>2D 损失平面,共轭梯度方向</p>
 </div>
 <hr />
+
+<p>
+其中, \(\rho_{k}\) 选择可以依赖 Fletcher 和 Reeves<sup><a id="fnr.9" class="footref" href="#fn.9">9</a></sup>
+</p>
+\begin{equation}
+\beta_{k}=\frac{\Delta E(w_{k})^{T}\Delta E(w_{k})}{\Delta E(w_{k-1})^{T}\Delta E(w_{k-1})}
+\end{equation}
+<p>
+或者 Polak 和 Ribiere:
+</p>
+\begin{equation}
+\beta_{k}=\frac{(\Delta E(w_{k})-\Delta E(w_{k-1}))^{T}\Delta E(w_{k})}{\Delta E(w_{k-1})^{T}\Detal E(w_{k-1})}
+\end{equation}
+<p>
+两个方向 \(\rho_{k}\) 和 \(\rho_{k-1}\) 是共轭,如果满足如下关系:
+</p>
+\begin{equation}
+  \rho_{k}^{T}H\rho_{k-1}=0.
+\end{equation}
+<p>
+共轭方向是在 Hessian 矩阵空间内为正交的(如<a href="#org13806c3">17</a>所示).对于上述两种选择,收敛的最重要因素是好的线性选择方法.
+</p>
+
+<hr />
+
+<div id="org13806c3" class="figure">
+<p><img src="assets/efficient-backprop/figure-17.png" alt="figure-17.png" />
+</p>
+<p><span class="figure-number">Figure 17: </span>2D 错误平面,共轭梯度方向</p>
+</div>
+<hr />
+
+<p>
+对于一个二次函数,具有 N 个输入变量.N 步模型收敛是可以证明的.对于非二次函数 Polak 和 Ribiere 的选择看起来更为健壮.共轭梯度可以看作神经网络中使用的更为明智设计的动能更新项.面对基本不冗余的数据集时,多层神经网络中具有很好的应用.对于大量和冗余的问题时,随机梯度下降表现更快.并且共轭梯度下降需要在 batch 模式下才能使用.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org38e6961" class="outline-3">
+<h3 id="org38e6961">Quasi-Newton(BFGS)</h3>
+<div class="outline-text-3" id="text-org38e6961">
+<p>
+Quasi-Newton(BFGS)方法:(1) 迭代计算模拟 Hessian 矩阵的逆矩阵;(2) \(O(N^{2})\) 计算量;(3) 需要线性搜索;(4) 只适合 batch 模型训练.
+</p>
 </div>
 </div>
 </div>
@@ -1323,12 +1368,16 @@ Murata, N., Müller, K.-R., Ziehe, A., Amari, S.: Adaptive on-line learning in c
 Jacobs, R.A.: Increased rates of convergence through learning rate adaptation. 
 </p></div></div>
 
+<div class="footdef"><sup><a id="fn.9" class="footnum" href="#fnr.9">9</a></sup> <div class="footpara"><p class="footpara">
+W. H. Press, B. P. Flannery, S. A. Teukolsky, and W. T. Vetterling. Numerical Recipies in C: art of Scientific Programming.
+</p></div></div>
+
 
 </div>
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: stupid-coder</p>
-<p class="date">Created: 2018-10-18 Thu 23:37</p>
+<p class="date">Created: 2019-10-14 Mon 14:56</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

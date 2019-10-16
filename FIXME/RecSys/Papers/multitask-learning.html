@@ -1,0 +1,1302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2019-09-29 Sun 15:08 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>推荐系统中多任务学习</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="stupid-coder" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">推荐系统中多任务学习</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org384de94">1. 多目标优化简介</a></li>
+<li><a href="#orgeb79b4e">2. 论文</a>
+<ul>
+<li><a href="#orgc7aceb7">2.1. Multitask Learning</a>
+<ul>
+<li><a href="#org9d72cb6">2.1.1. MTL 是否有用?</a></li>
+<li><a href="#orgda26e0b">2.1.2. MTL 是如何工作的?</a></li>
+<li><a href="#orgb71ba14">2.1.3. 其他需要注意</a></li>
+</ul>
+</li>
+<li><a href="#org52b7359">2.2. MMoE</a>
+<ul>
+<li><a href="#org4590dbf">2.2.1. Mixture-of-Experts</a></li>
+<li><a href="#org561bf0f">2.2.2. Multi-gate Mixture-of-experts</a></li>
+</ul>
+</li>
+<li><a href="#org0127448">2.3. NFM</a>
+<ul>
+<li><a href="#org5c9d162">2.3.1. 计算公式</a></li>
+</ul>
+</li>
+<li><a href="#org86e1648">2.4. FwFMs</a>
+<ul>
+<li><a href="#org437d372">2.4.1. 线性项</a></li>
+<li><a href="#org3a5375d">2.4.2. 特征域重要性</a></li>
+</ul>
+</li>
+<li><a href="#orgec4e8eb">2.5. How to Merge Loss</a></li>
+<li><a href="#org38a590d">2.6. ESMM</a>
+<ul>
+<li><a href="#orgc33a615">2.6.1. Entire Space Multi-Task Model</a></li>
+</ul>
+</li>
+<li><a href="#orgdb00797">2.7. DUPN</a>
+<ul>
+<li><a href="#orgbe44b10">2.7.1. 输入和行为 embedding</a></li>
+<li><a href="#orga178980">2.7.2. Property Gated LSTM &amp; Attention Net</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgc0d8798">3. 业内方案</a>
+<ul>
+<li><a href="#orgdd4a593">3.1. 美图</a>
+<ul>
+<li><a href="#org61c8f72">3.1.1. 样本 reweight</a></li>
+<li><a href="#orgec9af4b">3.1.2. Task-specific weighted Loss</a></li>
+</ul>
+</li>
+<li><a href="#org9a0f5f4">3.2. 美团</a>
+<ul>
+<li><a href="#org32a0664">3.2.1. NFM</a></li>
+<li><a href="#org37bdfb8">3.2.2. ID 类特征</a></li>
+</ul>
+</li>
+<li><a href="#org549e6d8">3.3. 知乎</a></li>
+<li><a href="#orgce3a55e">3.4. 信息流段视频时长多目标优化</a></li>
+</ul>
+</li>
+<li><a href="#orga1a58b9">4. Roadmap</a>
+<ul>
+<li><a href="#orgd50f688">4.1. 技术难点</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org384de94" class="outline-2">
+<h2 id="org384de94"><span class="section-number-2">1</span> 多目标优化简介</h2>
+</div>
+
+<div id="outline-container-orgeb79b4e" class="outline-2">
+<h2 id="orgeb79b4e"><span class="section-number-2">2</span> 论文</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-orgc7aceb7" class="outline-3">
+<h3 id="orgc7aceb7"><span class="section-number-3">2.1</span> Multitask Learning</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+论文<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>表示: <b>Multitask Learning</b> 通过将相关任务看作为归纳偏好(<i>inductive bias</i>)来提高主任务的泛化能力.例如:在图像识别中,同时训练一个网络来识别目标,形状,边界,区域,文理等目标,这些任务互相之间可以帮助识别,从而提升整体的效果.
+</p>
+
+<p>
+本文中提出的多任务学习结构如下:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/mlt.png" alt="mlt.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>4 个任务的多任务学习</p>
+</div>
+</div>
+
+<div id="outline-container-org9d72cb6" class="outline-4">
+<h4 id="org9d72cb6"><span class="section-number-4">2.1.1</span> MTL 是否有用?</h4>
+<div class="outline-text-4" id="text-2-1-1">
+<p>
+对于 <b>Multitask Learning</b> 是否有用这个问题,论文采用了三个任务来验证.
+</p>
+
+<dl class="org-dl">
+<dt>1D-ALVINN</dt><dd><p>
+1D-ALVINN 为一个道路图像模拟软件,用来指导道路追踪算法学习.论文对该软件进行了改造,生成 1D 水平的道路向量,而非 2D 的图像.
+主要的任务为预测道路的方向.论文添加了 8 个额外的任务:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">单行还是双行道</td>
+<td class="org-left">双行道的道路中线</td>
+</tr>
+
+<tr>
+<td class="org-left">道路左边位置</td>
+<td class="org-left">道路右边位置</td>
+</tr>
+
+<tr>
+<td class="org-left">道路中线</td>
+<td class="org-left">路面强度</td>
+</tr>
+
+<tr>
+<td class="org-left">与路面连接区域的强度</td>
+<td class="org-left">道路中线强度</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+下图显示了单任务学习和多任务学习的结果:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/alvinn.png" alt="alvinn.png" />
+</p>
+</div></dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-orgda26e0b" class="outline-4">
+<h4 id="orgda26e0b"><span class="section-number-4">2.1.2</span> MTL 是如何工作的?</h4>
+<div class="outline-text-4" id="text-2-1-2">
+<blockquote>
+<p>
+那么 MTL 是真的从相关任务中,学习到了更好的隐层表达,还是其他因素影响?
+</p>
+
+<p>
+如果 MTL 真的是从相关任务中学习到了额外的信息,那么又是如何学习到的?
+</p>
+</blockquote>
+
+<hr />
+<p>
+对于 MLT 是否真的学习到有用的信息这个疑问.论文先给出了除了归纳偏执意外的 3 个可能解释:
+</p>
+<ul class="org-ul">
+<li>在神经网络反向传播中增加噪声本身就可以提高模型的泛化.如果相关任务并不相关时,可以将相关任务的梯度看作是噪声.</li>
+<li>可以将相关任务的梯度看作是对隐层的梯度的加强,从而加速了隐层的学习率.</li>
+<li><i>net capacity</i> 由于隐层是所有任务共享的,那么是不是因为变相降低了模型的 capacity,从而提高了模型的泛化能力.</li>
+</ul>
+
+
+<p>
+论文随意 shuffle 相关任务的目标值,然后发现模型的表现降低了.所以可以直接认为相关任务对主任务起到了归纳偏执的作用,并不是其他原因(噪声,加大学习率).
+</p>
+
+<p>
+对于 <i>net capacity</i> 解释,论文将 MTL 的网络 capacity 加大到所有 STL 之和,发现 MTL 仍然要比单独的 STL 要好.
+</p>
+
+<hr />
+<p>
+那么 MTL 是如何从相关任务中学习到额外的信息来提高模型泛化的呢?
+</p>
+
+<dl class="org-dl">
+<dt>statistical Data Amplification</dt><dd>当数据具有噪声的时候,扩大数据集常常能够模型泛化能力的提升.假设两个具有噪声的任务 T 和 T^{'},两个任务具有相同的隐层表达 F.那么如果一个网络能够同时学习两个任务,并且能够学习到两个任务可以共享隐层表达 F,那么采用两个任务同时学习 F 要比单独学习要好.</dd>
+<dt>Attribute Selection</dt><dd>任务具有多个输入并且具有噪声的时候,单独的模型很难确定输入和 F 表达之间的关系.但是当任务同时学习多个任务的时候可以更好的选择出和 F 有关的输入.</dd>
+<dt>Eavesdropping</dt><dd>假设隐层表达 F 对与任务 T 和 T^{'} 都有用,并且任务 T 容易学习到 F 的表达,但是 T^{'} 不容易学习到.所有当两个任务同时训练时候,T^{'} 可以从任务 T 学习到隐层表达 F,从而是任务 T^{'} 表现更好.</dd>
+<dt>Representation Bias</dt><dd><p>
+神经网络的权重初始化对模型效果具有较大的影响.那么假设任务 T 的局部最小点为 A 和 B,任务 T^{'} 的局部最小为 A 和 C.那么如果联合训练任务时,更为容易进入到 A.MTL 需要找到对两个任务都表现好的隐层表达.
+<img src="assets/mlt/representaition-bias.png" alt="representaition-bias.png" />
+</p>
+
+<p>
+论文做实验表示,如果任务 T 对 B 更为偏向,T^{'} 对 A 和 C 没有偏向时.同时训练时,任务 T 找到 B 点,T^{'} 一般常常会找到 C 点.因为任务 T 对 B 点的偏向,给任务 T^{'}带来了一点的偏执,使得更容易找到 C.
+</p>
+
+<blockquote>
+<p>
+MTL tasks prefer NOT to use hidden layer representations that other tasks prefer NOT to use.
+</p>
+</blockquote></dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-orgb71ba14" class="outline-4">
+<h4 id="orgb71ba14"><span class="section-number-4">2.1.3</span> 其他需要注意</h4>
+<div class="outline-text-4" id="text-2-1-3">
+</div>
+<ol class="org-ol">
+<li><a id="orgbcf2540"></a>多任务预测<br />
+<div class="outline-text-5" id="text-2-1-3-1">
+<p>
+MTL 虽然在一个网络中同时训练多个任务,但是并不代表就是用该模型去预测所有任务的结果.采用 MTL 方法训练模型主要是从相关任务获取信息从而提高主任务的泛化能力.所以需要关注主任务的效果,可以允许相关任务效果稍微下降.
+</p>
+
+<p>
+如果确实需要训练一个能够进行多任务预估的模型的时候,MTL 需要将所有任务看作一样重要,并且共享隐层需要具有充足的 capacity 来允许模型隐层的表达对单一任务有一些冗余,但是多任务训练时会表现较好.
+</p>
+
+<p>
+如果早停需要采用的话,需要独立的在不同任务上使用.在训练过程中,对已经收敛的任务停止更新,未收敛的任务接着训练.额外的方法,是对已经收敛的任务降低学习率,从而使得其他任务能够接着训练.
+</p>
+</div>
+</li>
+
+<li><a id="org28a1c3e"></a>学习率设置<br />
+<div class="outline-text-5" id="text-2-1-3-2">
+<p>
+MTL 常常所有任务以相同的学习速度达到最优,表现最好.如果主任务需要花费更长时间来达到收敛,那么随后的更新就无法从相关任务获取相关任务还没有学习到的表达.
+</p>
+
+<p>
+解决方法就是调整不同任务的学习率.调低收敛速度快的任务的学习率,或者调高收敛速度慢的任务的学习率.
+</p>
+</div>
+</li>
+
+<li><a id="org2241497"></a>MTL 不一定有用<br />
+<div class="outline-text-5" id="text-2-1-3-3">
+<blockquote>
+<p>
+MTL is a source ofinductive bias. Some inductive biases help. Some inductive biases hurt. It depends on the problem
+</p>
+</blockquote>
+
+<p>
+需要分问题对待.
+</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org52b7359" class="outline-3">
+<h3 id="org52b7359"><span class="section-number-3">2.2</span> MMoE</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+MMoE<sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup> 提出一个基于 Multi-gate Mixture-of-Experts 结构的多任务学习网络模型,能够在不显著增加模型参数的基础上动态捕捉共享信息和独立任务信息.
+</p>
+
+<p>
+MMoE 的多任务网络结构如图所示:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/MMoE.png" alt="MMoE.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>(a) 底层共享多任务模型.(b)一个 gate 的 MoE 模型.(c)多个 gate 的 MoE 模型.</p>
+</div>
+
+<p>
+上图(a)为常见的底层共享的多任务模型结构.(c)为 MMoE 网络结构,底层为多个专家网络.然后对于每个任务都引入一个独立的 gate 网络.
+</p>
+</div>
+
+<div id="outline-container-org4590dbf" class="outline-4">
+<h4 id="org4590dbf"><span class="section-number-4">2.2.1</span> Mixture-of-Experts</h4>
+<div class="outline-text-4" id="text-2-2-1">
+<p>
+原始的 MoE 模型如下:
+</p>
+\begin{equation}
+  y=\sum_{i=1}^{n}g(x)_{i}f_{i}(x)
+\end{equation}
+
+<p>
+其中: \(\sum_{i=1}^{n}g(x)_{i}=1\) 并且 \(g(x)_{i}\) 为 g(x) 的第 i 个输出的逻辑斯特值,表示第 i 个 export 的输出概率.
+</p>
+
+<p>
+g(x)根据输入值来度量每个专家系统输出概率,加权和作为输出.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org561bf0f" class="outline-4">
+<h4 id="org561bf0f"><span class="section-number-4">2.2.2</span> Multi-gate Mixture-of-experts</h4>
+<div class="outline-text-4" id="text-2-2-2">
+<p>
+MMoE 在 MoE 的基础上对每一个任务都添加一个门网络:
+</p>
+\begin{equation}
+  y_{k} = h^{k}(f^{k}(x)), \\
+  where f^{k}(x) = \sum_{i=1}^{n}g^{k}(x)^{i}f_{i}(x).
+\end{equation}
+
+<p>
+门网络为采用 ReLU 作为激活函数的多层感知机网络:
+</p>
+\begin{equation}
+  g^{k}(x) = softmax(W_{gk}x).
+\end{equation}
+
+<p>
+\(W_{gk} \in R^{n \times d}\) 为可训练矩阵,n 为专家网络的数量,d 为特征维度.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0127448" class="outline-3">
+<h3 id="org0127448"><span class="section-number-3">2.3</span> NFM</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+<b>Neural Factorization Machines</b><sup><a id="fnr.3" class="footref" href="#fn.3">3</a></sup> 通过引入 <b>Bilinear Interaction(Bi-Interaction) pooling</b> 提高模型高阶特征交叉能力.
+</p>
+</div>
+
+<div id="outline-container-org5c9d162" class="outline-4">
+<h4 id="org5c9d162"><span class="section-number-4">2.3.1</span> 计算公式</h4>
+<div class="outline-text-4" id="text-2-3-1">
+\begin{equation}
+  \hat{y}_{NFM}(x) = w_{0} + \sum_{i=1}^{n}w_{i}x_{i} + f(x)
+\end{equation}
+
+<p>
+其中,前两项和 FM 一致;第三项为多层前向神经网络,对高阶特征交叉就行建模.如下图所示.
+</p>
+
+
+<div class="figure">
+<p><img src="assets/mlt/nfm.png" alt="nfm.png" />
+</p>
+</div>
+</div>
+
+
+<ol class="org-ol">
+<li><a id="orgb7dee24"></a>Bi-Interaction layer<br />
+<div class="outline-text-5" id="text-2-3-1-1">
+<p>
+对 Embedding 特征进行 pooling 操作,将多个 Embedding 向量转为一个向量:
+</p>
+\begin{equation}
+  f_{BI}(V_{x}) = \sum_{i=1}^{n}\sum_{j=i+1}^{n}x_{i}v_{i} \odot x_{j}v_{j}
+\end{equation}
+
+<p>
+\(\odot\) 为元素相乘, \((v_{i}\odot v_{j})_k = v_{ik}v_{jk}\).上述操作可以看作时二阶特征交叉,然后按 embedding 维度进行加和,最后获得 k 维向量.
+</p>
+
+<p>
+上述公式,参照 FM 的交叉项变化,可以改写如下(去掉最外层的逐 k 加和):
+</p>
+\begin{equation}
+  f_{BI}(V_{x}) = \frac{1}{2}\left[ (\sum_{i=1}^{n}x_{i}v_{i})^2 - \sum_{i=1}^{n}(x_{i}v_{i})^2\right]
+\end{equation}
+
+
+<p>
+后续跟着多层前向神经网络来执行高阶特征交叉:
+</p>
+\begin{equation}
+  \hat{y}_{NFM}(x) = w_{0} + \sum_{i=1}^{n}w_{i}x_{i} + h^{T}\sigma_{L}(W_{L}(...\sigma_{1}(W_{1}f_{BI}(V_{x})+b_{1})...)+b_{L})
+\end{equation}
+</div>
+</li>
+
+<li><a id="org4b8096d"></a>NFM Generalize FM<br />
+<div class="outline-text-5" id="text-2-3-1-2">
+<p>
+如何设置 L 为 0,即不加任何前向网络,并且将 h 规定为常量向量(1,&#x2026;,1),NFM 就是 FM 模型.
+</p>
+\begin{align}
+  \hat{y}_{NFM-0}(x) &= w_{0} + \sum_{i=1}^{n}w_{i}x_{i} + h^{T}\sum_{i=1}^{n}\sum_{j=i+1}^{n}x_{i}v_{i} \odot x_{j}v_{j} \\
+  &= w_{0} + \sum_{i=1}^{n}w_{i}x_{i} + \sum_{i=1}^{n}\sum_{j=i+1}^{n}\sum_{f=1}^{k}h_{f}x_{if}v_{if} \odot x_{jf}v_{jf}
+\end{align}
+
+<blockquote>
+<p>
+虽然 h 在 NFM 中是可学参数,但是在 0 层 NFM 中时,使得 h 为可学参数并不会带来模型表现的提升.因为该可学参数直接可以在 embedding 参数中学习到.
+</p>
+</blockquote>
+</div>
+</li>
+</ol>
+</div>
+</div>
+
+<div id="outline-container-org86e1648" class="outline-3">
+<h3 id="org86e1648"><span class="section-number-3">2.4</span> FwFMs</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+<b>Field-weighted Factorization Machines</b><sup><a id="fnr.4" class="footref" href="#fn.4">4</a></sup> 引入特征域对重要性信息提高模型拟合能力.
+</p>
+
+<p>
+论文首先研究了不同域的特征交叉重要性不同,采用互信息 <i>mutual information</i> 来检测域对的差异:
+</p>
+\begin{equation}
+  MI((F_{k},F_{l}),Y) = \sum_{(i,j) \in (F_{k},F_{l})}\sum_{y \in Y} p((i,j),y)\log \frac{p((i,j),y)}{p(i,j)p(y)}
+\end{equation}
+
+<p>
+下图显示在 Oath CTR 数据集上不同域对的互信信息值,可以看出不同域对具有很大的差异.
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/mutual-information.png" alt="mutual-information.png" />
+</p>
+<p><span class="figure-number">Figure 5: </span>Oath CTR 数据集上不同域对的互信信息值</p>
+</div>
+
+<p>
+引入特征域对重要性信息后,FwFMs 模型计算公式如下:
+</p>
+\begin{equation}
+  \Phi_{FwFMs}((w,v),x) = w_{0} + \sum_{i=1}^{m}x_{i}w_{i} + \sum_{i=1}^{m}\sum_{j=i+1}^{m}x_{i}x_{j} \left< v_{i},v_{j} \right> r_{F(i),F(j)}
+\end{equation}
+
+<p>
+FwFMs 通过引入参数 \(r_{F(i),F(j)}\) 学习特征域对之间的重要性.
+</p>
+
+
+<div class="figure">
+<p><img src="assets/mlt/FwFMs.png" alt="FwFMs.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span>FwFMs 网络结构</p>
+</div>
+</div>
+
+<div id="outline-container-org437d372" class="outline-4">
+<h4 id="org437d372"><span class="section-number-4">2.4.1</span> 线性项</h4>
+<div class="outline-text-4" id="text-2-4-1">
+<p>
+对于 FM 公式中的线性项 \(\sum_{i=1}^{m}x_{i}w_{i}\),可以学习一个额外的 embedding 向量和二阶交叉的 embedding 向量作内积来获得线性项权值.
+</p>
+\begin{equation}
+  \sum_{i=1}^{m}x_{i} \left< v_{i}, w_{i} \right>
+\end{equation}
+
+<p>
+上述方法会带来更多的参数,为了降低参数量可以为每一个特征域学习一个 embedding 向量:
+</p>
+\begin{equation}
+  \sum_{i=1}^{m}x_{i} \left< v_{i}, w_{F(i)} \right>
+\end{equation}
+</div>
+</div>
+
+<div id="outline-container-org3a5375d" class="outline-4">
+<h4 id="org3a5375d"><span class="section-number-4">2.4.2</span> 特征域重要性</h4>
+<div class="outline-text-4" id="text-2-4-2">
+<p>
+论文给出如下公式来度量模型学到的特征域重要性:
+</p>
+\begin{equation}
+  \frac{\sum_{(i,j) \in F_{k},F_{l}}I(i,j) \cdot \#(i,j)}{\sum_{(i,j) \in (F_{k},F_{l})}\#(i,j)}
+\end{equation}
+
+<p>
+#(i,j) 表示特征对(i,j)出现在训练集中的次数, \(I(i,j)\) 表示为模型中特征域的重要性.对于 FMs \(I(i,j)=\left|\left< v_{i},v_{j} \right>\right|\),对于 FFMs \(I(i,j)=\left|\left< v_{i,F_{l}}, v_{j,F_{k}}\right>\right|\),对于 FwFMs \(I(i,j)=\left|\left< v_{i},v_{j}\right> \cdot r_{F_{k},F_{l}}\right|\)
+</p>
+
+<p>
+不同模型计算的特征域对重要性和互信息对比结果如下:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/mi_fm_fw.png" alt="mi_fm_fw.png" />
+</p>
+<p><span class="figure-number">Figure 7: </span>特征域互信息和 FMs 计算的特征域重要性对比.</p>
+</div>
+
+
+<div class="figure">
+<p><img src="assets/mlt/ffm_fwfm_fw.png" alt="ffm_fwfm_fw.png" />
+</p>
+<p><span class="figure-number">Figure 8: </span>FFMs 和 FwFMs 计算的特征域重要性对比</p>
+</div>
+
+
+<div class="figure">
+<p><img src="assets/mlt/r_without_r.png" alt="r_without_r.png" />
+</p>
+<p><span class="figure-number">Figure 9: </span>FwFMs 的 r 值和 FwFMs 去掉 r 值后计算的特征域重要性对比</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgec4e8eb" class="outline-3">
+<h3 id="orgec4e8eb"><span class="section-number-3">2.5</span> How to Merge Loss</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+论文<sup><a id="fnr.5" class="footref" href="#fn.5">5</a></sup>提出在多任务学习中任务之间损失组合可以基于任务的噪声来学习最优权重.
+</p>
+
+<p>
+论文首先在实例识别和景深两个任务上给出了损失权重对模型泛化能力的影响:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/mtl_loss_weight.png" alt="mtl_loss_weight.png" />
+</p>
+<p><span class="figure-number">Figure 10: </span>多任务学习确实提高了模型的泛化能力,但是任务损失的权重组合对结果具有较大的影响.</p>
+</div>
+
+<p>
+论文提出基于最大化多任务似然函数方式来确定最优权重组合.设 \(f^{W}(x)\) 为输入为 x,权重为 W 的神经网络模型.对于回归模型,定义如下似然函数:
+</p>
+\begin{equation}
+  p(y|f^{W}(x)) = \mathcal{N}(f^{W}(x),\sigma^{2})
+\end{equation}
+
+<p>
+对于分类问题,模型的输出经过 softmax 函数:
+</p>
+\begin{equation}
+  p(y|f^{W}(x)) = Softmax(f^W(x))
+\end{equation}
+
+<p>
+对于多任务输出,给出如下的多任务似然函数:
+</p>
+\begin{equation}
+  p(y_1,..,y_k|f^{W}(x)) = p(y_1|f^{W}(x))...p(y_k|f^W(x))
+\end{equation}
+
+<p>
+对于回归模型,对数似然如下:
+</p>
+\begin{equation}
+  \log{p(y|f^{W}(x))} \propto -\frac{1}{2\sigma^2}\Arrowvert y - f^W(x) \Arrowvert^2 - \log\sigma
+\end{equation}
+
+<p>
+假设多任务模型输出两个值 \(y_1,y_2\),则似然函数为:
+</p>
+\begin{align}
+  p(y_1,y_2|f^W(x)) &= p(y_1|f^W(x)) \cdot p(y_2|f^W(x)) \\
+  &= \mathcal{N}(y_1;f^W(x),\sigma_1^2) \cdot \mathcal{N}(y_2;f^W(x),\sigma_2^2)
+\end{align}
+
+<p>
+最小化负对数似然:
+</p>
+\begin{align}
+  \mathcal{L}(W,\sigma_1,\sigma_2) &= -\log{p(y_1,y_2|f^W(x))} \\
+  &\propto \frac{1}{2\sigma_1^2} \Arrowvert y_1 - f^W(x) \Arrowvert^2 + \frac{1}{2\sigma_2^2} \Arrowvert y_2 - f^W(x) \Arrowvert^2 + \log{\sigma_1\sigma_2} \\  
+  &= \frac{1}{2\sigma_1^2}\mathcal{L}_1(W) + \frac{1}{2\sigma_2^2}\mathcal{L}_2(W) + \log{\sigma_1\sigma_2}  
+\end{align}
+
+<p>
+多任务学习时,引入上述两个参数 \(\sgima_1\sigma_2\),作为多个任务的损失权重参数.当 \(\sigma_1\) 噪声变大,对应的 \(\mathcal{L}_1\) 损失权重变小.由于最后一项作为正则化项的存在,不会使得噪声变太大.
+</p>
+
+<p>
+对于分类问题,分类似然函数增加了一个尺度系数:
+</p>
+\begin{equation}
+  p(y|f^W(x),\sigma) = Softmax(\frac{1}{\sigma^2}f^W(x))
+\end{equation}
+
+<p>
+对数似然如下:
+</p>
+\begin{equation}
+  \log{p(y=c|f^W(x),\sigma)} = \frac{1}{\sigma^2}f_c^W(x) - \log{\sum_{c'}\exp{(\frac{1}{\sigma^2}f_{c'}^W(x))}}
+\end{equation}
+
+<p>
+和回归多任务一样,对于一个回归任务,一个分类任务的多任务,最小化多任务似然函数:
+</p>
+\begin{align}
+  \mathcal{L}(W,\sigma_1,\sigma_2) &= -\log{p(y_1,y_2,=c|f^W(x),\sigma_2)} \\
+  &= -\log\mathcal{N}(y_1;f^W(x),\sigma_1^2)\cdot Softmax(y_2=c;f^W(x),\sigma_2) \\
+  &= \frac{1}{2\sigma_1^2} \Arrowvert y_1 - f^W(x) \Arrowvert^2 + \log\sigma_1 - \log{p(y_1,y_2,=c|f^W(x),\sigma_2)} \\
+  &= \frac{1}{2\sigma_1^2}\mathcal{L}_1(W) + \frac{1}{2\sigma_2^2}\mathcal{L}_2(W) + \log{\sigma_1} + \log{\frac{\sum_{c'}\exp{(\frac{1}{\sigma_2^2f_{c'}^W(x)})}}{(\sum_{c'}\exp{(f_{c'}^W(x))})^{\frac{1}{\sigma_2^{2}}}}} \\
+  &\approx \frac{1}{2\sigma_1^2}\mathcal{L}_1(W) + \frac{1}{2\sigma_2^2}\mathcal{L}_2(W) + \log{\sigma_1} + \log{\sigma_2}
+\end{align}
+</div>
+</div>
+
+
+<div id="outline-container-org38a590d" class="outline-3">
+<h3 id="org38a590d"><span class="section-number-3">2.6</span> ESMM</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+阿里在 2018 年提出了 <i>Entire Space Multi-task Model</i><sup><a id="fnr.6" class="footref" href="#fn.6">6</a></sup>,通过用户行为序列(展示-点击-转化)在全数据集上采用多任务学习方法对 CTR 和 CVR 同时建模.
+</p>
+
+<p>
+CVR 预估预估公式: \(pCVR = p(conversion|click,impression)\).
+</p>
+
+<p>
+一般业内进行 CVR 预估的时候,是在点击的数据集上进行模型训练,而在所有数据集上进行预测.那么就会带来样本选择偏差问题<sup><a id="fnr.7" class="footref" href="#fn.7">7</a></sup>.常规的 pCVR 模型在进行模型构建的时候都有一个假设 \(p(conversion=1|click=1,impression) \approx (conversion=1|impression_c)\),\(imppresion_c\) 为具有点击行为的样本子空间.而在线进行 \(p(conversion|click,impression)\) 预测的时候,样本空间为全局样本空间.因为点击数据非常稀疏时,impression_c 是 impression 的子空间.
+</p>
+
+
+<div class="figure">
+<p><img src="assets/mlt/SSB.png" alt="SSB.png" />
+</p>
+<p><span class="figure-number">Figure 11: </span>sample selection bias 问题.</p>
+</div>
+
+<p>
+带有 SSB 问题的 CVR 预估公式: \(pCVR = p(conversion|click)\).
+</p>
+
+<p>
+其次,转化样本非常稀疏.模型很难拟合转化率.
+</p>
+</div>
+
+<div id="outline-container-orgc33a615" class="outline-4">
+<h4 id="orgc33a615"><span class="section-number-4">2.6.1</span> Entire Space Multi-Task Model</h4>
+<div class="outline-text-4" id="text-2-6-1">
+<p>
+ESMM 引入点击率和转化率之间的关系,引入中间值 pCTCVR,该值等于 CTR*CVR:
+</p>
+\begin{equation}
+  p_{CTCVR}(click, conversion|impression) = p_{CTR}(click|impression) p_{CVR}(conversion|click,impression)
+\end{equation}
+
+<p>
+网络结构:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/ESMM.png" alt="ESMM.png" />
+</p>
+<p><span class="figure-number">Figure 12: </span>ESMM 网络结构,作边的网络和常规的基于点击样本训练的 pCVR 模型一样.</p>
+</div>
+
+<p>
+整体网络有三个输出: pCTR, pCVR, pCTCVR.
+</p>
+
+<p>
+其中,pCTR 和 pCTCVR 在整个数据集上进行建模.而 pCVR 可以用如下公式获取:
+</p>
+\begin{equation}
+  p_{CVR}(conversion=1|click=1,impression) = \frac{p_{CTCVR}(click=1,conversion=1|impression)}{p_{CTR}(click=1|impression)}
+\end{equation}
+
+<p>
+看起来上述可以采用单独模型分别拟合 pCTR 和 pCTCVR,然后根据上述公式获得 pCVR.但是由于 pCTR 非常小,会出现数值不稳定情况.ESMM 采用了乘法方式来构建模型.
+</p>
+
+<p>
+ESMM 的损失函数为:
+</p>
+\begin{equation}
+  L(\theta_{cvr},\theta_{ctr}) = \sum_{i=1}^{N}l(y_{i}, f(x_{i};\theta_{ctr})) + \sum_{i=1}^{N}l(y_{i}\&z_{i},f(x_{i};\theta_{ctr}) \times f(x_{i};\theta_{cvr}))
+\end{equation}
+
+<p>
+\(l(\cdot)\) 为交叉熵损失函数.
+</p>
+
+<p>
+网络底层的 feature embedding 共享.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdb00797" class="outline-3">
+<h3 id="orgdb00797"><span class="section-number-3">2.7</span> DUPN</h3>
+<div class="outline-text-3" id="text-2-7">
+<p>
+阿里同时在 2018 提出了 <i>Deep User Perception Network</i><sup><a id="fnr.8" class="footref" href="#fn.8">8</a></sup> 采用 RNN+Attention+多任务学习 对用户行为建模,获取用户兴趣表达.
+</p>
+
+<p>
+网络结构如下:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/DUPN.png" alt="DUPN.png" />
+</p>
+<p><span class="figure-number">Figure 13: </span>DUPN 网络结构.紫色代表 item,粉色代表行为,浅绿色为用户表达.</p>
+</div>
+</div>
+
+<div id="outline-container-orgbe44b10" class="outline-4">
+<h4 id="orgbe44b10"><span class="section-number-4">2.7.1</span> 输入和行为 embedding</h4>
+<div class="outline-text-4" id="text-2-7-1">
+<p>
+DUPN 输入为用户的行为序列 \(x=\{x_{1},x_{2},...,x_{N}\})\), \(x_{i}\) 表示用户的 ith 行为.每个用户的行为都为用户和 item 的交互,例如点击,购买等.所以 \(x_{i}\) 表示为元组 \(\left< item_{i}, property_{i}\right>\), \(item_{i}\) 为 item 特征, \(property_{i}\) 表示行为的属性特征(时间,行为类型,行为场景).
+</p>
+
+
+<div class="figure">
+<p><img src="assets/mlt/dupn_embedding_layer.png" alt="dupn_embedding_layer.png" />
+</p>
+<p><span class="figure-number">Figure 14: </span>行为 embedding</p>
+</div>
+
+<p>
+embedding layer 通过线性输入转为低维稠密向量 \(res_{i}=[e_{i},p_{i}]\), \(e_i\) 表示 item 的 embedding, \(p_{i}\) 为行为属性的 embedding:
+</p>
+\begin{equation}
+  res_{i} = \left[ W_{emb}^{1}x_{i}^{1},W_{emb}^2x_i^2,...,W_{emb}^{F}x_{i}^{F}\right],W_{emb}^{f} \in R^{d_{emb}^f \times V_{f}}
+\end{equation}
+
+<p>
+\(d_{emb}^{f}\) 表示 \(f^{th}\) 特征的 embedding 大小,\(V_{f}\) 为特征的字典大小.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga178980" class="outline-4">
+<h4 id="orga178980"><span class="section-number-4">2.7.2</span> Property Gated LSTM &amp; Attention Net</h4>
+<div class="outline-text-4" id="text-2-7-2">
+<p>
+对于行为序列 \(\left{res_1,res_2,...,res_N \right}\) 采用 RNN 序列化建模. 论文基于行为属性并不会揭示用户偏好信息,只是用来反映行为的重要程度,所以提出了 \(Property Gated LSTM\) 进行行为建模.
+</p>
+
+
+\begin{align}
+  i_t &= \sigma(W_{ei}e_t + W_{pi}p_t + W_{hi}h_{t-1} + b_i) \\
+  f_t &= \sigma(W_{ef}e_t + W_{pf}p_t + W_{hf}h_{t-1} + b_f) \\
+  c_t &= f_t \cdot c_{t-1} + i_t \cdot \tanh{(W_{ec}e_t + W_{hc}h_{t-1} + b_{c})} \\
+  o_t &= \sigma(W_{eo}e_t + W_{po}p_t + W_{ho}h_{t-1} + b_o) \\
+  h_t &= o_t \cdot \tanh{(c_t)}
+\end{align}
+
+<p>
+可以看到,属性 embedding 只影响门值(输入&amp;遗忘&amp;输出).
+</p>
+
+<p>
+在 LSTM 输出序列 \(h=\left{ h_1,h_2,...,h_N \right}\) 之后,采用 attention layer 对所有的隐藏状态进行融合而不是采用最后时候的隐藏状态:
+</p>
+\begin{align}
+  rep_s &= \sum_{t=1}^Na_th_t \\  
+  a_t &= \frac{\exp{(attention(h_t,q,u,p_t;\omega))}}{\sum_{t=1}^{T}\exp{(attention(h_t,q,u,p_t;\omega))}} \\
+\end{align}
+
+<p>
+\(attention(\cdot)\) 为二层全链接网络.
+</p>
+
+
+<p>
+网络结构如下:
+</p>
+
+<div class="figure">
+<p><img src="assets/mlt/dupn_lstm_anet.png" alt="dupn_lstm_anet.png" />
+</p>
+<p><span class="figure-number">Figure 15: </span>Property Gated LSTM 和 Attention Net</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc0d8798" class="outline-2">
+<h2 id="orgc0d8798"><span class="section-number-2">3</span> 业内方案</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orgdd4a593" class="outline-3">
+<h3 id="orgdd4a593"><span class="section-number-3">3.1</span> 美图</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+美图<sup><a id="fnr.9" class="footref" href="#fn.9">9</a></sup> 提出了 NFwFM 网络结构:
+</p>
+
+<div class="figure">
+<p><img src="assets/summary/NFwFM.png" alt="NFwFM.png" />
+</p>
+<p><span class="figure-number">Figure 16: </span>Multi-task NFwFM 结构</p>
+</div>
+
+<p>
+上图网络结构中,采用工业中常用的底层共享网络结构.
+</p>
+</div>
+
+<div id="outline-container-org61c8f72" class="outline-4">
+<h4 id="org61c8f72"><span class="section-number-4">3.1.1</span> 样本 reweight</h4>
+<div class="outline-text-4" id="text-3-1-1">
+<p>
+在多任务学习中,不同目标样本数量不均衡会影响较少样本的目标优化.
+</p>
+
+<p>
+美图通过 Item 的关注转化率对点击正样本进行 reweight,从而使得 ctr 相差不多的 Item 能够更容易推荐出关注转化率较高的 Item.
+</p>
+
+
+<div class="figure">
+<p><img src="assets/summary/meitu_reweight.png" alt="meitu_reweight.png" />
+</p>
+</div>
+
+<blockquote>
+<p>
+通过关注转化率来对点击样本进行加权来提高关注转化率高的 Item 的虚拟点击率,从而更容易推荐出关注高的 Item.
+</p>
+</blockquote>
+
+<p>
+CTR: -1.09%,关注转化率: +12.03%.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgec9af4b" class="outline-4">
+<h4 id="orgec9af4b"><span class="section-number-4">3.1.2</span> Task-specific weighted Loss</h4>
+<div class="outline-text-4" id="text-3-1-2">
+<p>
+多任务学习的缺点就是参数共享,在多个任务不相关时,任务之间会有相互扰乱的问题(<i>share conflict</i>).
+</p>
+
+<p>
+<i>Homoscedastic Uncertainty</i><sup><a id="fnr.5.100" class="footref" href="#fn.5">5</a></sup> 通过设定多个任务不同的学习率控制目标对整体模型的学习主导.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9a0f5f4" class="outline-3">
+<h3 id="org9a0f5f4"><span class="section-number-3">3.2</span> 美团</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+美团<sup><a id="fnr.10" class="footref" href="#fn.10">10</a></sup>的模型结构如下:
+</p>
+
+<div class="figure">
+<p><img src="assets/summary/meituan_arch.png" alt="meituan_arch.png" />
+</p>
+<p><span class="figure-number">Figure 18: </span>美团 multi-task 网络结构.</p>
+</div>
+
+<p>
+底层 DNN 采用参数共享,最后一层全连接层分成两个输出层,分别对应着点击和购买.线上预测的将两个输出进行线形融合.
+</p>
+
+<p>
+在上述的结构基础上,美团额外有两个优化:
+</p>
+<dl class="org-dl">
+<dt><b>Missing Value Layer</b></dt><dd><p>
+针对训练样本中连续特征缺失问题,一般处理方法有:零值,或者取均值.零值会导致该项特征权重在本轮优化中无法进行更新,降低收敛速度.均值有一些武断.
+</p>
+
+<p>
+参考 XGBoost 在处理缺失特征时,会根据 Loss 将缺失样本分到左右子树.美团提出了自适应处理缺失值的方法:
+</p>
+
+<div class="figure">
+<p><img src="assets/summary/meituan_missig_value_layer.png" alt="meituan_missig_value_layer.png" />
+</p>
+<p><span class="figure-number">Figure 19: </span>Missing Value Layer</p>
+</div></dd>
+<dt><b>KL-divergence Bound</b></dt><dd>不同的目标带有不同的噪声,如果通过物理意义将有关系的目标关联起来,可以提高模型鲁棒性,降低单独标签的噪声.例如:点击率*转化率=下单率.所以在多个优化目标之间加上了基于 KL 的一个损失.并且由于 KL 散度是非对称的,所有优化的是 <b>KL(p|q)+KL(q:p)</b>. CTR 效果带来了 1.23% 的提升.</dd>
+</dl>
+</div>
+
+<div id="outline-container-org32a0664" class="outline-4">
+<h4 id="org32a0664"><span class="section-number-4">3.2.1</span> NFM</h4>
+<div class="outline-text-4" id="text-3-2-1">
+<p>
+通过 NFM<sup><a id="fnr.3.100" class="footref" href="#fn.3">3</a></sup> 显式的引入二阶特征组合和 DNN 一起进行学习.
+</p>
+
+<div class="figure">
+<p><img src="assets/summary/NFM.png" alt="NFM.png" />
+</p>
+<p><span class="figure-number">Figure 20: </span>NFM+DNN</p>
+</div>
+
+<p>
+由于 DNN 有梯度消失的问题,NFM 的引入加速的模型收敛.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org37bdfb8" class="outline-4">
+<h4 id="org37bdfb8"><span class="section-number-4">3.2.2</span> ID 类特征</h4>
+<div class="outline-text-4" id="text-3-2-2">
+<p>
+通过 ID 类特征来表达用户兴趣和 Item.
+</p>
+
+<dl class="org-dl">
+<dt>Item 向量表达</dt><dd>Item ID 稀疏性问题,采用随即初始化+模型学习,非常容易出现过拟合.解决方法,预训练的 Item 向量初始化+训练 fine tuning.</dd>
+<dt>用户兴趣表达</dt><dd>用户可以采用用户历史序列中的 Item 向量进行 <b>Average Pooling, Max Pooling, Attention Pooling</b> 的方法进行融合表达.</dd>
+</dl>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org549e6d8" class="outline-3">
+<h3 id="org549e6d8"><span class="section-number-3">3.3</span> 知乎</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+主要是基于 MMoE 实现多任务学习.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgce3a55e" class="outline-3">
+<h3 id="orgce3a55e"><span class="section-number-3">3.4</span> 信息流段视频时长多目标优化<sup><a id="fnr.11" class="footref" href="#fn.11">11</a></sup></h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+文章中认为视频推荐优化目标分为两类:
+</p>
+<dl class="org-dl">
+<dt>感知相关性优化</dt><dd>点击模型优化(CTR/CLICK)</dd>
+<dt>真实相关性优化</dt><dd>时长多目标优化(停留时长 RDTM/播放完成率 PCR)</dd>
+</dl>
+
+<p>
+文章主要通过样本 reweight 的方法,在点击 label 不变情况下,时长长的样本进行加权从而影响时长目标.
+</p>
+
+<p>
+原始 youtube-net 采用的是加权逻辑回归,那么在点击较少的场景下,对数发生几率接近播放长时间的期望:
+</p>
+\begin{align}
+  \frac{\sum_{i}{T_{i}}}{N-k} &= \frac{\sum_{i}{T_{i}}}{N} \frac{N}{N-k} \\
+  &= E\left[ T \right] * \frac{1}{1-k/N} \\
+  &= E\left[ T \right] * \frac{1}{1-p}
+\end{align}
+
+<p>
+N 为样本数量,K 为正样本数量,T_{i} 为第 i 个样本停留时长,P 为点击率.那么在 p&lt;&lt;1 的时候,上述的对数发生几率为 E[T],停留时长的期望.
+</p>
+
+<p>
+该文章提出的加权方式不是单纯直接以播放时长加权,而是采用视频时长分段,然后对停留时长完成率进行分位数归一化,并进行威尔逊置信区间平滑,从而使得各视频时长段的播放完成率相对可比.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga1a58b9" class="outline-2">
+<h2 id="orga1a58b9"><span class="section-number-2">4</span> Roadmap</h2>
+<div class="outline-text-2" id="text-4">
+<dl class="org-dl">
+<dt>reweight</dt><dd>采用时长进行点击样本加权</dd>
+<dt>归一化播放率</dt><dd>参考<a href="#orgce3a55e">信息流段视频时长多目标优化</a></dd>
+<dt>ctr + 归一化播放率</dt><dd>loss 加和联合训练</dd>
+<dt>播放时长预估</dt><dd>基于加权逻辑斯特回归进行预测播放时长(参考 youtube-net)</dd>
+<dt>多任务学习</dt><dd>尝试 ESMM 等业内成熟的多任务学习模型进行点击率和播放时长联合训练.</dd>
+</dl>
+</div>
+
+<div id="outline-container-orgd50f688" class="outline-3">
+<h3 id="orgd50f688"><span class="section-number-3">4.1</span> 技术难点</h3>
+<div class="outline-text-3" id="text-4-1">
+<dl class="org-dl">
+<dt>损失函数结合方式和参数</dt><dd>参考论文<sup><a id="fnr.5.100" class="footref" href="#fn.5">5</a></sup></dd>
+<dt>不同任务的学习率设置问题</dt><dd>参考博文<sup><a id="fnr.12" class="footref" href="#fn.12">12</a></sup></dd>
+<dt>播放时长预估较难</dt><dd>需要额外尝试其他预估播放时长的方法和模型</dd>
+</dl>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+Rich Caruana. 1998. Multitask learning. In Learning to learn
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+Modeling task relationships in multi-task learning with multi-gate mixture-of-experts
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.3" class="footnum" href="#fnr.3">3</a></sup> <div class="footpara"><p class="footpara">
+Neural Factorization Machines for Sparse Predictive Analytics
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.4" class="footnum" href="#fnr.4">4</a></sup> <div class="footpara"><p class="footpara">
+Field-weighted Factorization Machines for Click-Through Rate Prediction in Display Advertising
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.5" class="footnum" href="#fnr.5">5</a></sup> <div class="footpara"><p class="footpara">
+Multi-task learning using uncertainty to weigh losses for scene geometry and semantics
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.6" class="footnum" href="#fnr.6">6</a></sup> <div class="footpara"><p class="footpara">
+Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.7" class="footnum" href="#fnr.7">7</a></sup> <div class="footpara"><p class="footpara">
+Learning and evaluating classifiers under sample selection bias.
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.8" class="footnum" href="#fnr.8">8</a></sup> <div class="footpara"><p class="footpara">
+Perceive Your Users in Depth: Learning Universal User Representations from Multiple E-commerce Tasks
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.9" class="footnum" href="#fnr.9">9</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://mp.weixin.qq.com/s/-rw2Gecv-QOSW33Q8QTfcA">https://mp.weixin.qq.com/s/-rw2Gecv-QOSW33Q8QTfcA</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.10" class="footnum" href="#fnr.10">10</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://tech.meituan.com/2018/03/29/recommend-dnn.html">https://tech.meituan.com/2018/03/29/recommend-dnn.html</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.11" class="footnum" href="#fnr.11">11</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://yq.aliyun.com/articles/627734?tdsourcetag=s_pctim_aiomsg">https://yq.aliyun.com/articles/627734?tdsourcetag=s_pctim_aiomsg</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.12" class="footnum" href="#fnr.12">12</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://engineering.taboola.com/deep-multi-task-learning-3-lessons-learned/">https://engineering.taboola.com/deep-multi-task-learning-3-lessons-learned/</a>
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: stupid-coder</p>
+<p class="date">Created: 2019-09-29 Sun 15:08</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
