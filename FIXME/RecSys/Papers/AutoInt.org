@@ -1,0 +1,86 @@
+#+TITLE: AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2
+
+* 简介
+  推荐都会有两个比较关键的问题:
+  + 高维稀疏特征,例如 id类特征
+  + 特征工程,耗时耗力
+
+
+  本文提出了基于 /multi-head self-attention/ 的高价特征自动交叉.
+
+
+
+* 网络结构
+
+  #+CAPTION: AutoInt的网络整体结构
+  [[file:assets/AutoInt/overview.png]]
+
+  整体网络如上图所示:首先,潜入层(/embedding layer/)把所有的输入的高维稀疏特征和值特征映射到一个低维稠密向量;然后送到基于多头自注意(/multi-head self-attention/)构建的自动化交叉层(/interacting layer/),多头自注意可以将特征映射到不同的子空间下,然后堆叠多层多头自注意层可以构建高阶特征交叉;最终获得一个高阶交叉后的低维稠密向量表达.
+
+** 输入层
+   输入层将用户画像特征和item属性特征concat在一起,从而获得一个高维稀疏的特征向量:
+   \begin{equation}
+     x = [x_1;x_2;...;x_M]
+   \end{equation}
+
+   M 为特征域数量,$x_i$ 为特征域i的特征向量,类别类的特征时,$x_i$ 为one-hot向量(如下图的 $x_1$);值类特征时,$x_i$ 为标量(如下图的 $x_m$).
+
+   #+CAPTION: 输入层
+   [[file:assets/AutoInt/input_layer.png]]
+
+** 嵌入层
+   输入特征的类别特征是非常稀疏的高维特征,常规的做法是将高维稀疏的特征嵌入到低维稠密空间:
+   \begin{equation}
+     e_i = V_i x_i
+   \end{equation}
+
+   $V_i$ 为特征域i的嵌入向量,$x_i$ 为特征域i的one-hot向量.
+
+   为了使得类别特征和值类特征能够自动交叉,需要同样将值类特征也映射到同一个嵌入空间:
+   \begin{equation}
+     e_m = v_m x_m
+   \end{equation}
+
+   $v_m$ 为特征域m的嵌入表达,$x_m$ 为对应的标量值.
+
+   最终将多个特征域的嵌入向量concat在一起,获得最终的特征嵌入表达.
+
+** 交叉层
+   在类别特征和值类特征都嵌入到一个统一的空间后,基于 /multi-head self-attention/ 来实现高阶特征交叉.
+
+   \begin{equation}
+     \alpha_{m,k}^{(h)} = \frac{\mathop{exp}(\psi^{(h)}(e_m,e_k))}{\sum_{l=1}^M \mathop{exp}(\psi^{(h)}(e_m,e_l))} \\
+     \psi^{(h)}(e_m,e_k) = \langle W_{Query}^{(h)}e_m,W_{Key}^{(h)}e_k \rangle
+   \end{equation}
+
+   其中,$\psi^{(h)}(\cdot,\cdot)$ 用来定义特征m和特征k的相似函数.可以采用神经网络或者简单的内积函数来实现.
+
+   最终,特征m在h子空间的高阶交叉表达为:
+   \begin{equation}
+     \hat{e}_{m}^{(h)} = \sum_{k=1}^{M}\alpha_{m,k}^{(h)}(W_{Value}^{(h)} e_k)
+   \end{equation}
+   
+   #+CAPTION: 自注意交叉层
+   [[file:assets/AutoInt/interacting_layer.png]]
+
+   $\hat{e}_{m}^{(h)} \in R^{d^{'}}$ 为特征m和其他特征在h子空间下的交叉特征.最终的交叉特征将多个子空间下的交叉特征concat在一起:
+   \begin{equation}
+     \hat{e}_m = \hat{e}_m^{(1)} \oplus \hat{e}_m^{(2)} \oplus ... \oplus \hat{e}_{m}^{(H)}
+   \end{equation}
+
+   最终,为了保留上一层的交叉特征和原始特征,在模型中增加了一个残差层:
+   \begin{equation}
+     e_{m}^{Res} = \mathop{ReLU}(\hat{e}_{m}+W_{Res}e_{m})
+   \end{equation}
+
+** 输出层
+   最终,将所有的特征域的特征嵌入表达concat在一起,经过非线性变换得到最终预估结果:
+   \begin{equation}
+     \hat{y} = \mathop{sigmoid}(w^{T}(e_1^{Res} \oplus e_2^{Res} \oplus ... \oplus e_{M}^{Res})+b),
+   \end{equation}
+
+   
