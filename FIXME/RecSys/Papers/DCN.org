@@ -1,0 +1,47 @@
+#+TITLE: Deep&Cross Network for ad click Predictions
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:2
+
+* 网络结构
+  #+CAPTION: Deep&Cross Network网络结构
+  [[file:assets/DCN/overview.png]]
+
+  DCN的网络结构和常规的结构一样,由输入&嵌入层,交叉层和deep网络一样.
+
+** Embedding and Stacking Layer
+   和常规潜入层一样:
+   \begin{equation}
+     x_{embed,i} = W_{embed,i}x_{i}
+   \end{equation}
+
+   $x_i$ 为特征域i的one-hot输入,$W_{embed,i} \in R^{n_e \times n_v}$ 为特征域i的嵌入矩阵,$n_e,n_v$ 分别为embedding size和vocabulary size.
+
+   最终,将个特征域的特征嵌入concat在一起:
+   \begin{equation}
+     x_0 = \lbrack x_{embed,1}^{T},x_{embed,2}^{T},...,x_{embed,k}^{T},x_{dense}^{T} \rbrack
+   \end{equation}
+
+** Cross Network
+   交叉网络由多层交叉层堆叠起来,每一层的交叉公式如下:
+   \begin{equation}
+     x_{l+1} = x_{0}x_{l}^{T}w_{l}+b_{l}+x_{l} = f(x_{l},w_{l},b_{l})+x_{l}
+   \end{equation}
+
+   #+CAPTION: 交叉层可视化
+   [[file:assets/DCN/cross_layer.png]]
+
+** Deep Network
+   深度网络为一个全联接网络,每一层如下:
+   \begin{equation}
+     h_{l+1} = f(W_{l}h_{l}+b_{l})
+   \end{equation}
+
+** Combination Layer
+   合并层将Cross网络和Deep网络的输出向量concat在一起,然后feed到后续的logit层:
+   \begin{equation}
+     p = \sigma{([x_{L1}^{T},h_{L2}^{T}]w_{logits})}
+   \end{equation}
+
+   $x_{L1} \in R^{d}, x_{L2}^{m}$ 为Cross网络和Deep网络的输出.$w_{logits} \in R^{(d+m)}$ 为combination layer的权重.

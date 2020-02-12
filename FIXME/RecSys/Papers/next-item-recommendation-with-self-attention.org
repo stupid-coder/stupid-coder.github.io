@@ -1,0 +1,90 @@
+#+TITLE: Next Item Recommendation with Self-Attention
+#+AHTOR: stupid-coder
+#+OPTIONS: H:2 ^:nil
+#+STARTUP: indent
+
+* 简介
+  推荐系统主要解决问题就是:如何根据用户的历史交互行为,推荐出用户后续的交互行为.如何利用用户交互行为就可以分成两种:
+  + 交互行为没有时间先后,只是看作发生过的事情,代表就是将用户的行为看作为矩阵,然后直接矩阵分解,然后利用学习到的隐向量来计算出用户对其他item的预估的得分,从而推荐出topk商品.
+  + 交互行为具有时间先后,例如采用RNN,CNN,Attention网络可以学习到用户行为的变化.DIEN是采用GRU+Attention来获取用户的兴趣变化,从而提高推荐质量.
+
+   
+* 网络结构
+  本文提出的 *AttRec(/self-attentive sequential recommendation model/)* 由如下两个部分组成:
+
+  1. 基于 /self-attention/ 机制来刻画用户短期兴趣
+  2. 基于协同度量学习(/collaborative metric learning/)度量用户长期兴趣
+     
+** 基于 self-attention 的短期兴趣
+   本文提出基于 /self-attention/ 机制的序列化推荐算法.
+
+   /self-attention/ 的基本结构如下:
+   #+CAPTION: self-attention.
+   [[file:assets/next-item/self-attention.png]]
+
+
+   */self-attention module/*
+   -----
+   用户的短期兴趣可以通过用户过去L条行为获取,每条行为对应的item可以采用d-维向量表示.设 $X\in R^{N \times d}$,表示维用户所有的item的向量.则最近的L个item可以用如下矩阵表示:
+   \begin{equation}
+     X_{t}^{u} = \left[ \begin{matrix}
+       X_{(t-L+1)_1} && X_{(t-L+1)_2} && \cdots && X_{(t-L+1)_d} \\
+       \vdots && \vdots && \vdots && \vdots \\
+       X_{(t-L)_1} && X_{(t-L)_2} && \cdots && X_{(t-L)_d} \\
+       X_{t_1} && X_{t_2} && \cdots && X_{t_d} 
+       \end{matrix} \right]
+   \end{equation}
+
+   用户u在时刻t的 /Query,Key,Value/ 矩阵等于矩阵 $X_{t}^{u}$. 
+
+   首先,需要对这些相同矩阵进行非线性变换:
+   \begin{equation}
+     Q^{'} = \mathop{ReLU}(X_{t}^{u}W_{Q}) \\
+     K^{'} = \mathop{ReLU}(X_{t}^{u}W_{K}) 
+   \end{equation}
+   其中 $W_{Q}$ 和 $W_{K}$ 为变换矩阵.
+
+   那么,权重矩阵(/weight matrix or affinity matrix/)计算如下:
+   \begin{equation}
+     s_{t}^{u} = \mathop{softmax}(\frac{Q^{'}{K^{'}}^{T}}{\sqrt{d}})
+   \end{equation}
+   输出为 $L \times L$ 的仿射矩阵,用来表示L个item之间的相似度. $\sqrt{d}$ 用来对点击attention进行缩放,保证attention的值在sigmoid函数的非饱和区域.
+
+   其次,本文保留 /Value/ 矩阵不变,不像其他论文对该矩阵同样进行了非线性变换.本文发现对 /Value/ 矩阵进行非线性变化不利于模型去学习真是的矩阵.
+
+   最终, /self-attention/ 的输出为:
+   \begin{equation}
+     a_{t}^{u} = s_{t}^{u} \times X_{t}^{u}
+   \end{equation}
+
+   /self-attention/ 的输出 $a_{t}^{u}\in R^{L \times d}$ 可以看作是用户短期兴趣的表现.然后对该矩阵进行均值处理获得最终的d维向量来表示用户的短期兴趣.
+   \begin{equation}
+     m_{t}^{u} = \frac{1}{L}\sum_{l=1}^{L}a_{tl}^{u}
+   \end{equation}
+
+   */input embedding with time signals/* 
+   -----
+   上述的基于attention的机制并没有包含时间信号,所以只能看做是一个词带表达.参考 /Transformer/,通过对 /Query/ 和 /Key/ 叠加位置潜入(/position embedding/)来添加时间信息:
+   \begin{equation}
+     TE(t,2i) = \sin {(t/10000^{2i/d})} \\
+     TE(t,2i+1) = \cos {(t/10000^{2i/d})}
+   \end{equation}
+   
+** 用户长期兴趣建模
+   类似潜在因子方法,对每一个用户和item学习一个潜在因子.设 $U \in R^{M \times d}$ 和 $V \in R^{N \times d}$,表示用户和item的潜在因子.可以采用内积来表示用户和item的交互行为,但是有论文表示内积会伤害度量函数的不等属性,影响模型性能.本文采用 /Euclidean distance/ 来度量用户和item之间的行为:
+   \begin{equation}
+     {\Vert U_{u}-V_{l} \Vert}_{2}^{2}
+   \end{equation}
+   
+   
+* 模型训练
+  
+** 目标函数
+   有了用户的短期兴趣和长期兴趣建模,目标函数定义如下:
+   \begin{equation}
+     y_{t+1}^{u} = w {\Vert U_{u} - V_{H_{t+1}^{u}} \Vert}_{2}^{2} + (1-w) {\Vert m_{t}^{u} - X_{t+1}^{u} \Vert}_{2}^{2}
+   \end{equation}
+
+   上述等式中:第一部分表示的是用户长期兴趣和下一个item($H_{t+1}^{u}$)的长期表达的匹配分;第二部分表示的是短期兴趣分.可以看到相同item的长期和短期表达是不一样的.最终分的分由一个超参w控制.
+
+   
