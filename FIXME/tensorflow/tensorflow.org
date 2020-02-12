@@ -1,0 +1,40 @@
+#+TITLE: tensorflow 总体结构
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+STARTUP: indent
+#+OPTIONS: H:num:^::nil creator:nil 
+
+#+BEGIN_QUOTE
+tensorflow 为google开源的很重的一个机器学习框架.本系列博客在tag:r1.0代码上进行源码解析.
+#+END_QUOTE
+
+
+* tensorflow 代码结构
+
+tensorflow核心代码主要是cpp开发,前端开发代码包括python,c,cpp,java等语言.整体结构由bazel进行编译控制.代码目录如下:
+
++ c :: 主要是c语言的前端代码,也是前端语言调用的基础接口.
++ cc :: cpp语言的前端代码.
++ compiler :: 图结构一些编译代码.不做深入考察
++ contrib :: 第三方贡献的一些代码,后续是有可能移到核心库下的
++ core :: tensorflow的核心库代码,包括session,op,计算图等代码
++ examples :: 样例
++ go :: 
++ python :: python前端语言的具体实现代码. 重点需要看一下python是如何调用c接口的.有利于对tensorflow有一个调用流程上的认识.
++ stream_executor :: 一些特殊操作的执行代码实现.
++ tensorboard :: 
++ tools ::
++ user_ops ::
+
+
+* tensorflow 调用方法
+
+tensorflow 的整体架构如下图所示:
+
+#+NAME: tensorflow-arch
+#+CAPTION: tensorflow的整体架构图.
+[[file:assets/tensorflow-arch.png]]
+
+可以看到前端语言 /python,cpp,Go,Java.../ 是通过调用 C API 来调用tensorflow的核心功能.
+
+其中比较关键的技术是采用SWIG工具来实现其他语言调用c接口的方法.相关不细说了.

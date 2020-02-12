@@ -1,0 +1,288 @@
+#+TITLE: tensorflow源码:session
+#+AUTHOR: stupid-coder
+#+EMAIL: stupid_coder@163.com
+#+OPTIONS: ^:nil H:2 num:nil creator:nil
+#+STARTUP: indent
+
+* Session
+  *tf.Session* 为tensorflow用来调用图结构执行的结构对象. 
+
+  python的代码实现在 *tensorflow/python/client/session.py*.
+
+  session.py调用的tf_session对象就是SWIG生成的c_api接口的调用对象.
+
+* python源码解析
+
+  *Session* 继承于 *BaseSession* 继承于 *SessionInterface*. 
+
+** SessionInterface
+类对象定义了Session的接口. 
+   #+BEGIN_SRC python
+     class SessionInterface(object):
+         @propery
+         def graph(self):
+             raise NotImplementedError('graph')
+         @property
+         def sess_str(self):
+             raise NotImplementedError('sess_str')
+
+         def run(self, fetches, feed_dict=None, options=None, run_metadata=None):
+             """Runs operations in the session. See `BaseSession.run()` for details."""
+             raise NotImplementedError('run')
+
+         def partial_run_setup(self, fetches, feeds=None):
+             """Sets up the feeds and fetches for partial runs in the session."""
+             raise NotImplementedError('partial_run_setup')
+
+         def partial_run(self, handle, fetches, feed_dict=None):
+             """Continues the execution with additional feeds and fetches."""
+             raise NotImplementedError('partial_run')
+   #+END_SRC 
+
+   * graph :: 当前session关联的graph对象.
+   * sess_str :: session字符串表达.
+   * run :: 调用计算过程的函数.输入需要喂入的数据 /fetches/,输出的节点 /feed_dict/.
+   * partial_run_step :: 局部调用图结构的设置函数.
+   * partial_run :: 进行局部调用图函数.
+
+** BaseSession
+
+*BaseSession* 在 *SessionInterface* 的基础上增加了图结构的增量构建方法.
+#+BEGIN_SRC python
+  class BaseSession(SessionInterface):
+    def __init__(self, target='', graph=None, config=None):
+      self._graph = ops.get_default_graph()  # 获取图对象
+      opts = tf_session.TF_NewSessionOptions(target=self._target, config=config)  # 创建SessionOptions
+      self._session = tf_session.TF_NewDeprecatedSession(opts, status)            # 创建session
+
+    def close(self):
+        tf_session.TF_CloseDeprecatedSession(self._session, status)  # 关闭session
+
+    def run(self, fetches, feed_dict=None, options=None, run_metadata=None):
+        result = self._run(None, fetches, feed_dict, options_ptr,
+                           run_metadata_ptr)
+
+    def _run(self, handle, fetches, feed_dict, options, run_metadata):
+        results = self._do_run(handle, final_targets, final_fetches,
+                               feed_dict_string, options, run_metadata)
+
+    def _do_run(self, handle, target_list, fetch_list, feed_dict,
+                options, run_metadata):
+        self._extend_graph()      # 首先扩展构造图
+        return tf_session.TF_Run(session, options,
+                                 feed_dict, fetch_list, target_list,
+                                 status, run_metadata)
+
+    def _extend_graph(self):
+        if self._graph.version > self._current_version:
+            graph_def, self._current_version = self._graph._as_graph_def(
+                from_version=self._current_version,
+                add_shapes=self._add_shapes)
+            tf_session.TF_ExtendGraph(
+                self._session, graph_def.SerializeToString(), status)
+          self._opened = True
+#+END_SRC
+
+需要看到,上述代码中出现了很多 /tf_session.TF_*/ 相关的函数.这些函数都是SWIG生成的c api提供的接口.
+
+** Session
+
+*Session* 为可以直接调用运行的对象.
+#+BEGIN_SRC python
+  class Session(BaseSession):
+    def __init__(self, target='', graph=None, config=None):
+      super(Session, self).__init__(target, graph, config=config)
+#+END_SRC
+
+* c api源码解析
+从上述python的代码中可以看到,python中主要就是调用了一些c api的接口代码,具体如下:
++ TF_NewSessionOptions :: 创建 /TF_SessionOptions/ 对象
++ TF_NewDeprecatedSession :: 创建 /TF_Session/ 实际的句柄
++ TF_CloseDeprecatedSession :: 关闭 /TF_Session/
++ TF_Run :: 运行计算图
++ TF_ExtendGraph :: 扩展图结构
+
+
+具体的声明代码在 *tensorflow/c/c_api.h* 中. 实现在 *tensorflow/c/c_api* 中.
+
+** 主要的结构体
+
++ TF_SessionOptions :: 定义在 *tensorflow/c/c_api.c:275* 
+  #+BEGIN_SRC c
+    struct TF_SessionOptions {
+      SessionOptions options;
+    };
+  #+END_SRC
+  /SessionOptions/ 定义在 *tensorflow/core/public/session_options.h* 文件中
+  #+BEGIN_SRC c
+    struct SessionOptions {
+      Env* env;                     /* 环境变量对象 */
+      string target;                /* session关联的执行设备 */
+      ConfigProto config;           /* 配置文件的protobuf对象 */
+    };
+  #+END_SRC 
+
+  /ConfigProto/ 的protobuf定义文件在 *tensorflow/core/protobuf/config.proto*. 定义了很多实际控制tensorflow运行的参数.
++ TF_Session :: 定义在 *tensorflow/c/c_api.c:767::* 中.
+  #+BEGIN_SRC c
+    struct TF_Session {
+    TF_Session(Session* s, TF_Graph* g)
+      : session(s), graph(g), last_num_graph_nodes(0) {}
+      Session* session;
+      TF_Graph* graph;
+      mutex mu;
+      int last_num_graph_nodes;
+    };
+  #+END_SRC
+  /Session/ 定义在 *tensorflow/core/public/session.h* 头文件中
+  #+BEGIN_SRC c
+    class Session {
+     public:
+      Session();
+      virtual ~Session();
+      /* 将图结构创建到该session中 */
+      virtual Status Create(const GraphDef& graph) = 0;
+      /* 扩展图结构,将图中新增的操作注册到该session的graph中 */
+      virtual Status Extend(const GraphDef& graph) = 0;
+
+      /* 运行图 */
+      virtual Status Run(const std::vector<std::pair<string, Tensor> >& inputs,
+                         const std::vector<string>& output_tensor_names,
+                         const std::vector<string>& target_node_names,
+                         std::vector<Tensor>* outputs) = 0;
+      /* .... other function */
+
+      virtual Status Close() = 0;
+    };
+  #+END_SRC
+  上述只列举了最为主要的几个函数
++ TF_Graph :: 定义在 *tensoflow/c/c_api.c:729* 中.
+  #+BEGIN_SRC c
+    struct TF_Graph {
+    TF_Graph()
+      : graph(OpRegistry::Global()),
+        refiner(graph.versions().producer(), graph.op_registry()),
+        num_sessions(0),
+        delete_requested(false) {}
+      mutex mu;
+      Graph graph GUARDED_BY(mu);
+
+      // Runs shape inference.
+      tensorflow::ShapeRefiner refiner GUARDED_BY(mu);
+
+      // Maps from name of an operation to the Node* in 'graph'.
+      std::unordered_map<tensorflow::string, Node*> name_map GUARDED_BY(mu);
+
+      // TF_Graph may only / must be deleted when
+      //   num_sessions == 0 && delete_requested == true
+
+      // num_sessions incremented by TF_NewSession, and decremented by
+      // TF_DeleteSession.
+      int num_sessions GUARDED_BY(mu);
+      bool delete_requested GUARDED_BY(mu);  // set true by TF_DeleteGraph
+    };
+  #+END_SRC
+  和 /TF_Session/ 结构体一样, /TF_Graph/ 也只是在真正的 /Graph/ 结构体外增加一些其他功能的成员对象. /Graph/ 结构体定义在 *tensorflow/core/graph/graph.h:266* 该结构体以后再说.
+
+  
+** 函数逻辑
+
+从调用顺序上看,首先调用 /TF_NewSessionOptions/ 构建会话配置选项, /TF_NewDeprecatedSession/ 创建会话句柄, /TF_ExtendGraph/ 将图对象注册到当前会话的图结构中, /TF_Run/ 运行会话, 最终调用 /TF_CloseDeprecatedSession/ 关闭会话对象.
+
+*** TF_NewSessionOptions
+函数定义在 *tensorflow/python/client/tf_session.i:183* :
+#+BEGIN_SRC 
+%insert("python") %{
+  def TF_NewSessionOptions(target=None, config=None):
+    # NOTE: target and config are validated in the session constructor.
+    opts = _TF_NewSessionOptions()
+    if target is not None:
+      _TF_SetTarget(opts, target)
+    if config is not None:
+      from tensorflow.python.framework import errors
+      with errors.raise_exception_on_not_ok_status() as status:
+        config_str = config.SerializeToString()
+        _TF_SetConfig(opts, config_str, status)
+    return opts
+%}
+#+END_SRC
+上述为SWIG描述文件,其实可以看到该函数调用了 /_TF_NewSessionOptions/ 函数,该函数其实才是c_api.cc定义的对象,只是简单的返回一个新的 /TF_SessionOptions/.
+
+该函数定义在 *tensorflow/core/c_api.cc:278* :
+#+BEGIN_SRC c
+  TF_SessionOptions* TF_NewSessionOptions() { return new TF_SessionOptions; }
+#+END_SRC
+直接返回一个新new的 /TF_SessionOptions/ 指针.
+
+*** TF_NewDeprecatedSession
+该函数定义在 *tensorflow/core/c_api.cc:322*
+#+BEGIN_SRC c
+  struct TF_DeprecatedSession {
+    Session* session;
+  };
+
+  TF_DeprecatedSession* TF_NewDeprecatedSession(const TF_SessionOptions* opt,
+                                                TF_Status* status) {
+    Session* session;
+    status->status = NewSession(opt->options, &session);
+    if (status->status.ok()) {
+      return new TF_DeprecatedSession({session});
+    } else {
+      DCHECK_EQ(nullptr, session);
+      return NULL;
+    }
+  }
+#+END_SRC
+该函数也非常简单,只是调用 /NewSession/ 创建真正的 /Session/ ,然后构建 /TF_DeprecatedSession/ 对象中.
+
+*** TF_ExtendGraph
+该函数定义在 *tensorflow/c/c_api.cc:344* :
+#+BEGIN_SRC c
+  void TF_ExtendGraph(TF_DeprecatedSession* s, const void* proto,
+                      size_t proto_len, TF_Status* status) {
+    GraphDef g;
+    if (!tensorflow::ParseProtoUnlimited(&g, proto, proto_len)) {
+      status->status = InvalidArgument("Invalid GraphDef");
+      return;
+    }
+    status->status = s->session->Extend(g);
+  }
+#+END_SRC
+实际调用工作可以看到是调用了会话对象的 /Extend/ 方法.
+
+*** TF_Run
+实际的 /TF_Run/ 函数是定义在 *tensorflow/python/client/tf_session_helper.cc:571* 的 /TF_Run_Wrapper/ 函数. 具体可以参考 *tensorflow/python/client/tf_session.i* 中对接口的定义.
+
+
+
+#+BEGIN_SRC c
+  void TF_Run(TF_DeprecatedSession* s, const TF_Buffer* run_options,
+              // Input tensors
+              const char** c_input_names, TF_Tensor** c_inputs, int ninputs,
+              // Output tensors
+              const char** c_output_names, TF_Tensor** c_outputs, int noutputs,
+              // Target nodes
+              const char** c_target_oper_names, int ntargets,
+              TF_Buffer* run_metadata, TF_Status* status) {
+    TF_Run_Setup(noutputs, c_outputs, status);
+    std::vector<std::pair<tensorflow::string, Tensor>> input_pairs(ninputs);
+    if (!TF_Run_Inputs(c_inputs, &input_pairs, status)) return;
+    for (int i = 0; i < ninputs; ++i) {
+      input_pairs[i].first = c_input_names[i];
+    }
+    std::vector<tensorflow::string> output_names(noutputs);
+    for (int i = 0; i < noutputs; ++i) {
+      output_names[i] = c_output_names[i];
+    }
+    std::vector<tensorflow::string> target_oper_names(ntargets);
+    for (int i = 0; i < ntargets; ++i) {
+      target_oper_names[i] = c_target_oper_names[i];
+    }
+    TF_Run_Helper(s->session, nullptr, run_options, input_pairs, output_names,
+                  c_outputs, target_oper_names, run_metadata, status);
+  }
+#+END_SRC
+
+*** TF_CloseDeprecatedSession
+
+* cpp 源码解析
